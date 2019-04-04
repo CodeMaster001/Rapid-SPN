@@ -22,11 +22,10 @@ P = numpy.random.randn(D, D)
 def newpoint():
     return numpy.dot(numpy.random.randn(D), P)
 
-print 'Generating data...' 
 # Now, let's populate the dictionary with N random points
 X = dict()
 
-for i in xrange(N):
+for i in numpy.arange(N):
     # Let's use string-valued keys
     X['%04x' %i] = newpoint()
     pass
@@ -36,28 +35,19 @@ X['Alice']  = newpoint()
 X['Bob']    = newpoint()
 X['Carol']  = newpoint()
 
-print 'done.'
 
 # Construct a tree.  Let's use a 2-means tree with spill percentage 0.3
-print 'Building tree...'
 T = spatialtree(X, rule='2-means', spill=0.3)
-print 'done.'
 
 
-# Show some stats
-print '# items in tree    : ', len(T)
-print 'Dimensionality     : ', T.getDimension()
-print 'Height of tree     : ', T.getHeight()
-print 'Spill percentage   : ', T.getSpill()
-print 'Split rule         : ', T.getRule()
 
 # Let's find the nearest neighbors of bob:
 knn_bob = T.k_nearest(X, k=10, index='Bob')
-print 'KNN(Bob)           : ', knn_bob
+print('KNN(Bob)           : '+str(knn_bob))
 
 # Or of a random vector:
 knn_random = T.k_nearest(X, k=10, vector=newpoint())
-print 'KNN(random)        : ', knn_random
+print('KNN(random)        : '+str(knn_random))
 
 
 # With dictionary-type data, we add to the tree as well
@@ -66,4 +56,3 @@ T.update({'Dave': X['Dave']})
 
 # For retrieval purposes, the new point will have to live in X from then onward
 knn_dave = T.k_nearest(X, k=10, index='Dave')
-print 'KNN(Dave)          : ', knn_dave

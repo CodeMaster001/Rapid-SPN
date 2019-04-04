@@ -24,16 +24,10 @@ X = numpy.dot(X, P)
 
 # Construct a tree.  This time, we'll use a random projection tree of height 10
 
-print 'Building tree...'
 T = spatialtree(X, rule='rp', height=10)
-print 'done.'
 
 # Show some useful information about the tree
-print '# items in tree    : ', len(T)
-print 'Dimensionality     : ', T.getDimension()
-print 'Height of tree     : ', T.getHeight()
-print 'Spill percentage   : ', T.getSpill()
-print 'Split rule         : ', T.getRule()
+
 
 #
 # By default, spatialtree retains index information at every level 
@@ -45,22 +39,18 @@ print 'Split rule         : ', T.getRule()
 # The invertedmap structure only stores the relationship between items
 # and the leaves of the tree from which it is constructed.
 
-print 'Converting tree T to inverted map I...'
 I = invertedmap(T)
-print 'done.'
 
 # Some stats:
-print '# items in the map : ', len(I)
-print '# leaf sets        : ', I.numSets()
 
 # It can answer k_nearest queries just like a spatialtree
 knn_t = T.k_nearest(X, k=10, index=499)
-print 'KNN approx (tree)  : ', knn_t
+print('KNN approx (tree)  : '+str(knn_t))
 
 # The imap discards all vector data from the structure,
 # so it can only answer queries by index.
 knn_i = I.k_nearest(X, k=10, index=499)
-print 'KNN approx (imap)  : ', knn_i
+print('KNN approx (imap)  : '+str(knn_i))
 
 # You can also delete items from the inverted map, but
 # new nodes cannot be added.

@@ -574,7 +574,7 @@ class spatialtree(object):
         W   = numpy.random.randn( k, self.__d )
 
         # normalize each sample to get a sample from unit sphere
-        for i in xrange(k):
+        for i in numpy.arange(k):
             W[i] /= numpy.sqrt(numpy.sum(W[i]**2))
             pass
 
