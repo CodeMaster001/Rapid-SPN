@@ -1,0 +1,2 @@
+KD tree always splits on full dataset , so there is no drop in data
+we drop data and pass only specifc data of the respective node
