@@ -1,2 +1,4 @@
-KD tree always splits on full dataset , so there is no drop in data
-we drop data and pass only specifc data of the respective node
+#1 KD tree always splits on full dataset , so there is no drop in data
+#1 we drop data and pass only specifc data of the respective node
+
+#2 we tried to put the data in such a way that the left node will not contain those data that are in the right node , but that failed , so instead when we are doing the analysis we are only passing the dataset that passing maximum diameter of the sphere in the rptree with a hope that indepence method can find something new for the rp node

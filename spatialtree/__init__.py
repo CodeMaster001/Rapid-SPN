@@ -17,6 +17,11 @@ import numpy
 import scipy.stats
 import random
 import heapq
+from spn.structure.Base import Product, Sum, assign_ids
+
+class NODE_TYPE:
+    SUM_NODE= 0;
+    PRODUCT_NODE = 1;
 
 class spatialtree(object):
 
@@ -59,18 +64,23 @@ class spatialtree(object):
         '''
 
         # Default values
+
+        self.proportion = None;
+
         if 'indices' not in kwargs:
             if isinstance(data, dict):
                 kwargs['indices']   = data.keys()
             else:
                 kwargs['indices']   = range(len(data))
             pass
+        if 'proportion' in kwargs:
+            self.proportion = kwargs['proportion']
         
         n = len(kwargs['indices'])
 
         # Use maximum-variance kd by default
         if 'rule' not in kwargs:
-            kwargs['rule']          = 'kd'
+            kwargs['rule']          = 'rp'
             pass
 
         kwargs['rule'] = kwargs['rule'].lower()
@@ -154,9 +164,10 @@ class spatialtree(object):
         # Compute the split direction 
         self.__w = splitF(data, **kwargs)
 
+
         # Project onto split direction
         wx = {}
-        for i in self.__indices:
+        for i in numpy.arange(0,data.shape[0]):
             wx[i] = numpy.dot(self.__w, data[i])
             pass
 
@@ -165,27 +176,60 @@ class spatialtree(object):
         # Partition the data
         left_set    = set()
         right_set   = set()
-        import sys
+
+        right_data = list();
+        left_data = list();
         for (i, val) in wx.items():
             if val >= self.__thresholds[0]:
                 right_set.add(i)
+                right_data.append(data[i])
+
+        for (i, val) in wx.items():   
             if val < self.__thresholds[-1]:
                 left_set.add(i)
+                left_data.append(data[i])
             pass
         del wx  # Don't need scores anymore
 
         # Construct the children
         self.__children     = [ None ] * 2
         kwargs['height']    -= 1
-
+        total = len(left_set) + len(right_set)
         kwargs['indices']   = left_set
-        self.__children[0]  = spatialtree(data, **kwargs)
+
+        kwargs = self.decide_node(kwargs);
+        kwargs['proportion'] =len(left_set)/float(total)
+        self.__children[0]  = spatialtree(numpy.array(left_data), **kwargs)
 
         kwargs['indices']   = right_set
-        self.__children[1]  = spatialtree(data, **kwargs)
+        kwargs['proportion'] = len(right_set)/float(total)
+       
+        self.__children[1]  = spatialtree(numpy.array(right_data), **kwargs)
 
         # Done
         return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight())
+
+
+    def decide_node(self,kwargs):
+        '''
+        Update tree structure parent node type based on node type
+        '''
+
+        if 'NODE_TYPE' not in kwargs:
+            kwargs['NODE_TYPE'] = 'SUM_NODE';
+            self.NODE_TYPE = NODE_TYPE.SUM_NODE
+
+            return kwargs
+
+        if kwargs['NODE_TYPE'] == 'SUM_NODE':
+            kwargs['NODE_TYPE'] = 'PRODUCT_NODE'
+            self.NODE_TYPE = NODE_TYPE.PRODUCT_NODE;
+
+        elif kwargs['NODE_TYPE'] == 'PRODUCT_NODE':
+            kwargs['NODE_TYPE'] = 'SUM_NODE'
+            self.NODE_TYPE = NODE_TYPE.SUM_NODE
+
+        return kwargs;
 
     def update(self, D):
         '''
@@ -208,7 +252,6 @@ class spatialtree(object):
         right_set   = {}
         for (key, vector) in D.items():
             wx = numpy.dot(self.__w, vector)
-
             if wx >= self.__thresholds[0]:
                 right_set[key]  = vector
             if wx < self.__thresholds[-1]:
@@ -220,7 +263,7 @@ class spatialtree(object):
 
         pass
 
-    # Getters and container methods
+
     def getHeight(self):
         '''
         Returns the height of the tree.
@@ -582,8 +625,8 @@ class spatialtree(object):
 
         min_val = numpy.inf * numpy.ones(k)
         max_val = -numpy.inf * numpy.ones(k)
+        for i in numpy.arange(0,data.shape[0]):
 
-        for i in self.__indices:
             Wx      = numpy.dot(W, data[i])
             min_val = numpy.minimum(min_val, Wx)
             max_val = numpy.maximum(max_val, Wx)
