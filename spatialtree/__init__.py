@@ -17,6 +17,7 @@ import numpy
 import scipy.stats
 import random
 import heapq
+from spn.algorithms.TransformStructure import Prune
 from spn.structure.Base import Product, Sum, assign_ids
 
 class NODE_TYPE:
@@ -25,7 +26,12 @@ class NODE_TYPE:
 
 class spatialtree(object):
 
-    def __init__(self, data, **kwargs):
+    def update_ids(self):
+        assign_ids(self.spn_node)
+        #Prune(self.spn_node)
+
+    def __init__(self, data,spn_object=None, **kwargs):
+
         '''
         T = spatialtree(    data, 
                             rule='kd', 
@@ -64,8 +70,8 @@ class spatialtree(object):
         '''
 
         # Default values
-
         self.proportion = None;
+        self.spn_node = spn_object
 
         if 'indices' not in kwargs:
             if isinstance(data, dict):
@@ -80,7 +86,7 @@ class spatialtree(object):
 
         # Use maximum-variance kd by default
         if 'rule' not in kwargs:
-            kwargs['rule']          = 'rp'
+            kwargs['rule'] = 'rp'
             pass
 
         kwargs['rule'] = kwargs['rule'].lower()
@@ -153,6 +159,17 @@ class spatialtree(object):
             splitF  =   self.__RP
         else:
             raise ValueError('Unsupported split rule: %s' % kwargs['rule'])
+        
+        if 'NODE_TYPE'  not in kwargs:
+            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE)
+            kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+    
+        elif kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE:
+
+            kwargs['NODE_TYPE']= NODE_TYPE.SUM_NODE #temporary
+
+        elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
+            kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
 
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
@@ -179,6 +196,7 @@ class spatialtree(object):
 
         right_data = list();
         left_data = list();
+
         for (i, val) in wx.items():
             if val >= self.__thresholds[0]:
                 right_set.add(i)
@@ -196,41 +214,48 @@ class spatialtree(object):
         kwargs['height']    -= 1
         total = len(left_set) + len(right_set)
         kwargs['indices']   = left_set
-
-        kwargs = self.decide_node(kwargs);
+        print(kwargs['NODE_TYPE'])
         kwargs['proportion'] =len(left_set)/float(total)
-        self.__children[0]  = spatialtree(numpy.array(left_data), **kwargs)
+        children_left = self.produce_node(kwargs['NODE_TYPE'])
+
+        self.spn_node.children.append(children_left)
+        self.spn_node.weights.append(kwargs['proportion'])
+        self.__children[0]  = spatialtree(numpy.array(data),children_left, **kwargs)
+
+
 
         kwargs['indices']   = right_set
         kwargs['proportion'] = len(right_set)/float(total)
-       
-        self.__children[1]  = spatialtree(numpy.array(right_data), **kwargs)
 
+        children_right = self.produce_node(kwargs['NODE_TYPE'])
+
+        self.spn_node.children.append(children_right)
+        self.spn_node.weights.append(kwargs['proportion'])
+        self.spn_node.children[1] = children_right
+
+        self.__children[1]  = spatialtree(numpy.array(data),children_right, **kwargs)
         # Done
+
         return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight())
 
 
-    def decide_node(self,kwargs):
+    def produce_node(self,TYPE):
         '''
         Update tree structure parent node type based on node type
         '''
+        print(TYPE)
+        if  TYPE == NODE_TYPE.SUM_NODE:
+            spn_node = Sum();
+            return spn_node
 
-        if 'NODE_TYPE' not in kwargs:
-            kwargs['NODE_TYPE'] = 'SUM_NODE';
-            self.NODE_TYPE = NODE_TYPE.SUM_NODE
 
-            return kwargs
+        elif TYPE == NODE_TYPE.PRODUCT_NODE:
+            spn_node = Product();
+            return spn_node
 
-        if kwargs['NODE_TYPE'] == 'SUM_NODE':
-            kwargs['NODE_TYPE'] = 'PRODUCT_NODE'
-            self.NODE_TYPE = NODE_TYPE.PRODUCT_NODE;
 
-        elif kwargs['NODE_TYPE'] == 'PRODUCT_NODE':
-            kwargs['NODE_TYPE'] = 'SUM_NODE'
-            self.NODE_TYPE = NODE_TYPE.SUM_NODE
-
-        return kwargs;
-
+    def spn_node_object(self):
+        return self.spn_node;
     def update(self, D):
         '''
         T.update({new_key1: new_vector1, [new_key2: new_vector2, ...]})

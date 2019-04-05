@@ -7,13 +7,14 @@ Spatial tree demo for matrix data
 
 import numpy
 from spatialtree import spatialtree
+from spn.io.Graphics import plot_spn
 
 
 # First, create a random data matrix
-N = 20000
-D = 200
+N = 2000
+D = 2
 
-X = numpy.random.randn(N,D)
+X = numpy.random.randint(2,size=(N,D))
 
 
 # Apply a random projection so the data's not totally boring
@@ -26,8 +27,12 @@ X = numpy.dot(X, P)
 
 print('Building tree...')
 T = spatialtree(X)
-for i in T.traverse():
-	pass;
+T.update_ids()
+
+spn = T.spn_node_object()
+
+
+plot_spn(spn, 'basicspn.png')
 #print 'done.'
 
 # Show some useful information about the tree
