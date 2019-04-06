@@ -35,7 +35,8 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=300,scope=None, **kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=300,scope=None,threshold=0.3,ohe=True, **kwargs):
+    
 
         self.leaves_size = leaves_size
         '''
@@ -83,9 +84,7 @@ class spatialtree(object):
             scope = range(0,data.shape[1])
 
         data = data[:,scope]
-        print(scope)
-        print(data.shape)
-        self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=True,threshold=0.3, n_jobs=5)
+        self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=ohe,threshold=threshold, n_jobs=5)
 
         self.proportion = None;
         self.spn_node = spn_object
@@ -125,7 +124,6 @@ class spatialtree(object):
             kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
             pass
         
-        print(kwargs['height'])
         if 'min_items' not in kwargs:
             kwargs['min_items']     = 64
             pass
@@ -181,6 +179,8 @@ class spatialtree(object):
         else:
             raise ValueError('Unsupported split rule: %s' % kwargs['rule'])
 
+        # next stage option
+
         if 'NODE_TYPE'  not in kwargs:
             self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data,scope)
             self.spn_node.scope.extend(scope)
@@ -194,7 +194,10 @@ class spatialtree(object):
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
 
         if kwargs['height'] == 1:
+
             kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
+
+        #---Next stage option ends
 
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
@@ -256,10 +259,6 @@ class spatialtree(object):
             spn_node = Sum();
             return spn_node
 
-
-        elif TYPE == NODE_TYPE.PRODUCT_NODE:
-            spn_node = Product();
-            return spn_node
         elif TYPE == NODE_TYPE.LEAF_NODE:
             return self.build_spn_leaf(data,scope)
 
@@ -273,6 +272,25 @@ class spatialtree(object):
         self.spn_node.weights.append(kwargs['proportion'])
         self.spn_node.children[spn_index].scope.extend(scope)
         return spatialtree(numpy.array(data),children,ds_context = self.ds_context, **kwargs)
+
+
+    def build_product_node(self,data,data_set,sum_weight,spn_index,current_height,scope,**kwargs):
+
+        kwargs['height']    =current_height
+        kwargs['indices']   = data_set
+        kwargs['proportion'] =sum_weight
+        spn_node= Product();
+        for data_slice, scope_slice, _ in self.split_cols(data, self.ds_context, scope)
+            children = self.produce_node(NODE_TYPE.PRODUCT_NODE,data[:,scope_slice],scope_slice)
+            children.scope.extend(scope_slice)
+            spn_node.children.append(children)
+            self._children.append(spatialtree(numpy.array(data[:,scope_slice]),children,ds_context = self.ds_context, **kwargs))
+        return rptree,spn_node
+
+
+
+
+
 
 
     def build_spn_leaf(self, data,scope):

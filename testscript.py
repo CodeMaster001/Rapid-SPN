@@ -41,6 +41,7 @@ ds_context = Context(parametric_types=context).add_domains(X)
 
 print('Building tree...')
 T = spatialtree(X,ds_context=ds_context)
+print("Building tree complete")
 T.update_ids()
 spn = T.spn_node_object()
 
