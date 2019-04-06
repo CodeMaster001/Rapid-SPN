@@ -11,13 +11,17 @@ from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.structure.leaves.parametric.Parametric import Categorical, Gaussian
 from spn.algorithms.Inference import log_likelihood
+from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_RDC_py
+from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 
+data = fetch_california_housing()
 
 # First, create a random data matrix
-N = 2000
-D = 3
-
-X = numpy.random.randint(2,size=(N,D))
+print(data.data.shape)
+target = numpy.array(data.target).reshape(-1,1)
+X = numpy.concatenate((data.data, target),axis=1)
+N = X.shape[0]
+D = X.shape[1]
 
 
 
@@ -29,7 +33,7 @@ X = numpy.dot(X, P)
 
 # Construct a tree.  By default, we get a KD-spill-tree with height
 # determined automatically, and spill = 25%
-ds_context = Context(parametric_types=[Categorical, Categorical,Categorical]).add_domains(X)
+ds_context = Context(parametric_types=[Gaussian]*D).add_domains(X)
 
 
 print('Building tree...')
@@ -41,6 +45,8 @@ spn = T.spn_node_object()
 
 plot_spn(spn, 'basicspn.png')
 ll = log_likelihood(spn, X)
+print(numpy.mean(ll))
+"""
 #print 'done.'
 
 # Show some useful information about the tree
@@ -83,4 +89,5 @@ print('KNN true   (vector): '+str(knn_t))
 
 # Recall rate:
 print('Recall'+str((len(set(knn_a) & set(knn_t)) * 1.0 / len(set(knn_t)))))
+"""
 

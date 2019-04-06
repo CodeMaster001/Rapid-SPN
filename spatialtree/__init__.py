@@ -20,6 +20,8 @@ import heapq
 from spn.algorithms.TransformStructure import Prune
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
+from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_RDC_py
+
 
 class NODE_TYPE:
     SUM_NODE= 0;
@@ -117,6 +119,7 @@ class spatialtree(object):
             # This calculates the height necessary to achieve leaves of roughly 500 items,
             # given the current spill threshold
             kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / 500) / numpy.log(2.0 / (1 + kwargs['spill'])))))
+            print(kwargs['height'])
             pass
         
 
@@ -172,7 +175,6 @@ class spatialtree(object):
             splitF  =   self.__RP
         else:
             raise ValueError('Unsupported split rule: %s' % kwargs['rule'])
-        
         if 'NODE_TYPE'  not in kwargs:
             self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data)
             self.spn_node.scope.extend(kwargs['scope'])
@@ -184,6 +186,8 @@ class spatialtree(object):
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+
+        print(self.spn_node.scope)
 
         if kwargs['height'] == 1:
             kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
