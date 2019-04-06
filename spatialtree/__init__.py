@@ -18,7 +18,7 @@ import scipy.stats
 import random
 import heapq
 from spn.algorithms.TransformStructure import Prune
-from spn.structure.Base import Product, Sum, assign_ids
+from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
 
 class NODE_TYPE:
@@ -30,7 +30,8 @@ class spatialtree(object):
 
     def update_ids(self):
         assign_ids(self.spn_node)
-        #Prune(self.spn_node)
+        rebuild_scopes_bottom_up(self.spn_node)
+        self.spn_node = Prune(self.spn_node)
 
     def __init__(self, data,spn_object=None,ds_context=None, **kwargs):
 
@@ -173,7 +174,7 @@ class spatialtree(object):
             raise ValueError('Unsupported split rule: %s' % kwargs['rule'])
         
         if 'NODE_TYPE'  not in kwargs:
-            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE)
+            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data)
             self.spn_node.scope.extend(kwargs['scope'])
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
     
@@ -231,7 +232,7 @@ class spatialtree(object):
         total = len(left_set) + len(right_set)
         kwargs['indices']   = left_set
         kwargs['proportion'] =len(left_set)/float(total)
-        children_left = self.produce_node(kwargs['NODE_TYPE'])
+        children_left = self.produce_node(kwargs['NODE_TYPE'],data)
 
         self.spn_node.children.append(children_left)
         self.spn_node.weights.append(kwargs['proportion'])
@@ -243,7 +244,7 @@ class spatialtree(object):
         kwargs['indices']   = right_set
         kwargs['proportion'] = len(right_set)/float(total)
 
-        children_right = self.produce_node(kwargs['NODE_TYPE'])
+        children_right = self.produce_node(kwargs['NODE_TYPE'],data)
 
         self.spn_node.children.append(children_right)
         self.spn_node.weights.append(kwargs['proportion'])
@@ -257,7 +258,7 @@ class spatialtree(object):
         return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight(),)
 
 
-    def produce_node(self, TYPE):
+    def produce_node(self, TYPE,data):
         '''
         Update tree structure parent node type based on node type
         '''
@@ -270,14 +271,18 @@ class spatialtree(object):
             spn_node = Product();
             return spn_node
         elif TYPE == NODE_TYPE.LEAF_NODE:
-            return Product()
+            return self.build_spn_leaf(data)
+
 
     def build_spn_leaf(self, data):
+        spn_node = Product()
         indices = self.getIndices()
         node_info = data[list(indices)]
         temp = data[:,1].reshape(-1,1)
         for s in range(0,len(self.scope)):
                     node = create_parametric_leaf(data[:,s].reshape(-1,1), self.ds_context, [s])
+                    spn_node.children.append(node)
+        return spn_node
                     
 
                

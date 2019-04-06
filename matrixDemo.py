@@ -10,13 +10,16 @@ from spatialtree import spatialtree
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.structure.leaves.parametric.Parametric import Categorical, Gaussian
+from spn.algorithms.Inference import log_likelihood
 
 
 # First, create a random data matrix
-N = 1000
+N = 2000
 D = 3
 
 X = numpy.random.randint(2,size=(N,D))
+
+
 
 
 # Apply a random projection so the data's not totally boring
@@ -37,6 +40,7 @@ spn = T.spn_node_object()
 
 
 plot_spn(spn, 'basicspn.png')
+ll = log_likelihood(spn, X)
 #print 'done.'
 
 # Show some useful information about the tree
@@ -49,6 +53,7 @@ print('Height of tree     : '+ str(T.getHeight()))
 # If we want to compare accuracy against brute-force search,
 # we can make a height=0 tree:
 T_root = spatialtree(X, height=0,rule='rp')
+
 
 # Find the 10 approximate nearest neighbors of the 500th data point
 # returned list is row#'s of X closest to the query index, 
