@@ -20,7 +20,7 @@ import heapq
 from spn.algorithms.TransformStructure import Prune
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
-from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_RDC_py
+from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_cols_RDC_py
 
 
 class NODE_TYPE:
@@ -82,6 +82,8 @@ class spatialtree(object):
         if 'scope' not in kwargs:
             kwargs['scope'] = range(0,data.shape[1])
 
+        self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=True,threshold=0.7, n_jobs=5)
+
         self.proportion = None;
         self.spn_node = spn_object
         self.ds_context = ds_context
@@ -118,7 +120,7 @@ class spatialtree(object):
         if 'height' not in kwargs:
             # This calculates the height necessary to achieve leaves of roughly 500 items,
             # given the current spill threshold
-            kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / 500) / numpy.log(2.0 / (1 + kwargs['spill'])))))
+            kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / 200) / numpy.log(2.0 / (1 + kwargs['spill'])))))
             print(kwargs['height'])
             pass
         
@@ -155,7 +157,9 @@ class spatialtree(object):
 
         # Split the new node
         self.__height       = self.__split(data, **kwargs)
-        pass
+
+        #data_slices = self.split_cols(data,self.ds_context,self.scope)
+
 
     def __split(self, data, **kwargs):
         '''
@@ -186,8 +190,6 @@ class spatialtree(object):
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
-
-        print(self.spn_node.scope)
 
         if kwargs['height'] == 1:
             kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
@@ -281,10 +283,12 @@ class spatialtree(object):
     def build_spn_leaf(self, data):
         spn_node = Product()
         indices = self.getIndices()
-        node_info = data[list(indices)]
-        temp = data[:,1].reshape(-1,1)
-        for s in range(0,len(self.scope)):
-                    node = create_parametric_leaf(data[:,s].reshape(-1,1), self.ds_context, [s])
+        print("dataset")
+        print(data[0,:])
+        node_info = data[list(indices),:]
+        print(node_info)
+        for s in self.scope:
+                    node = create_parametric_leaf(node_info[:,s].reshape(-1,1), self.ds_context, [s])
                     spn_node.children.append(node)
         return spn_node
                     
