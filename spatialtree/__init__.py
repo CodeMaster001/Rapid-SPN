@@ -19,10 +19,12 @@ import random
 import heapq
 from spn.algorithms.TransformStructure import Prune
 from spn.structure.Base import Product, Sum, assign_ids
+from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
 
 class NODE_TYPE:
     SUM_NODE= 0;
     PRODUCT_NODE = 1;
+    LEAF_NODE=3
 
 class spatialtree(object):
 
@@ -30,7 +32,8 @@ class spatialtree(object):
         assign_ids(self.spn_node)
         #Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None, **kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None, **kwargs):
+
 
         '''
         T = spatialtree(    data, 
@@ -70,8 +73,16 @@ class spatialtree(object):
         '''
 
         # Default values
+
+     
+
+        if 'scope' not in kwargs:
+            kwargs['scope'] = range(0,data.shape[1])
+
         self.proportion = None;
         self.spn_node = spn_object
+        self.ds_context = ds_context
+        self.scope = kwargs['scope']
 
         if 'indices' not in kwargs:
             if isinstance(data, dict):
@@ -92,6 +103,7 @@ class spatialtree(object):
         kwargs['rule'] = kwargs['rule'].lower()
 
 
+
         # By default, 25% of items propagate to both subtrees
         if 'spill' not in kwargs:
             kwargs['spill']         = 0.25
@@ -105,6 +117,7 @@ class spatialtree(object):
             # given the current spill threshold
             kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / 500) / numpy.log(2.0 / (1 + kwargs['spill'])))))
             pass
+        
 
         if 'min_items' not in kwargs:
             kwargs['min_items']     = 64
@@ -138,7 +151,6 @@ class spatialtree(object):
 
         # Split the new node
         self.__height       = self.__split(data, **kwargs)
-
         pass
 
     def __split(self, data, **kwargs):
@@ -162,6 +174,7 @@ class spatialtree(object):
         
         if 'NODE_TYPE'  not in kwargs:
             self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE)
+            self.spn_node.scope.extend(kwargs['scope'])
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
     
         elif kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE:
@@ -170,6 +183,9 @@ class spatialtree(object):
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+
+        if kwargs['height'] == 1:
+            kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
 
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
@@ -214,13 +230,13 @@ class spatialtree(object):
         kwargs['height']    -= 1
         total = len(left_set) + len(right_set)
         kwargs['indices']   = left_set
-        print(kwargs['NODE_TYPE'])
         kwargs['proportion'] =len(left_set)/float(total)
         children_left = self.produce_node(kwargs['NODE_TYPE'])
 
         self.spn_node.children.append(children_left)
         self.spn_node.weights.append(kwargs['proportion'])
-        self.__children[0]  = spatialtree(numpy.array(data),children_left, **kwargs)
+        self.spn_node.children[0].scope.extend(kwargs['scope'])
+        self.__children[0]  = spatialtree(numpy.array(data),children_left,ds_context = self.ds_context, **kwargs)
 
 
 
@@ -232,18 +248,19 @@ class spatialtree(object):
         self.spn_node.children.append(children_right)
         self.spn_node.weights.append(kwargs['proportion'])
         self.spn_node.children[1] = children_right
+        self.spn_node.children[1].scope.extend(kwargs['scope'])
 
-        self.__children[1]  = spatialtree(numpy.array(data),children_right, **kwargs)
+
+        self.__children[1]  = spatialtree(numpy.array(data),children_right,ds_context = self.ds_context, **kwargs,)
         # Done
 
-        return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight())
+        return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight(),)
 
 
-    def produce_node(self,TYPE):
+    def produce_node(self, TYPE):
         '''
         Update tree structure parent node type based on node type
         '''
-        print(TYPE)
         if  TYPE == NODE_TYPE.SUM_NODE:
             spn_node = Sum();
             return spn_node
@@ -252,8 +269,21 @@ class spatialtree(object):
         elif TYPE == NODE_TYPE.PRODUCT_NODE:
             spn_node = Product();
             return spn_node
+        elif TYPE == NODE_TYPE.LEAF_NODE:
+            return Product()
 
+    def build_spn_leaf(self, data):
+        indices = self.getIndices()
+        node_info = data[list(indices)]
+        temp = data[:,1].reshape(-1,1)
+        for s in range(0,len(self.scope)):
+                    node = create_parametric_leaf(data[:,s].reshape(-1,1), self.ds_context, [s])
+                    
 
+               
+
+    def getIndices(self):
+        return self.__indices;
     def spn_node_object(self):
         return self.spn_node;
     def update(self, D):

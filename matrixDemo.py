@@ -7,12 +7,14 @@ Spatial tree demo for matrix data
 
 import numpy
 from spatialtree import spatialtree
+from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
+from spn.structure.leaves.parametric.Parametric import Categorical, Gaussian
 
 
 # First, create a random data matrix
-N = 2000
-D = 2
+N = 1000
+D = 3
 
 X = numpy.random.randint(2,size=(N,D))
 
@@ -24,11 +26,13 @@ X = numpy.dot(X, P)
 
 # Construct a tree.  By default, we get a KD-spill-tree with height
 # determined automatically, and spill = 25%
+ds_context = Context(parametric_types=[Categorical, Categorical,Categorical]).add_domains(X)
+
 
 print('Building tree...')
-T = spatialtree(X)
+T = spatialtree(X,ds_context=ds_context)
 T.update_ids()
-
+print(T.getIndices())
 spn = T.spn_node_object()
 
 

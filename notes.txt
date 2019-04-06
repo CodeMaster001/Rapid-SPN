@@ -4,3 +4,7 @@
 #2 we tried to put the data in such a way that the left node will not contain those data that are in the right node , but that failed , so instead when we are doing the analysis we are only passing the dataset that passing maximum diameter of the sphere in the rptree with a hope that indepence method can find something new for the rp nodek
 
 #3 Completed adding decision circut for each node. Each node will through left or right data at each  processing of node
+
+#4 tested code for SPN theory holding, that means each time spn was generated it wa stested if spn has a proper theory
+
+$5 Currently Random projection stops at hieght is used as hyper parameter to determine the amount of height we need for an rp tree
