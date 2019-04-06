@@ -18,16 +18,13 @@ from sklearn.model_selection import train_test_split
 data = load_digits()
 
 # First, create a random data matrix
-print(data.data.shape)
 
 X_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.33, random_state=42)
-print(y_train.shape)
 X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
 X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
 N = X.shape[0]
 D = X.shape[1]
 
-print(X.shape)
 
 # Apply a random projection so the data's not totally boring
 P = numpy.random.randn(D, D)
@@ -45,7 +42,6 @@ ds_context = Context(parametric_types=context).add_domains(X)
 print('Building tree...')
 T = spatialtree(X,ds_context=ds_context)
 T.update_ids()
-print(T.getIndices())
 spn = T.spn_node_object()
 
 
