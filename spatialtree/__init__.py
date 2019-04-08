@@ -38,10 +38,9 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=200,scope=None,threshold=0.2,ohe=True, **kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=800,scope=None,threshold=0.2,ohe=True, **kwargs):
 
         self.leaves_size = leaves_size
-        print("called")
         '''
         T = spatialtree(    data, 
                             rule='kd', 
@@ -318,7 +317,6 @@ class spatialtree(object):
                 node.children.append(children)
 
             else:
-                print("called")
                 children = self.produce_node(NODE_TYPE.SUM_NODE,data,scope_slice)
                 node.scope.extend(scope_slice) 
                 node.children.append(children)
