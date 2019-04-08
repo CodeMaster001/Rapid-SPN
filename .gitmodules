@@ -1,0 +1,4 @@
+[submodule "fashion-mnist"]
+	path = fashion-mnist
+	url = https://github.com/zalandoresearch/fashion-mnist.git
+	branch = master

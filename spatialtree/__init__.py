@@ -13,11 +13,14 @@ Also supports spill trees.
 See: docs for spatialtree.spatialtree
 '''
 
+import sys
+sys.setrecursionlimit(1000000000)
 import numpy
 import scipy.stats
 import random
 import heapq
 from spn.algorithms.TransformStructure import Prune
+from spn.algorithms.Validity import is_valid
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
 from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_cols_RDC_py
@@ -35,10 +38,10 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=300,scope=None,threshold=0.3,ohe=True, **kwargs):
-    
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=200,scope=None,threshold=0.2,ohe=True, **kwargs):
 
         self.leaves_size = leaves_size
+        print("called")
         '''
         T = spatialtree(    data, 
                             rule='kd', 
@@ -81,13 +84,12 @@ class spatialtree(object):
      
 
         if scope is None:
-            scope = range(0,data.shape[1])
+            scope = list(set(list(range(0,data.shape[1]))))
 
-        data = data[:,scope]
         self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=ohe,threshold=threshold, n_jobs=5)
-
         self.proportion = None;
         self.spn_node = spn_object
+        self.scope = scope;
         self.ds_context = ds_context
 
         if 'indices' not in kwargs:
@@ -121,7 +123,7 @@ class spatialtree(object):
         if 'height' not in kwargs:
             # This calculates the height necessary to achieve leaves of roughly 500 items,
             # given the current spill threshold
-            kwargs['height']    =   max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
+            kwargs['height']    =  max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
             pass
         
         if 'min_items' not in kwargs:
@@ -185,19 +187,22 @@ class spatialtree(object):
             self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data,scope)
             self.spn_node.scope.extend(scope)
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+
     
         elif kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE:
 
-            kwargs['NODE_TYPE']= NODE_TYPE.SUM_NODE #temporary
+            kwargs['NODE_TYPE']= NODE_TYPE.PRODUCT_NODE #temporary
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+    
 
         if kwargs['height'] == 1:
 
             kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
 
         #---Next stage option ends
+
 
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
@@ -226,6 +231,8 @@ class spatialtree(object):
 
         right_data = list();
         left_data = list();
+    
+
 
         for (i, val) in wx.items():
             if val >= self.__thresholds[0]:
@@ -237,18 +244,36 @@ class spatialtree(object):
                 left_set.add(i)
                 left_data.append(data[i])
             pass
+        print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
         del wx  # Don't need scores anymore
 
         # Construct the children
-        total = len(left_set) + len(right_set)
-        self.__children     = [ None ] * 2
-        height=kwargs['height']    
+        self.__children     = list()
+        total = len(left_set) + len(right_set)   
+        height=kwargs['height'] 
 
-        self.__children[0]  =   self.build_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs)
+        if len(scope) == 1:
+            #self.spn_node.children.append(self.build_spn_leaf(data,scope))
+            return 0;
 
-        self.__children[1]  =   self.build_node(data,right_set,len(right_set)/float(total),1,height-1,scope,**kwargs)
+    
+
+        if kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE or kwargs['NODE_TYPE'] == NODE_TYPE.LEAF_NODE:
+                self.__children.append(self.build_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs))
+                self.__children.append(self.build_node(data,right_set,len(right_set)/float(total),1,height-1,scope,**kwargs))
         # Done
-        return 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight(),)
+        
+        elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
+            self.__children.extend(self.build_product_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs))
+            self.__children.extend(self.build_product_node(data,right_set,len(right_set)/float(total),1,height-1,scope,**kwargs))
+        
+
+        height_list = list();
+
+        for i in range(0,len(self.__children)):
+            height_list.append(self.__children[i].getHeight())
+
+        return 1 + max(height_list)
 
 
     def produce_node(self, TYPE,data,scope):
@@ -257,6 +282,7 @@ class spatialtree(object):
         '''
         if  TYPE == NODE_TYPE.SUM_NODE:
             spn_node = Sum();
+            spn_node.scope.extend(scope)
             return spn_node
 
         elif TYPE == NODE_TYPE.LEAF_NODE:
@@ -267,25 +293,42 @@ class spatialtree(object):
         kwargs['height']    =current_height
         kwargs['indices']   = data_set
         kwargs['proportion'] =sum_weight
+        scope= list(set(scope))
         children = self.produce_node(kwargs['NODE_TYPE'],data,scope)
+
+
         self.spn_node.children.append(children)
         self.spn_node.weights.append(kwargs['proportion'])
-        self.spn_node.children[spn_index].scope.extend(scope)
         return spatialtree(numpy.array(data),children,ds_context = self.ds_context, **kwargs)
 
 
-    def build_product_node(self,data,data_set,sum_weight,spn_index,current_height,scope,**kwargs):
+    # product node
+    def build_product_node(self,data,data_set,sum_weight,children_pos,current_height,scope,**kwargs):
+        scope_list = list();
 
         kwargs['height']    =current_height
         kwargs['indices']   = data_set
         kwargs['proportion'] =sum_weight
-        spn_node= Product();
-        for data_slice, scope_slice, _ in self.split_cols(data, self.ds_context, scope)
-            children = self.produce_node(NODE_TYPE.PRODUCT_NODE,data[:,scope_slice],scope_slice)
-            children.scope.extend(scope_slice)
-            spn_node.children.append(children)
-            self._children.append(spatialtree(numpy.array(data[:,scope_slice]),children,ds_context = self.ds_context, **kwargs))
-        return rptree,spn_node
+        node= Product();
+        rptree = list()
+        for data_slice, scope_slice, _ in self.split_cols(data, self.ds_context, scope):
+            if len(scope_slice) == 1:
+                children = self.produce_node(NODE_TYPE.LEAF_NODE,data,scope_slice)
+                node.scope.extend(scope_slice) 
+                node.children.append(children)
+
+            else:
+                print("called")
+                children = self.produce_node(NODE_TYPE.SUM_NODE,data,scope_slice)
+                node.scope.extend(scope_slice) 
+                node.children.append(children)
+                kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
+                rptree.append(spatialtree(numpy.array(data_slice),children,scope=scope_slice,ds_context = self.ds_context, **kwargs))
+        
+        self.spn_node.children.append(node)
+
+        self.spn_node.weights.append(sum_weight) 
+        return rptree
 
 
 
@@ -296,11 +339,13 @@ class spatialtree(object):
     def build_spn_leaf(self, data,scope):
 
         spn_node = Product()
+        scope = list(set(scope))
         indices = self.getIndices()
         node_info = data[list(indices),:]
-        for s in scope:
-            node = create_parametric_leaf(node_info[:,s].reshape(-1,1), self.ds_context, [s])
+        for i in range(0,len(scope)):
+            node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
             spn_node.children.append(node)
+
         return spn_node
                     
 
