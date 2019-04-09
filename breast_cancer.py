@@ -12,6 +12,7 @@ import sys
 from spatialtree import spatialtree
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
+from spn.algorithms.Sampling import sample_instances
 from spn.structure.leaves.parametric.Parametric import Categorical, Gaussian
 from spn.algorithms.Inference import log_likelihood
 from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_RDC_py

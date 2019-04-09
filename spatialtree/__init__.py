@@ -31,15 +31,39 @@ class NODE_TYPE:
     PRODUCT_NODE = 1;
     LEAF_NODE=3
 
+class Classifier(object):
+
+    def build_classifier(self, data,target,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.2,ohe=True, **kwargs):
+        class_labels = numpy.unique(data[:,target]);
+        print("called")
+        print(class_labels)
+        sum_node = Sum();
+        for i in class_labels:
+            class_data = data[data[:,target]==i,:]
+            print(class_data.shape)
+            weight = class_data.shape[0]/float(data.shape[0])
+            classifier_rp_tree = spatialtree(data=class_data,ds_context=ds_context,leaves_size=leaves_size,scope=scope,threshold=threshold,**kwargs)
+            #classifier_rp_tree.update_ids()
+            spn = classifier_rp_tree.spn_node_object()
+            sum_node.children.append(spn)
+            sum_node.weights.append(weight)
+        sum_node.scope.extend(list(set(list(range(0,data.shape[1])))))
+        assign_ids(sum_node)
+        return sum_node;
+
 class spatialtree(object):
+
+
 
     def update_ids(self):
         assign_ids(self.spn_node)
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.2,ohe=True, **kwargs):
+    def __init__(self, data,target=None,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.2,ohe=True, **kwargs):
 
+            
+        
         self.leaves_size = leaves_size
         '''
         T = spatialtree(    data, 
@@ -155,6 +179,7 @@ class spatialtree(object):
             self.__d = len(data[x])
             break
 
+
         # Split the new node
         self.__height       = self.__split(data,scope, **kwargs)
 
@@ -256,6 +281,7 @@ class spatialtree(object):
             return 0;
 
     
+
 
         if kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE or kwargs['NODE_TYPE'] == NODE_TYPE.LEAF_NODE:
                 self.__children.append(self.build_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs))
