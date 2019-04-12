@@ -38,8 +38,8 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,ohe=True, **kwargs):
-
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.2,prob=0.5,ohe=True, **kwargs):
+        self.prob = prob
         self.leaves_size = leaves_size
         '''
         T = spatialtree(    data, 
@@ -113,25 +113,22 @@ class spatialtree(object):
 
         # By default, 25% of items propagate to both subtrees
         if 'spill' not in kwargs:
-            kwargs['spill']         = 0.25
+            kwargs['spill']         = 0.10
             pass
 
         if kwargs['spill'] < 0.0 or kwargs['spill'] >= 1.0:
             raise ValueError('spill=%.2e, must lie in range [0,1)' % kwargs['spill'])
 
         if 'height' not in kwargs:
-            # This calculates the height necessary to achieve leaves of roughly 500 items,
-            # given the current spill threshold
-            kwargs['height']    =  max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
-            pass
+            print("height")
+                # This calculates the height necessary to achieve leaves of roughly 500 items,
+                # given the current spill threshold
+            kwargs['height']    = 2# max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
+  
         
         if 'min_items' not in kwargs:
-            kwargs['min_items']     = 64
+            kwargs['min_items']     = 5
             pass
-
-        if kwargs['rule'] == '2-means' and 'steps_2means' not in kwargs:
-            kwargs['steps_2means']  = 1000
-            pass 
 
         if kwargs['rule'] == 'rp' and 'samples_rp' not in kwargs:
             kwargs['samples_rp']    = 10
@@ -200,8 +197,7 @@ class spatialtree(object):
 
             kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
 
-        #---Next stage option ends
-
+        #---Next stage option endsitems'])
 
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
@@ -209,7 +205,7 @@ class spatialtree(object):
         # If the height is 0, or the set is too small, then we don't need to split
         if kwargs['height'] == 0 or len(kwargs['indices']) < kwargs['min_items']:
             return  0
-
+        print("called")
         # Compute the split direction 
         self.__w = splitF(data, **kwargs)
 
@@ -223,7 +219,7 @@ class spatialtree(object):
 
 
         # Compute the bias points
-        self.__thresholds = scipy.stats.mstats.mquantiles(list(wx.values()), [0.25 - self.__spill/2, 0.75 + self.__spill/2])
+        self.__thresholds = scipy.stats.mstats.mquantiles(list(wx.values()), [self.prob - self.__spill/2, (1-self.prob) + self.__spill/2])
         # Partition the data
         left_set    = set()
         right_set   = set()
@@ -244,20 +240,16 @@ class spatialtree(object):
                 left_data.append(data[i])
             pass
 
+
         print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
-        if len(left_set) == 0 or len(right_set) == 0:
-            if len(left_set) == 0:
-                self.spn_node.children.append(self.build_spn_leaf(data[list(right_set),:],scope))
-                return 0;
-            else:
-                self.spn_node.children(self.build_spn_leaf(data[list(left_set),:],scope))
-                return 0;
+
         del wx  # Don't need scores anymore
 
         # Construct the children
         self.__children     = list()
         total = len(left_set) + len(right_set)   
         height=kwargs['height'] 
+        print(height)
         if len(scope) == 1:
             #self.spn_node.children.append(self.build_spn_leaf(data,scope))
             return 0;
@@ -343,9 +335,9 @@ class spatialtree(object):
 
     def build_spn_leaf(self,data,scope):
         if self.spn_node is Sum:
-            return self.build_spn_leaf_product(data,self.spn_node.scope)
+            return self.build_spn_leaf_product(data,scope)
         else:
-            return self.build_spn_leaf_product(data,self.spn_node.scope)
+            return self.build_spn_leaf_product(data,scope)
 
     def build_spn_leaf_sum(self, data,scope):
 

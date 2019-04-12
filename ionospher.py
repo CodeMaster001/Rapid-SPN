@@ -76,7 +76,7 @@ print(numpy.mean(ll))
 print(X)
 
 print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=150,prob=0.55)
+T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=150,prob=0.60)
 print("Building tree complete")
 T.update_ids()
 
