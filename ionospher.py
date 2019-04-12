@@ -56,7 +56,6 @@ X_test_prediction = numpy.array([numpy.nan]*y_test.shape[0]).reshape(-1,1)
 X_test_prediction =numpy.concatenate((X_test, X_test_prediction),axis=1)
 N = X.shape[0]
 D = X.shape[1]
-X_zero = X[X[:,-1]==0]
 
 
 context = list()
@@ -74,10 +73,10 @@ ll = log_likelihood(spn_classification, X_test)
 
 print(numpy.mean(ll))
 
-
+print(X)
 
 print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=20)
+T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=150,prob=0.55)
 print("Building tree complete")
 T.update_ids()
 
@@ -85,6 +84,7 @@ T.update_ids()
 
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
+plot_spn(spn_classification, 'basicspn-original.png')
 ll = log_likelihood(spn, X_test)
 
 print(numpy.mean(ll))
