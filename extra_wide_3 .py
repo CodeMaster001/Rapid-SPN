@@ -49,7 +49,7 @@ credit = credit.apply(LabelEncoder().fit_transform)
 credit_x = credit.values[:,:-1]
 print(credit.shape)
 credit_y = credit.values[:,-1]
-X_train, X_test, y_train, y_test = train_test_split(credit.values[:,:-1],credit.values[:,-1],test_size=0.1) 
+X_train, X_test, y_train, y_test = train_test_split(credit.values[:,:-1],credit.values[:,-1],test_size=0.2) 
 
 
 # First, create a random data matrix

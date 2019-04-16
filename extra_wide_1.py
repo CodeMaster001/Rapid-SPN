@@ -35,8 +35,7 @@ def  score(i):
 		return 0;
 	else:
 		return 1;
-url="https://archive.ics.uci.edu/ml/machine-learning-databases/ionosphere/ionosphere.data" 
-raw_data = urllib.request.urlopen(url)
+
 credit=pd.read_csv("data.csv",delimiter=",") 
 credit = credit.dropna()
 y = credit.values[:,-1]
@@ -67,17 +66,17 @@ context.append(Categorical)
 
 ds_context = Context(parametric_types=context).add_domains(X)
 
-spn_classification = learn_parametric(X,ds_context)
+spn_classification = learn_parametric(numpy.array(X),ds_context)
 
 
-ll = log_likelihood(spn_classification, X_test)
+ll_original = log_likelihood(spn_classification, X_test)
 
-print(numpy.mean(ll))
+
 
 
 
 print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X)
+T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75)
 print("Building tree complete")
 T.update_ids()
 
@@ -86,6 +85,7 @@ T.update_ids()
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
 ll = log_likelihood(spn, X_test)
+print(numpy.mean(ll_original))
 
 print(numpy.mean(ll))
 
