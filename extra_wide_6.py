@@ -48,7 +48,7 @@ def one_hot(df,col):
 credit=pd.read_csv("lung.data",delimiter=",") 
 credit=credit.drop(columns=credit.columns[0])
 credit = credit.apply(LabelEncoder().fit_transform)
-X_train, X_test, y_train, y_test = train_test_split(credit.values[:,:-1],credit.values[:,-1],test_size=0.3) 
+X_train, X_test, y_train, y_test = train_test_split(credit.values[:,:-1],credit.values[:,-1],test_size=0.2) 
 print(X_train.shape)
 print(X_test.shape)
 
@@ -62,7 +62,7 @@ N = X.shape[0]
 D = X.shape[1]
 X_zero = X[X[:,-1]==0]
 
-#2 1 530101 38.50 66 28 3 3 ? 2 5 4 4 ? ? ? 3 5 45.00 8.40 ? ? 2 2 11300 00000 00000 2
+
 context = list()
 Gaussian_index = []
 for i in range(0,X.shape[1]):

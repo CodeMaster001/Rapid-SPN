@@ -93,10 +93,12 @@ T.update_ids()
 
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
-ll = log_likelihood(spn, X)
+ll = log_likelihood(spn_classification, X)
 ll_test = log_likelihood(spn,X_test)
-
-
+ll_test=ll_test[ll_test>-1000]
+ll_original=ll_original[ll_original>-1000]
+print(ll)
+print(ll_test)
 print(numpy.mean(ll))
 print(numpy.mean(ll_test))
 

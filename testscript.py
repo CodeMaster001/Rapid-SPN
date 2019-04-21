@@ -9,7 +9,7 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 
-from spatialtree import spatialtree,Classifier
+from spatialtree import spatialtree
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances

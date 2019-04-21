@@ -79,7 +79,7 @@ from spn.algorithms.Sampling import sample_instances
 
 ds_context = Context(parametric_types=context).add_domains(X)
 print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp')
+T = spatialtree(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',prob=0.7)
 print("Building tree complete")
 T.update_ids()
 spn = T.spn_node_object()

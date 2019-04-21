@@ -85,7 +85,7 @@ print(numpy.mean(ll))
 print(numpy.mean(ll_test))
 
 print('Building tree...')
-T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=3)
+T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.25,leaves_size=5)
 print("Building tree complete")
 T.update_ids()
 
@@ -93,9 +93,10 @@ T.update_ids()
 
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
-ll = log_likelihood(spn, X)
+ll = log_likelihood(spn_classification, X_test)
 ll_test = log_likelihood(spn,X_test)
-
+ll_test=ll_test[ll_test>-1000]
+ll=ll[ll>-1000]
 
 print(numpy.mean(ll))
 print(numpy.mean(ll_test))

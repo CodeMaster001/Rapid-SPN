@@ -86,8 +86,11 @@ spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
 ll = log_likelihood(spn, X_test)
 print(numpy.mean(ll_original))
+ll_test=ll_test[ll_test>-1000]
+ll_original=ll_original[ll_original>-1000]
 
-print(numpy.mean(ll))
+print(numpy.mean(ll_original))
+print(numpy.mean(ll_test))
 
 
 

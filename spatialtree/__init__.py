@@ -38,7 +38,7 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.2,prob=0.5,ohe=True, **kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,ohe=True, **kwargs):
         self.prob = prob
         self.leaves_size = leaves_size
         '''
@@ -113,7 +113,7 @@ class spatialtree(object):
 
         # By default, 25% of items propagate to both subtrees
         if 'spill' not in kwargs:
-            kwargs['spill']         = 0.10
+            kwargs['spill']         = 0.75
             pass
 
         if kwargs['spill'] < 0.0 or kwargs['spill'] >= 1.0:
@@ -123,7 +123,7 @@ class spatialtree(object):
             print("height")
                 # This calculates the height necessary to achieve leaves of roughly 500 items,
                 # given the current spill threshold
-            kwargs['height']    = 2# max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
+            kwargs['height']    = max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
   
         
         if 'min_items' not in kwargs:

@@ -8,7 +8,6 @@ Spatial tree demo for matrix data
 
 import numpy
 import sys
-
 from spatialtree import spatialtree
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
@@ -76,7 +75,7 @@ ll_original = log_likelihood(spn_classification, X_test)
 
 
 print('Building tree...')
-T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75)
+T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5)
 print("Building tree complete")
 T.update_ids()
 
@@ -85,6 +84,9 @@ T.update_ids()
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
 ll = log_likelihood(spn, X_test)
+print(ll)
+ll=ll[ll>-1000]
+ll_original=ll_original[ll_original>-1000]
 print(numpy.mean(ll_original))
 
 print(numpy.mean(ll))
