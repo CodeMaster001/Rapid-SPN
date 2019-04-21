@@ -37,61 +37,63 @@ def  score(i):
 	else:
 		return 1;
 
-credit=pd.read_csv("clean1.data",delimiter=",") 
-credit = credit.apply(LabelEncoder().fit_transform)
-credit = credit.dropna()
+if __name__=="__main__":
 
-y = credit.values[:,-1]
-y = [score(i) for i in y]
-y = numpy.array(y).reshape(-1,1)
-X = credit.values[:,:-1]
-X = X.astype(float)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3) 
+	credit=pd.read_csv("clean1.data",delimiter=",") 
+	credit = credit.apply(LabelEncoder().fit_transform)
+	credit = credit.dropna()
 
-
-# First, create a random data matrix
-X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
-X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
-
-X_test_prediction = numpy.array([numpy.nan]*y_test.shape[0]).reshape(-1,1)
-
-X_test_prediction =numpy.concatenate((X_test, X_test_prediction),axis=1)
-N = X.shape[0]
-D = X.shape[1]
-X_zero = X[X[:,-1]==0]
+	y = credit.values[:,-1]
+	y = [score(i) for i in y]
+	y = numpy.array(y).reshape(-1,1)
+	X = credit.values[:,:-1]
+	X = X.astype(float)
+	X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3) 
 
 
-context = list()
-left_cols = [Gaussian]*(D-1);
-context.extend(left_cols)
-context.append(Categorical)
+	# First, create a random data matrix
+	X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
+	X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
+
+	X_test_prediction = numpy.array([numpy.nan]*y_test.shape[0]).reshape(-1,1)
+
+	X_test_prediction =numpy.concatenate((X_test, X_test_prediction),axis=1)
+	N = X.shape[0]
+	D = X.shape[1]
+	X_zero = X[X[:,-1]==0]
 
 
-ds_context = Context(parametric_types=context).add_domains(X)
-print("training normnal spm")
-
-#spn_classification = learn_parametric(X,ds_context)
-
-
-#ll_original = log_likelihood(spn_classification, X_test)
+	context = list()
+	left_cols = [Gaussian]*(D-1);
+	context.extend(left_cols)
+	context.append(Categorical)
 
 
+	ds_context = Context(parametric_types=context).add_domains(X)
+	print("training normnal spm")
+
+	#spn_classification = learn_parametric(X,ds_context)
 
 
-print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X,prob=0.5,leaves_size=100)
-print("Building tree complete")
-T.update_ids()
+	#ll_original = log_likelihood(spn_classification, X_test)
 
 
 
-spn = T.spn_node_object()
-plot_spn(spn, 'basicspn.png')
-#ll_original=ll_original[ll_original>-1000]
-ll = log_likelihood(spn, X_test)
-#print(numpy.mean(ll_original))
-ll=ll[ll>-1000]
-print(numpy.mean(ll))
+
+	print('Building tree...')
+	T = spatialtree(data=X,ds_context=ds_context,target=X,prob=0.5,leaves_size=100)
+	print("Building tree complete")
+	T.update_ids()
+
+
+
+	spn = T.spn_node_object()
+	plot_spn(spn, 'basicspn.png')
+	#ll_original=ll_original[ll_original>-1000]
+	ll = log_likelihood(spn, X_test)
+	#print(numpy.mean(ll_original))
+	ll=ll[ll>-1000]
+	print(numpy.mean(ll))
 
 
 
