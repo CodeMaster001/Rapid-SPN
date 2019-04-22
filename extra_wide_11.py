@@ -45,65 +45,74 @@ def one_hot(df,col):
 
 
 
+theirs = list()
+ours = list()
+
 credit=pd.read_csv("lymphography.data",delimiter=",") 
-X_train, X_test, y_train, y_test = train_test_split(credit.values[:,:-1],credit.values[:,-1],test_size=0.3) 
-print(X_train.shape)
-print(X_test.shape)
 
-# First, create a random data matrix
-X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
-X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
+from sklearn.model_selection import KFold
 
+kf = KFold(n_splits=10,shuffle=True)
 
-X
-N = X.shape[0]
-D = X.shape[1]
-X_zero = X[X[:,-1]==0]
+final_theirs = list();
 
-#2 1 530101 38.50 66 28 3 3 ? 2 5 4 4 ? ? ? 3 5 45.00 8.40 ? ? 2 2 11300 00000 00000 2
-context = list()
-Categorical_index = [9]
-for i in range(0,X.shape[1]):
-	if i in Categorical_index:
-		context.append(Categorical)
-		continue;
-	context.append(Gaussian)
+for train_index, test_index in kf.split(credit):
+	X = credit.values[train_index]
+	X_test = credit.values[test_index];
 
 
 
+	# First, create a random data matrix
 
 
-ds_context = Context(parametric_types=context).add_domains(X)
-print("training normnal spm")
-spn_classification = learn_parametric(numpy.array(X),ds_context)
 
+	X
+	N = X.shape[0]
+	D = X.shape[1]
+	X_zero = X[X[:,-1]==0]
 
-ll_original = log_likelihood(spn_classification, X)
-print(numpy.mean(ll_original))
-plot_spn(spn_classification, 'basicspn-original.png')
-ll = log_likelihood(spn_classification, X)
-ll_test = log_likelihood(spn_classification,X_test)
-ll_test_original=ll_test[ll_test>-1000]
-print(numpy.mean(ll_test_original))
+	#2 1 530101 38.50 66 28 3 3 ? 2 5 4 4 ? ? ? 3 5 45.00 8.40 ? ? 2 2 11300 00000 00000 2
+	context = list()
+	Categorical_index = [9]
+	for i in range(0,X.shape[1]):
+		if i in Categorical_index:
+			context.append(Categorical)
+			continue;
+		context.append(Gaussian)
 
 
 
 
-print('Building tree...')
-T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=20,height=6)
-print("Building tree complete")
-T.update_ids()
+
+	ds_context = Context(parametric_types=context).add_domains(X)
+	print("training normnal spm")
+	spn_classification = learn_parametric(numpy.array(X),ds_context)
+
+
+	ll_original = log_likelihood(spn_classification, X)
+	ll = log_likelihood(spn_classification, X)
+	ll_test = log_likelihood(spn_classification,X_test)
+	ll_test_original=ll_test[ll_test>-1000]
 
 
 
-spn = T.spn_node_object()
-plot_spn(spn, 'basicspn.png')
-ll = log_likelihood(spn, X)
-ll_test = log_likelihood(spn,X_test)
-ll_test=ll_test[ll_test>-1000]
 
-print(numpy.mean(ll_test_original))
-print(numpy.mean(ll_test))
+	print('Building tree...')
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=20,height=3,spill=0.25)
+	print("Building tree complete")
+	T.update_ids()
+
+
+
+	spn = T.spn_node_object()
+	ll = log_likelihood(spn, X)
+	ll_test = log_likelihood(spn,X_test)
+	ll_test=ll_test[ll_test>-1000]
+
+	theirs.extend(ll_test_original)
+	ours.extend(ll_test)
+print(numpy.mean(theirs))
+print(numpy.mean(ours))
 
 
 
