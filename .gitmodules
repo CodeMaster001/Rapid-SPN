@@ -2,3 +2,6 @@
 	path = fashion-mnist
 	url = https://github.com/zalandoresearch/fashion-mnist.git
 	branch = master
+[submodule "SPFlow"]
+	path = SPFlow
+	url = https://github.com/SPFlow/SPFlow.git

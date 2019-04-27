@@ -35,18 +35,17 @@ def  score(i):
 		return 0;
 	else:
 		return 1;
-url="https://archive.ics.uci.edu/ml/machine-learning-databases/ionosphere/ionosphere.data" 
-raw_data = urllib.request.urlopen(url)
-credit=pd.read_csv(raw_data,delimiter=",") 
+
+credit=pd.read_csv("isolet.csv",delimiter=",") 
 credit = credit.dropna()
 y = credit.values[:,-1]
 y = [score(i) for i in y]
 y = numpy.array(y).reshape(-1,1)
 X = credit.values[:,:-1]
 X = X.astype(float)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2) 
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3) 
 
-print(X)
+
 # First, create a random data matrix
 X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
 X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
@@ -56,6 +55,7 @@ X_test_prediction = numpy.array([numpy.nan]*y_test.shape[0]).reshape(-1,1)
 X_test_prediction =numpy.concatenate((X_test, X_test_prediction),axis=1)
 N = X.shape[0]
 D = X.shape[1]
+X_zero = X[X[:,-1]==0]
 
 
 context = list()
@@ -65,19 +65,18 @@ context.append(Categorical)
 
 
 ds_context = Context(parametric_types=context).add_domains(X)
-
+print("training normnal spm")
 spn_classification = learn_parametric(X,ds_context)
 
 
-ll = log_likelihood(spn_classification, X_test)
+ll_original = log_likelihood(spn_classification, X_test)
 
-print(numpy.mean(ll))
-import sys
-sys.exit(-1)
-print(X)
+
+
+
 
 print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=150,prob=0.60)
+T = spatialtree(data=X,ds_context=ds_context,target=X,prob=0.3)
 print("Building tree complete")
 T.update_ids()
 
@@ -85,10 +84,13 @@ T.update_ids()
 
 spn = T.spn_node_object()
 plot_spn(spn, 'basicspn.png')
-plot_spn(spn_classification, 'basicspn-original.png')
 ll = log_likelihood(spn, X_test)
+print(numpy.mean(ll_original))
+ll_test=ll_test[ll_test>-1000]
+ll_original=ll_original[ll_original>-1000]
 
-print(numpy.mean(ll))
+print(numpy.mean(ll_original))
+print(numpy.mean(ll_test))
 
 
 

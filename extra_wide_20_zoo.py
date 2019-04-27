@@ -31,6 +31,10 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
+import sys
+numpy.random.seed(42)
+numpy.random.seed(42)
+
 
 def  score(i):
 	if i == 'g':
@@ -44,32 +48,27 @@ def one_hot(df,col):
 
 
 
-credit=pd.read_csv("crx.data",delimiter=",") 
-print(credit.head())
+credit=pd.read_csv("Zoo.csv",delimiter=",") 
 credit = credit.apply(LabelEncoder().fit_transform)
-theirs=list()
-kf = KFold(n_splits=10,shuffle=True)
-ours=list()
-context=list()
 print(credit.shape)
+print(credit.head())
+kf = KFold(n_splits=10,shuffle=True)
+theirs = list()
+ours = list();
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
 	
 	N = X.shape[0]
 	D = X.shape[1]
+	X_zero = X[X[:,-1]==0]
 
 
 	context = list()
-	Categorical_index = [0,3,4,5,6,8,9,11,12,13,14,15]
 	for i in range(0,X.shape[1]):
-		if i in Categorical_index:
-			X[:,i] =LabelEncoder().fit_transform(X[:,i])
-			X_test[:,i] = LabelEncoder().fit_transform(X_test[:,i])
-			context.append(Categorical)
-		else:
-			context.append(Gaussian)
-	print(X_test.shape)
+		context.append(Categorical)
+	
+
 
 
 
@@ -77,7 +76,7 @@ for train_index, test_index in kf.split(credit):
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
 	spn_classification = learn_parametric(numpy.array(X),ds_context)
-
+	plot_spn(spn_classification, 'basicspn.png')
 
 	ll_original = log_likelihood(spn_classification, X)
 	print(numpy.mean(ll_original))
@@ -87,7 +86,7 @@ for train_index, test_index in kf.split(credit):
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=4,spill=0.3)
 	print("Building tree complete")
 	T.update_ids()
 

@@ -31,6 +31,10 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
+numpy.random.seed(42)
+numpy.random.seed(42)
+import sys
+sys.path.append("/Users/prajay/spnrp/SPFlow/src")
 
 def  score(i):
 	if i == 'g':
@@ -44,50 +48,45 @@ def one_hot(df,col):
 
 
 
-credit=pd.read_csv("crx.data",delimiter=",") 
-print(credit.head())
+credit=pd.read_csv("promotergene.csv",delimiter=",") 
 credit = credit.apply(LabelEncoder().fit_transform)
-theirs=list()
-kf = KFold(n_splits=10,shuffle=True)
-ours=list()
-context=list()
 print(credit.shape)
+print(credit.head())
+kf = KFold(n_splits=10,shuffle=True)
+theirs = list()
+ours = list();
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
+	X =X[:20,:]
 	X_test = credit.values[test_index];
 	
 	N = X.shape[0]
 	D = X.shape[1]
+	print(N)
 
 
 	context = list()
-	Categorical_index = [0,3,4,5,6,8,9,11,12,13,14,15]
+	Categorical_index = [0]
 	for i in range(0,X.shape[1]):
-		if i in Categorical_index:
-			X[:,i] =LabelEncoder().fit_transform(X[:,i])
-			X_test[:,i] = LabelEncoder().fit_transform(X_test[:,i])
-			context.append(Categorical)
-		else:
-			context.append(Gaussian)
-	print(X_test.shape)
+		context.append(Categorical)
+
 
 
 
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context)
+	spn_classification = learn_parametric(numpy.array(X),ds_context,threshold=0.2)
 
-
+	plot_spn(spn_classification, 'basicspn.png')
 	ll_original = log_likelihood(spn_classification, X)
 	print(numpy.mean(ll_original))
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
 
-
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.7,rule="rp")
 	print("Building tree complete")
 	T.update_ids()
 
@@ -101,6 +100,7 @@ for train_index, test_index in kf.split(credit):
 
 
 
+	
 
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)

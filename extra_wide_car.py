@@ -30,7 +30,8 @@ import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold
+numpy.random.seed(42)
+
 
 def  score(i):
 	if i == 'g':
@@ -44,32 +45,29 @@ def one_hot(df,col):
 
 
 
-credit=pd.read_csv("crx.data",delimiter=",") 
-print(credit.head())
+credit=pd.read_csv("car.data",delimiter=",") 
+credit=credit.drop(columns=credit.columns[0])
 credit = credit.apply(LabelEncoder().fit_transform)
-theirs=list()
-kf = KFold(n_splits=10,shuffle=True)
-ours=list()
-context=list()
 print(credit.shape)
+
+from sklearn.model_selection import KFold
+
+kf = KFold(n_splits=10,shuffle=True)
+
+final_theirs = list();
+theirs = list()
+ours = list();
+
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
-	
-	N = X.shape[0]
-	D = X.shape[1]
 
+# First, create a random data matrix
 
 	context = list()
-	Categorical_index = [0,3,4,5,6,8,9,11,12,13,14,15]
 	for i in range(0,X.shape[1]):
-		if i in Categorical_index:
-			X[:,i] =LabelEncoder().fit_transform(X[:,i])
-			X_test[:,i] = LabelEncoder().fit_transform(X_test[:,i])
-			context.append(Categorical)
-		else:
-			context.append(Gaussian)
-	print(X_test.shape)
+		context.append(Categorical)
+
 
 
 
@@ -81,26 +79,30 @@ for train_index, test_index in kf.split(credit):
 
 	ll_original = log_likelihood(spn_classification, X)
 	print(numpy.mean(ll_original))
+	plot_spn(spn_classification, 'basicspn-original.png')
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
+	print(numpy.mean(ll_test_original))
+
+
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,height=3,leaves_size=100)
 	print("Building tree complete")
 	T.update_ids()
 
 
 
 	spn = T.spn_node_object()
+	plot_spn(spn, 'basicspn.png')
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
 	ll_test=ll_test[ll_test>-1000]
-	ll =ll[ll>-1000]
 
-
-
+	print(numpy.mean(ll_test_original))
+	print(numpy.mean(ll_test))
 
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)

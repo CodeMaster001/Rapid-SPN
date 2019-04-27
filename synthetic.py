@@ -27,69 +27,42 @@ from numpy.random.mtrand import RandomState
 from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
 import urllib
 import tensorflow as tf
-
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+numpy.random.seed(42)
+numpy.random.seed(42)
+
 
 def  score(i):
 	if i == 'g':
 		return 0;
 	else:
 		return 1;
-url="https://archive.ics.uci.edu/ml/machine-learning-databases/ionosphere/ionosphere.data" 
-raw_data = urllib.request.urlopen(url)
-credit=pd.read_csv(raw_data,delimiter=",") 
-credit = credit.dropna()
-y = credit.values[:,-1]
-y = [score(i) for i in y]
-y = numpy.array(y).reshape(-1,1)
-X = credit.values[:,:-1]
-X = X.astype(float)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2) 
 
-print(X)
-# First, create a random data matrix
-X = numpy.concatenate((X_train, y_train.reshape(-1,1)),axis=1)
-X_test = numpy.concatenate((X_test, y_test.reshape(-1,1)),axis=1)
+def one_hot(df,col):
+	df = pd.get_dummies([col])
+	df.drop()
 
-X_test_prediction = numpy.array([numpy.nan]*y_test.shape[0]).reshape(-1,1)
-
-X_test_prediction =numpy.concatenate((X_test, X_test_prediction),axis=1)
-N = X.shape[0]
-D = X.shape[1]
-
-
+X= numpy.random.randint(10, size=(15000,3))
 context = list()
-left_cols = [Gaussian]*(D-1);
-context.extend(left_cols)
-context.append(Categorical)
+for i in range(0,X.shape[1]):
+		context.append(Categorical)
 
 
 ds_context = Context(parametric_types=context).add_domains(X)
-
-spn_classification = learn_parametric(X,ds_context)
-
-
-ll = log_likelihood(spn_classification, X_test)
-
-print(numpy.mean(ll))
-import sys
-sys.exit(-1)
-print(X)
-
-print('Building tree...')
-T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=150,prob=0.60)
+T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,height=3,rule='rp',prob=0.25,leaves_size=20,min_items=200,spill=0.25)
 print("Building tree complete")
 T.update_ids()
 
 
 
 spn = T.spn_node_object()
-plot_spn(spn, 'basicspn.png')
-plot_spn(spn_classification, 'basicspn-original.png')
-ll = log_likelihood(spn, X_test)
 
-print(numpy.mean(ll))
 
+
+plot_spn(spn, 'basicspn-synthetic.png')
 
 
 

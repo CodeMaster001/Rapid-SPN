@@ -35,9 +35,9 @@ from sklearn.preprocessing import LabelEncoder
 mnist = load_breast_cancer()
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
-credit=pd.read_csv("breast-cancer-wisconsin.data",delimiter=",") 
-credit = credit.apply(LabelEncoder().fit_transform)
+credit=pd.read_csv("OVA_Ovary.csv",delimiter=",") 
 kf = KFold(n_splits=10,shuffle=True)
+credit = credit.drop(credit.columns[-1], axis=1)
 print(credit.shape)
 theirs = list()
 ours = list();
@@ -57,8 +57,7 @@ for train_index, test_index in kf.split(credit):
 
 	# Construct a tree.  By default, we get a KD-spill-tree with height
 	# determined automatically, and spill = 25%
-	context = [Categorical]*(D-1);
-	context.append(Categorical)
+	context = [Gaussian]*D
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 

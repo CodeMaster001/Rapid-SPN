@@ -31,6 +31,9 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
+numpy.random.seed(42)
+numpy.random.seed(42)
+
 
 def  score(i):
 	if i == 'g':
@@ -43,33 +46,36 @@ def one_hot(df,col):
 	df.drop()
 
 
+credit=pd.read_csv("genes.csv",delimiter=",") 
+credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
 
-credit=pd.read_csv("crx.data",delimiter=",") 
-print(credit.head())
-credit = credit.apply(LabelEncoder().fit_transform)
-theirs=list()
-kf = KFold(n_splits=10,shuffle=True)
-ours=list()
-context=list()
 print(credit.shape)
+kf = KFold(n_splits=10,shuffle=True)
+theirs = list()
+ours = list()
+credit =credit.drop(credit.columns[1], axis=1)
+credit =credit.drop(credit.columns[2], axis=1)
+credit =credit.drop(credit.columns[-1], axis=1)
+credit =credit.drop(credit.columns[1], axis=1)
+print(credit.head())
+credit= (credit - credit.mean()) / (credit.max() - credit.min())
+credit.values.astype(float)
+credit.to_csv('credit.csv')
+
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
+	print(X.shape)
 	
 	N = X.shape[0]
 	D = X.shape[1]
-
+	X_zero = X[X[:,-1]==0]
 
 	context = list()
-	Categorical_index = [0,3,4,5,6,8,9,11,12,13,14,15]
+	Categorical_index = [0]
 	for i in range(0,X.shape[1]):
-		if i in Categorical_index:
-			X[:,i] =LabelEncoder().fit_transform(X[:,i])
-			X_test[:,i] = LabelEncoder().fit_transform(X_test[:,i])
-			context.append(Categorical)
-		else:
-			context.append(Gaussian)
-	print(X_test.shape)
+		context.append(Gaussian)
+
 
 
 
@@ -80,14 +86,13 @@ for train_index, test_index in kf.split(credit):
 
 
 	ll_original = log_likelihood(spn_classification, X)
-	print(numpy.mean(ll_original))
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=2,spill=0.75)
 	print("Building tree complete")
 	T.update_ids()
 
@@ -100,8 +105,10 @@ for train_index, test_index in kf.split(credit):
 	ll =ll[ll>-1000]
 
 
-
-
+	print(numpy.mean(ll_test))
+	print(numpy.mean(ll_test_original))
+	plot_spn(spn, 'basicspn.png')
+	plot_spn(spn_classification, 'basicspn-original.png')
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
 print(numpy.mean(theirs))
