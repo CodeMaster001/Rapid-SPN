@@ -41,30 +41,33 @@ def  score(i):
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list();
-credit=pd.read_csv("vote.data",delimiter=",") 
-credit = credit.drop(credit.columns[-1], axis=1)
-credit = credit.apply(LabelEncoder().fit_transform)
-credit = credit.dropna()
-
-print(credit.values.shape)
+credit=pd.read_csv("imports-85.data",delimiter=",",na_values=["?"]) 
+Categorical_index = [0,2,3,4,5,6,7,8,14,15,17]
+print(credit.columns.values)
+for i in range(0,len(credit.columns.values)):
+	if i in Categorical_index:
+		credit[credit.columns.values[i]] = pd.Categorical(credit[credit.columns.values[i]]).codes 
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
 
-	
+	print(X.shape)
 	N = X.shape[0]
 	D = X.shape[1]
 	X_zero = X[X[:,-1]==0]
 
 
 	context = list()
-	left_cols = [Gaussian]*D;
-	context.extend(left_cols)
-
+	Gaussian_index = [0,2,3,4,5,6,7,8,14,15,17]
+	for i in range(0,X.shape[1]):
+		if i in Gaussian_index:
+			context.append(Categorical)
+			continue;
+		context.append(Gaussian)
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 
-	spn_classification = learn_parametric(X,ds_context,threshold=0.7,rows='tsne')
+	spn_classification = learn_parametric(X,ds_context,threshold=0.7)
 	plot_spn(spn_classification, 'basicspn-original.png')
 
 	ll_test_original = log_likelihood(spn_classification, X_test)
@@ -73,7 +76,7 @@ for train_index, test_index in kf.split(credit):
 
 
 	print('Building tree...')
-	T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=20,height=4,samples_rp=20,prob=0.75,spill=0.25)
+	T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=20,height=4,samples_rp=20,prob=0.50,spill=0.25,rule='rp')
 	print("Building tree complete")
 	T.update_ids()
 
@@ -82,8 +85,12 @@ for train_index, test_index in kf.split(credit):
 	spn = T.spn_node_object()
 	plot_spn(spn, 'basicspn.png')
 	ll_test = log_likelihood(spn, X_test)
-	print(numpy.mean(ll_test))
+	print(ll_test)
+	ll_test_original=ll_test_original[ll_test_original>-1000]
+	ll_test=ll_test[ll_test>-1000]
 
+	print(numpy.mean(ll_test))
+	print(numpy.mean(ll_test_original))
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
 print(numpy.mean(theirs))

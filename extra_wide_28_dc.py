@@ -41,7 +41,7 @@ def  score(i):
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list();
-credit=pd.read_csv("vote.data",delimiter=",") 
+credit=pd.read_csv("anneal.data",delimiter=",") 
 credit = credit.drop(credit.columns[-1], axis=1)
 credit = credit.apply(LabelEncoder().fit_transform)
 credit = credit.dropna()
@@ -64,7 +64,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 
-	spn_classification = learn_parametric(X,ds_context,threshold=0.7,rows='tsne')
+	spn_classification = learn_parametric(X,ds_context)
 	plot_spn(spn_classification, 'basicspn-original.png')
 
 	ll_test_original = log_likelihood(spn_classification, X_test)
