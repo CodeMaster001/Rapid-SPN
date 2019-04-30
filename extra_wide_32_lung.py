@@ -27,10 +27,20 @@ from numpy.random.mtrand import RandomState
 from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
 import urllib
 import tensorflow as tf
-from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
-
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+from spn.algorithms.Statistics import get_structure_stats
+from numpy.random.mtrand import RandomState
+from spn.algorithms.Sampling import sample_instances
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import log_loss
+import math
+
+numpy.random.seed(42)
+numpy.random.seed(42)
+
 
 def  score(i):
 	if i == 'g':
@@ -38,54 +48,78 @@ def  score(i):
 	else:
 		return 1;
 
+def one_hot(df,col):
+	df = pd.get_dummies([col])
+	df.drop()
+
+
+credit=pd.read_csv("lung.data",delimiter=",") 
+credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
+
+print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)
+credit = credit.apply(LabelEncoder().fit_transform)
 theirs = list()
-ours = list();
-credit=pd.read_csv("caesarian.csv",delimiter=",") 
+ours = list()
 
-
-print(credit.values.shape)
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
-	print(X_test)
-
-	
 	N = X.shape[0]
 	D = X.shape[1]
-
-
+	X_zero = X[X[:,-1]==0]
 
 	context = list()
-	left_cols = [Categorical]*D;
-	context.extend(left_cols)
+	Categorical_index = [0]
+	for i in range(0,X.shape[1]-1):
+		context.append(Categorical)
+	context.append(Gaussian)
+
+
+
 
 
 	ds_context = Context(parametric_types=context).add_domains(X)
+	print("training normnal spm")
+	spn_classification = learn_parametric(numpy.array(X),ds_context)
 
-	spn_classification = learn_parametric(X,ds_context,threshold=0.1,min_instances_slice=2)
-	plot_spn(spn_classification, 'basicspn-original.png')
 
-	ll_test_original = log_likelihood(spn_classification, X_test)
+	ll_original = log_likelihood(spn_classification, X)
+	ll = log_likelihood(spn_classification, X)
+	ll_test = log_likelihood(spn_classification,X_test)
+	ll_test_original=ll_test[ll_test>-1000]
 
-	l_test_original=ll_test_original[ll_test_original>-1000]
 
 	print('Building tree...')
-	T = spatialtree(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=5,prob=0.25,spill=0.75)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=4,spill=0.50,rule='rp')
 	print("Building tree complete")
 	T.update_ids()
 
 
 
 	spn = T.spn_node_object()
-	plot_spn(spn, 'basicspn.png')
-	ll_test = log_likelihood(spn, X_test)
+	result_holder = sample_instances(spn, X_test_holder, RandomState(123))
+	result = mean_squared_error(X_test,result_holder)
+	print(result)
+	ll = log_likelihood(spn, X)
+	ll_test = log_likelihood(spn,X_test)
 	ll_test=ll_test[ll_test>-1000]
+	ll =ll[ll>-1000]
+	print(ll_test)
+	print(ll)
+
+	print(numpy.mean(ll_test))
+	print(numpy.mean(ll_test_original))
+	plot_spn(spn, 'basicspn.png')
+	plot_spn(spn_classification, 'basicspn-original.png')
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
-print(theirs)
-print(ours)
+
+
+print(get_structure_stats(spn))
 print(numpy.mean(theirs))
 print(numpy.mean(ours))
+
+
 
 

@@ -72,7 +72,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context)
+	spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
 
 
 	ll_original = log_likelihood(spn_classification, X)

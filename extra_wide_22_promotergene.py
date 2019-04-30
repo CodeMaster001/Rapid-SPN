@@ -76,7 +76,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context,threshold=0.2)
+	spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=5)
 
 	plot_spn(spn_classification, 'basicspn.png')
 	ll_original = log_likelihood(spn_classification, X)
@@ -85,8 +85,9 @@ for train_index, test_index in kf.split(credit):
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
 
+
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.7,rule="rp")
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.5,rule="rp")
 	print("Building tree complete")
 	T.update_ids()
 
@@ -96,7 +97,7 @@ for train_index, test_index in kf.split(credit):
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
 	ll_test=ll_test[ll_test>-1000]
-	ll =ll[ll>-1000]
+
 
 
 

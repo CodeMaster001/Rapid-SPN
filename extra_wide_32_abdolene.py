@@ -41,9 +41,9 @@ def  score(i):
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list();
-credit=pd.read_csv("caesarian.csv",delimiter=",") 
+credit=pd.read_csv("abalone.csv",delimiter=",") 
 
-
+credit = credit[:10,:]
 print(credit.values.shape)
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
@@ -63,7 +63,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 
-	spn_classification = learn_parametric(X,ds_context,threshold=0.1,min_instances_slice=2)
+	spn_classification = learn_parametric(X,ds_context,threshold=0.7,rows='tsne')
 	plot_spn(spn_classification, 'basicspn-original.png')
 
 	ll_test_original = log_likelihood(spn_classification, X_test)
