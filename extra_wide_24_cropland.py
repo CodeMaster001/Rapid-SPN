@@ -49,13 +49,18 @@ def one_hot(df,col):
 credit=pd.read_csv("Cropland.csv",delimiter=",") 
 credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
 
+credit =credit.drop(credit.columns[0], axis=1)
+credit =credit.drop(credit.columns[0], axis=1)
+credit =credit.drop(credit.columns[-1], axis=1)
+credit =credit.drop(credit.columns[0], axis=1)
 print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
-credit=credit.apply(LabelEncoder().fit_transform)
 credit.to_csv('credit.csv')
-
+credit = credit.astype(float)
+credit = credit.fillna(0)
+credit= (credit - credit.mean()) / (credit.max() - credit.min())
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
@@ -68,7 +73,7 @@ for train_index, test_index in kf.split(credit):
 	context = list()
 	Categorical_index = [0]
 	for i in range(0,X.shape[1]):
-		context.append(Categorical)
+		context.append(Gaussian)
 
 
 
@@ -76,7 +81,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context)
+	spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=4,threshold = 0.2)
 
 
 	ll_original = log_likelihood(spn_classification, X)
@@ -86,7 +91,7 @@ for train_index, test_index in kf.split(credit):
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=2,spill=0.75)
+	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.55,leaves_size=2,height=4,spill=0.25)
 	print("Building tree complete")
 	T.update_ids()
 
