@@ -67,7 +67,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 
-	spn_classification = learn_parametric(X,ds_context,threshold=0.7)
+	spn_classification = learn_parametric(X,ds_context,threshold=0.3)
 	plot_spn(spn_classification, 'basicspn-original.png')
 
 	ll_test_original = log_likelihood(spn_classification, X_test)
