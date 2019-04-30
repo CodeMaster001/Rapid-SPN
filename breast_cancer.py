@@ -35,7 +35,7 @@ from sklearn.preprocessing import LabelEncoder
 mnist = load_breast_cancer()
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
-credit=pd.read_csv("breast-cancer-wisconsin.data",delimiter=",") 
+credit=pd.read_csv("breast-cancer.data",delimiter=",") 
 credit = credit.apply(LabelEncoder().fit_transform)
 kf = KFold(n_splits=10,shuffle=True)
 print(credit.shape)
@@ -63,12 +63,12 @@ for train_index, test_index in kf.split(credit):
 	ds_context = Context(parametric_types=context).add_domains(X)
 
 
-	spn_classification = learn_parametric(X,ds_context)
+	
+	spn_classification = learn_parametric(X,ds_context,min_instances_slice=2)
 
 
 	ll_test_original= log_likelihood(spn_classification, X_test)
 
-	#ll_test = log_likelihood(spn_original, X_test)
 
 
 
@@ -77,7 +77,7 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print('Building tree...')
-	T = spatialtree(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',prob=0.2,height=3,spill=0.76)
+	T = spatialtree(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',prob=0.2,height=2,spill=0.76)
 	print("Building tree complete")
 	T.update_ids()
 	spn = T.spn_node_object()
@@ -88,7 +88,6 @@ for train_index, test_index in kf.split(credit):
 	ll_test_original =ll_test_original[ll_test_original>-1000]
 	print(numpy.mean(ll_test_original))
 	print(numpy.mean(ll_test))
-	break;
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
 print(numpy.mean(theirs))
