@@ -9,7 +9,7 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 from sklearn import preprocessing
-from spatialtree import spatialtree
+from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -31,6 +31,7 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
+import time;
 numpy.random.seed(42)
 
 
@@ -47,6 +48,7 @@ def one_hot(df,col):
 
 
 credit=pd.read_csv("glass.data",delimiter=",") 
+credit=credit.drop(columns=credit.columns[-1])
 credit=credit.drop(columns=credit.columns[0])
 theirs = list()
 ours = list()
@@ -69,36 +71,46 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context,threshold=0.4,min_instances_slice=10)
+	theirs_time = time.time()
+	#spn_classification = learn_parametric(numpy.array(X),ds_context,threshold=0.4,min_instances_slice=10)
+	#theirs_time = time.time()-theirs_time
 
-
-	ll_original = log_likelihood(spn_classification, X)
-	print(numpy.mean(ll_original))
-	plot_spn(spn_classification, 'basicspn-original.png')
-	ll = log_likelihood(spn_classification, X)
-	ll_test = log_likelihood(spn_classification,X_test)
-	ll_test_original=ll_test[ll_test>-1000]
+	#ll_original = log_likelihood(spn_classification, X)
+	#print(numpy.mean(ll_original))
+	#plot_spn(spn_classification, 'basicspn-original.png')
+	#ll = log_likelihood(spn_classification, X)
+	#ll_test = log_likelihood(spn_classification,X_test)
+	#ll_test_original=ll_test[ll_test>-1000]
 
 
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.15,height=2)
+	original = time.time();
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.25,height=3,rule='rp')
 	print("Building tree complete")
+	
+	T= T.build_spn();
 	T.update_ids()
 
-
-
-	spn = T.spn_node_object()
+	spn = T.spn_node;
+	plot_spn(spn, 'basicspn-original.png')
+	ours_time = time.time()-original;
+	print(ours_time)
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
 	print(ll_test)
 	ll_test=ll_test[ll_test>-1000]
-
 	print(numpy.mean(ll_test_original))
 	print(numpy.mean(ll_test))
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
+print(theirs)
+print(ours)
+print(original)
+print('---Time---')
+print(ours_time)
+print(theirs_time)
 print(numpy.mean(theirs))
 print(numpy.mean(ours))
 
