@@ -24,6 +24,7 @@ from spn.algorithms.Validity import is_valid
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
 from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_cols_RDC_py
+from collections import deque
 
 
 class NODE_TYPE:
@@ -31,7 +32,40 @@ class NODE_TYPE:
     PRODUCT_NODE = 1;
     LEAF_NODE=3
 
+class SPNRPBuilder(object):
+    
+    tasks =list()
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,ohe=True,proportion=0.2,**kwargs):
+        self.data = data
+        self.spn_object = spn_object
+        self.ds_context = ds_context
+        self.leaves_size = leaves_size
+        self.scope = scope
+        self.threshold = threshold
+        self.prob = prob
+        self.ohe = ohe
+        self.proportion = proportion
+
+        self.root= spatialtree(data,spn_object=self.spn_object,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=self.scope,threshold=self.threshold,prob=self.prob,ohe=self.ohe,proportion=self.proportion,**kwargs)
+        SPNRPBuilder.tasks.append([self.root,data,kwargs])
+
+    
+    def build_spn(self):
+        while SPNRPBuilder.tasks:
+            sp,data,kwargs =  SPNRPBuilder.tasks.pop();
+            sp.split(self.data,**kwargs)
+            print(kwargs)
+
+
+        return self.root
+
+
+
+
 class spatialtree(object):
+
+    def get_kwargs(self):
+        return kwargs
 
     def update_ids(self):
         assign_ids(self.spn_node)
@@ -41,6 +75,8 @@ class spatialtree(object):
     def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,ohe=True, **kwargs):
         self.prob = prob
         self.leaves_size = leaves_size
+        self.spn_node = spn_object
+        tasks = deque()
         '''
         T = spatialtree(    data, 
                             rule='kd', 
@@ -80,26 +116,29 @@ class spatialtree(object):
 
         # Default values
 
-     
+
 
         if scope is None:
             scope = list(set(list(range(0,data.shape[1]))))
 
         self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=ohe,threshold=threshold, n_jobs=5)
-        self.proportion = None;
-        self.spn_node = spn_object
-        self.scope = scope;
+        self.spn_node = spn_object #sph_node
+        self.scope = scope; #scope
         self.ds_context = ds_context
 
+     
+
+    def split(self, data,**kwargs):
         if 'indices' not in kwargs:
             if isinstance(data, dict):
-                kwargs['indices']   = data.keys()
+                kwargs['indices']   = data.keys() #data 
             else:
                 kwargs['indices']   = range(len(data))
             pass
+
         if 'proportion' in kwargs:
-            self.proportion = kwargs['proportion']
-        
+            self.proportion = kwargs['proportion'] #proportion
+         
         n = len(kwargs['indices'])
 
         # Use maximum-variance kd by default
@@ -124,8 +163,8 @@ class spatialtree(object):
                 # This calculates the height necessary to achieve leaves of roughly 500 items,
                 # given the current spill threshold
             kwargs['height']    = max(0, int(numpy.ceil(numpy.log(n / self.leaves_size) / numpy.log(2.0 / (1 + kwargs['spill'])))))
-  
-        
+
+
         if 'min_items' not in kwargs:
             kwargs['min_items']     = 5
             pass
@@ -136,29 +175,25 @@ class spatialtree(object):
 
 
         # All information is now contained in kwargs, we may proceed
-        
+
         # Store bookkeeping information
-        self.__indices      = set(kwargs['indices'])
-        self.__splitRule    = kwargs['rule']
+        self.__indices      = set(kwargs['indices']) #remeber indices
+
+        self.__splitRule    = kwargs['rule'] 
         self.__spill        = kwargs['spill']
         self.__children     = None
         self.__w            = None
         self.__thresholds   = None
-        self.__keyvalue     = isinstance(data, dict)
+        self.__keyvalue     = isinstance(data, dict) #
 
         # Compute the dimensionality of the data
         # This way supports opaque key-value stores as well as numpy arrays
+
+        # Split the new node
         for x in self.__indices:
             self.__d = len(data[x])
             break
-
-        # Split the new node
-        self.__height       = self.__split(data,scope, **kwargs)
-
-        #data_slices = self.split_cols(data,self.ds_context,self.scope)
-
-
-    def __split(self, data,scope, **kwargs):
+    
         '''
         Recursive algorithm to build a tree by splitting data.
 
@@ -166,6 +201,7 @@ class spatialtree(object):
         '''
 
         # First, find the split rule
+    
         if kwargs['rule'] == 'pca':
             splitF  =   self.__PCA
         elif kwargs['rule'] == 'kd':
@@ -179,19 +215,20 @@ class spatialtree(object):
 
         # next stage option
 
+
         if 'NODE_TYPE'  not in kwargs:
-            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data,scope)
-            self.spn_node.scope.extend(scope)
+            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data,self.scope)
+            self.spn_node.scope.extend(self.scope)
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
 
-    
+
         elif kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE:
 
             kwargs['NODE_TYPE']= NODE_TYPE.PRODUCT_NODE #temporary
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
-    
+
 
         if kwargs['height'] == 1:
 
@@ -199,13 +236,13 @@ class spatialtree(object):
 
         #---Next stage option endsitems'])
 
+
         if kwargs['height'] < 0:
             raise ValueError('spatialtree.split() called with height<0')
 
         # If the height is 0, or the set is too small, then we don't need to split
         if kwargs['height'] == 0 or len(kwargs['indices']) < kwargs['min_items']:
             return  0
-        print("called")
         # Compute the split direction 
         self.__w = splitF(data, **kwargs)
 
@@ -226,7 +263,7 @@ class spatialtree(object):
 
         right_data = list();
         left_data = list();
-    
+
 
 
         for (i, val) in wx.items():
@@ -250,32 +287,25 @@ class spatialtree(object):
         total = len(left_set) + len(right_set)   
         height=kwargs['height'] 
         print(height)
-        if len(scope) == 1:
+        if len(self.scope) == 1:
             #self.spn_node.children.append(self.build_spn_leaf(data,scope))
             return 0;
 
-    
+
 
         if kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE or kwargs['NODE_TYPE'] == NODE_TYPE.LEAF_NODE:
-            self.__children.append(self.build_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs))
-            self.__children.append(self.build_node(data,right_set,len(right_set)/float(total),1,height-1,scope,**kwargs))
+            self.__children.append(self.build_node(data,left_set,len(left_set)/float(total),0,height-1,self.scope,**kwargs))
+            self.__children.append(self.build_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
         # Done
-        
+
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
-            self.__children.extend(self.build_product_node(data,left_set,len(left_set)/float(total),0,height-1,scope,**kwargs))
-            self.__children.extend(self.build_product_node(data,right_set,len(right_set)/float(total),1,height-1,scope,**kwargs))
+            print('called')
+            self.__children.extend(self.build_product_node(data,left_set,len(left_set)/float(total),0,height-1,self.scope,**kwargs))
+            self.__children.extend(self.build_product_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
 
-        
+        print(self.__children)
 
-        height_list = list();
 
-        for i in range(0,len(self.__children)):
-            height_list.append(self.__children[i].getHeight())
-        
-        if len(height_list) == 0:
-            return 0;
-
-        return 1 + max(height_list)
 
 
     def produce_node(self, TYPE,data,scope):
@@ -297,13 +327,15 @@ class spatialtree(object):
         scope= list(set(scope))
         children = self.produce_node(kwargs['NODE_TYPE'],data,scope)
 
-
         self.spn_node.children.append(children)
         self.spn_node.weights.append(kwargs['proportion'])
-        return spatialtree(numpy.array(data),children,ds_context = self.ds_context, **kwargs)
+        spatial_tree= spatialtree(numpy.array(data),children,ds_context = self.ds_context, **kwargs)
+        print('ADDED')
+        SPNRPBuilder.tasks.append([spatial_tree,data,kwargs])
+        return spatial_tree
 
 
-    # product node
+        # product node
     def build_product_node(self,data,data_set,sum_weight,children_pos,current_height,scope,**kwargs):
         scope_list = list()
         kwargs['height']    =current_height
@@ -325,10 +357,14 @@ class spatialtree(object):
                 node.children.append(children)
                 kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
                 child_count = child_count + 1
-                rptree.append(spatialtree(numpy.array(data_slice),children,scope=scope_slice,ds_context = self.ds_context, **kwargs))
+                spatial_tree = spatialtree(numpy.array(data_slice),children,scope=scope_slice,ds_context = self.ds_context, **kwargs)
+                rptree.append(spatial_tree)
+                SPNRPBuilder.tasks.append([spatial_tree,data,kwargs])
         if len(data_set) != 0 or child_count > 0:
             self.spn_node.children.append(node)
             self.spn_node.weights.append(sum_weight) 
+        print('length')
+        print(len(rptree))
         return rptree
 
 
@@ -338,6 +374,11 @@ class spatialtree(object):
             return self.build_spn_leaf_product(data,scope)
         else:
             return self.build_spn_leaf_product(data,scope)
+
+    def getIndices(self):
+        return self.__indices;
+    def spn_node_object(self):
+        return self.spn_node;
 
     def build_spn_leaf_sum(self, data,scope):
 
@@ -353,8 +394,8 @@ class spatialtree(object):
             spn_node.weights.append(weights)
 
         return spn_node
-                    
-    
+                
+
 
     def build_spn_leaf_product(self, data,scope):
 
@@ -367,21 +408,13 @@ class spatialtree(object):
             spn_node.children.append(node)
 
         return spn_node
-    
-                    
 
-               
+                
 
-    def getIndices(self):
-        return self.__indices;
-    def spn_node_object(self):
-        return self.spn_node;
     def update(self, D):
         '''
         T.update({new_key1: new_vector1, [new_key2: new_vector2, ...]})
-
         Add new data to the tree.  Note: this does not rebalance or split the tree.
-
         Only valid when using key-value stores.
         '''
 
@@ -395,8 +428,9 @@ class spatialtree(object):
 
         left_set    = {}
         right_set   = {}
-        for (key, vector) in D.items():
+        for (key, vector) in D.iteritems():
             wx = numpy.dot(self.__w, vector)
+
             if wx >= self.__thresholds[0]:
                 right_set[key]  = vector
             if wx < self.__thresholds[-1]:
@@ -408,11 +442,10 @@ class spatialtree(object):
 
         pass
 
-
+    # Getters and container methods
     def getHeight(self):
         '''
         Returns the height of the tree.
-
         A tree with no children (a leaf) has height=0.
         Otherwise, height = 1 + max(height(left child), height(right child))
         '''
@@ -429,7 +462,6 @@ class spatialtree(object):
     def getSpill(self):
         '''
         Returns the spill percentage used to generate this tree.
-
         Floating point number in range: [0, 1)
         '''
         return self.__spill
@@ -438,7 +470,6 @@ class spatialtree(object):
         '''
         Returns the split rule for this node: a tuple (w, (lower_threshold, upper_threshold))
         where w is a vector, and the thresholds are scalars.
-
         For a vector x, 
             if numpy.dot(w, x) >= lower_threshold  then  x propagates to right subtree
             if numpy.dot(w, x) <  upper_threshold  then  x propagates to left subtree
@@ -515,7 +546,6 @@ class spatialtree(object):
         S = T.retrievalSet(index=X, vector=X)
         
         Compute the retrieval set for either a given query index or vector.
-
         Exactly one of index or data must be supplied.
         '''
 
@@ -538,7 +568,7 @@ class spatialtree(object):
         def __retrieveVector(vec):
 
             S = set()
-    
+
             # Did we land at a leaf?  Must be done
             if self.isLeaf():
                 S = self.__indices
@@ -572,13 +602,10 @@ class spatialtree(object):
     def k_nearest(self, data, **kwargs):
         '''
         neighbors = T.k_nearest(data, k=10, index=X, vector=X)
-
         data:       the data matrix/dictionary
         k:          the number of (approximate) nearest neighbors to return
-
         index=X:    the index of the query point OR
         vector=X:   a data vector to query against
-
         Returns:
         A sorted list of the indices of k-nearest (approximate) neighbors of the query
         '''
@@ -613,7 +640,6 @@ class spatialtree(object):
     def prune(self, max_height):
         '''
         Prune the tree to height <= max_height.
-
         max_height must be a non-negative integer.
         '''
         
@@ -637,7 +663,7 @@ class spatialtree(object):
         # Otherwise, recursively prune
         self.__children[0].prune(max_height - 1)
         self.__children[1].prune(max_height - 1)
-        self.__height = 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight())
+        self.__height           = 1 + max(self.__children[0].getHeight(), self.__children[1].getHeight())
         pass
 
     # SPLITTING RULES
@@ -645,7 +671,6 @@ class spatialtree(object):
     def __PCA(self, data, **kwargs):
         '''
         PCA split:
-
         Computes a split direction by the top principal component
         (leading eigenvector of the covariance matrix) of data in 
         the current node.
@@ -678,7 +703,6 @@ class spatialtree(object):
     def __KD(self, data, **kwargs):
         '''
         KD split:
-
         Finds the coordinate axis with highest variance of data
         in the current node
         '''
@@ -704,11 +728,9 @@ class spatialtree(object):
     def __2means(self, data, **kwargs):
         '''
         2-means split
-
         Computes a split direction by clustering the data in the current node
         into two, and choosing the direction spanned by the cluster centroids:
             w <- (mu_1 - mu_2)
-
         The cluster centroids are found by an online k-means with the Hartigan
         update.  The algorithm runs through the data in random order until
         a specified minimum number of updates have occurred (default: 1000).
@@ -750,7 +772,6 @@ class spatialtree(object):
     def __RP(self, data, **kwargs):
         '''
         RP split
-
         Generates some number m of random directions w by sampling
         from the d-dimensional unit sphere, and picks the w which
         maximizes the diameter of projected data from the current node:
@@ -758,11 +779,13 @@ class spatialtree(object):
         '''
         k   = kwargs['samples_rp']
 
+
         # sample directions from d-dimensional normal
-        W   = numpy.random.randn( k, self.__d )
+        print(self.__d)
+        W   = numpy.random.randn( k, 9)
 
         # normalize each sample to get a sample from unit sphere
-        for i in numpy.arange(k):
+        for i in range(k):
             W[i] /= numpy.sqrt(numpy.sum(W[i]**2))
             pass
 
@@ -770,8 +793,8 @@ class spatialtree(object):
 
         min_val = numpy.inf * numpy.ones(k)
         max_val = -numpy.inf * numpy.ones(k)
-        for i in numpy.arange(0,data.shape[0]):
 
+        for i in self.__indices:
             Wx      = numpy.dot(W, data[i])
             min_val = numpy.minimum(min_val, Wx)
             max_val = numpy.maximum(max_val, Wx)
@@ -779,138 +802,131 @@ class spatialtree(object):
 
         return W[numpy.argmax(max_val - min_val)]
 
-# end spatialtree class
+    # end spatialtree class
 
-class invertedmap(object):
+    class invertedmap(object):
 
-    def __init__(self, T):
-        '''
-        Construct an inverted map from a spatialtree object T.
+        def __init__(self, T):
+            '''
+            Construct an inverted map from a spatialtree object T.
+            I   = spatialtree.invertedmap(T)
+            This provides a more space-efficient data-structure for fast
+            retrieval of a static dataset.
+            '''
+            if not isinstance(T, spatialtree):
+                raise TypeError('Argument must be of type: spatialtree')
 
-        I   = spatialtree.invertedmap(T)
-
-        This provides a more space-efficient data-structure for fast
-        retrieval of a static dataset.
-        '''
-        if not isinstance(T, spatialtree):
-            raise TypeError('Argument must be of type: spatialtree')
-
-        # Construct the index
-        self.__map      = {}
-        self.__leafsets = []
-        
-        # Leaf-generator helper function
-        def leafWalker():
-            for node in T.traverse():
-                if node.isLeaf():
-                    yield node
-            pass
-
-        for (i, node) in enumerate(leafWalker()):
-            # Construct a set for the i'th leaf
-            leafset = set()
-
-            for item in node:
-                # Add each item contained in the leaf to its set
-                leafset.add(item)
-
-                # Map the item to the new leaf-set
-                if item not in self.__map:
-                    self.__map[item] = set()
-                self.__map[item].add(i)
+            # Construct the index
+            self.__map      = {}
+            self.__leafsets = []
+            
+            # Leaf-generator helper function
+            def leafWalker():
+                for node in T.traverse():
+                    if node.isLeaf():
+                        yield node
                 pass
 
-            # Add the new leafset to our list
-            self.__leafsets.append(leafset)
-            pass
-        pass
+            for (i, node) in enumerate(leafWalker()):
+                # Construct a set for the i'th leaf
+                leafset = set()
 
-    def __contains__(self, k):
-        '''
-        Test if item k is contained in the invertedmap
-        '''
-        return k in self.__map
+                for item in node:
+                    # Add each item contained in the leaf to its set
+                    leafset.add(item)
 
-    def remove(self, k):
-        '''
-        Remove an item from the invertedmap
-        '''
-        if k not in self:
-            raise KeyError(k)
+                    # Map the item to the new leaf-set
+                    if item not in self.__map:
+                        self.__map[item] = set()
+                    self.__map[item].add(i)
+                    pass
 
-        # Remove k from each of its leaf sets
-        for s in self.__map[k]:
-            self.__leafsets[s].remove(k)
+                # Add the new leafset to our list
+                self.__leafsets.append(leafset)
+                pass
             pass
 
-        # Remove the mapping for k
-        del self.__map[k]
-        pass
+        def __contains__(self, k):
+            '''
+            Test if item k is contained in the invertedmap
+            '''
+            return k in self.__map
 
-    def __len__(self):
-        '''
-        Return the number of items in this invertedmap
-        '''
-        return len(self.__map)
+        def remove(self, k):
+            '''
+            Remove an item from the invertedmap
+            '''
+            if k not in self:
+                raise KeyError(k)
 
-    def numSets(self):
-        '''
-        Return the number of leaf sets in this invertedmap
-        '''
-        return len(self.__leafsets)
+            # Remove k from each of its leaf sets
+            for s in self.__map[k]:
+                self.__leafsets[s].remove(k)
+                pass
 
-    def __retrievalSet(self, k):
-        '''
-        S = invertedmap.__retrievalset(index)
-        
-        Get the retrieval set for the given item index.
-        '''
-
-        RS = set()
-
-        for s in self.__map[k]:
-            RS |= self.__leafsets[s]
+            # Remove the mapping for k
+            del self.__map[k]
             pass
 
-        # Remove self from the retrieval set
-        RS.remove(k)
+        def __len__(self):
+            '''
+            Return the number of items in this invertedmap
+            '''
+            return len(self.__map)
 
-        return RS
+        def numSets(self):
+            '''
+            Return the number of leaf sets in this invertedmap
+            '''
+            return len(self.__leafsets)
 
-    def k_nearest(self, data, **kwargs):
-        '''
-        neighbors = I.k_nearest(data, k=10, index=X)
+        def __retrievalSet(self, k):
+            '''
+            S = invertedmap.__retrievalset(index)
+            
+            Get the retrieval set for the given item index.
+            '''
 
-        data:       the data matrix/dictionary
-        k:          the number of (approximate) nearest neighbors to return
+            RS = set()
 
-        index=X:    the index of the query point
+            for s in self.__map[k]:
+                RS |= self.__leafsets[s]
+                pass
 
-        Returns:
-        A sorted list of the indices of k-nearest (approximate) neighbors of the query
-        '''
-        
-        if 'k' not in kwargs:
-            raise Exception('k_nearest called with no value of k')
+            # Remove self from the retrieval set
+            RS.remove(k)
 
-        if not isinstance(kwargs['k'], int):
-            raise TypeError('k_nearest must be called with an integer value of k')
+            return RS
 
-        if kwargs['k'] < 1:
-            raise ValueError('k must be a positive integer')
+        def k_nearest(self, data, **kwargs):
+            '''
+            neighbors = I.k_nearest(data, k=10, index=X)
+            data:       the data matrix/dictionary
+            k:          the number of (approximate) nearest neighbors to return
+            index=X:    the index of the query point
+            Returns:
+            A sorted list of the indices of k-nearest (approximate) neighbors of the query
+            '''
+            
+            if 'k' not in kwargs:
+                raise Exception('k_nearest called with no value of k')
 
-        if 'index' in kwargs:
-            x = data[kwargs['index']]
-        else:
-            raise Exception('k_nearest called with no target index')
+            if not isinstance(kwargs['k'], int):
+                raise TypeError('k_nearest must be called with an integer value of k')
 
-        # Now compute distance from query point to the retrieval set
-        def dg(S):
-            for i in S:
-                yield (numpy.sum((x-data[i])**2), i)
-            pass
+            if kwargs['k'] < 1:
+                raise ValueError('k must be a positive integer')
 
-        # Pull out indices in sorted order
-        return [i for (d,i) in heapq.nsmallest(kwargs['k'], dg(self.__retrievalSet(kwargs['index'])))]
+            if 'index' in kwargs:
+                x = data[kwargs['index']]
+            else:
+                raise Exception('k_nearest called with no target index')
 
-# end invertedmap
+            # Now compute distance from query point to the retrieval set
+            def dg(S):
+                for i in S:
+                    yield (numpy.sum((x-data[i])**2), i)
+                pass
+
+            # Pull out indices in sorted order
+            return [i for (d,i) in heapq.nsmallest(kwargs['k'], dg(self.__retrievalSet(kwargs['index'])))]
