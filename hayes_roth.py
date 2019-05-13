@@ -8,8 +8,8 @@ Spatial tree demo for matrix data
 
 import numpy
 import sys
-
-from spatialtree import spatialtree
+from sklearn import preprocessing
+from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -28,8 +28,11 @@ from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
 import urllib
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
+from sklearn.datasets import fetch_openml
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+import time;
 numpy.random.seed(42)
 
 
@@ -44,37 +47,28 @@ def one_hot(df,col):
 	df.drop()
 
 
-from sklearn.model_selection import KFold
 
-kf = KFold(n_splits=10,shuffle=True)
-
-credit=pd.read_csv("hayes-roth.data",delimiter=",") 
-credit = credit.fillna(0)
-print(credit.head())
-credit=credit.astype(float)
-final_theirs = list();
+credit,target = fetch_openml(name='hayes-roth', version=1,return_X_y=True)
 theirs = list()
-ours = list();
-print(credit.values.shape)
+ours = list()
+kf = KFold(n_splits=10,shuffle=True)
+print(credit.shape)
+ours_time_list = list();
+theirs_time_list = list();
+credit = numpy.nan_to_num(credit)
 
 for train_index, test_index in kf.split(credit):
-	X = credit.values[train_index]
-	X_test = credit.values[test_index];
+	X = credit[train_index,:]
+	#y_train=target[train_index]
+	X = preprocessing.normalize(X, norm='l2')
+	X_test = credit[test_index];	
+	X_test = preprocessing.normalize(X_test, norm='l2')
+	y_test=target[test_index]
 
- 
-	X
-	N = X.shape[0]
-	D = X.shape[1]
-	X_zero = X[X[:,-1]==0]
 
-	#2 1 530101 38.50 66 28 3 3 ? 2 5 4 4 ? ? ? 3 5 45.00 8.40 ? ? 2 2 11300 00000 00000 2
 	context = list()
-	Gaussian_index = [0]
 	for i in range(0,X.shape[1]):
-		if i in Gaussian_index:
-			context.append(Gaussian)
-			continue;
-		context.append(Categorical)
+		context.append(Gaussian)
 
 
 
@@ -82,11 +76,15 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
-	spn_classification = learn_parametric(numpy.array(X),ds_context)
-
+	
+	theirs_time = time.time()
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+	
+	
+	
+	theirs_time = time.time()-theirs_time
 
 	ll_original = log_likelihood(spn_classification, X)
-	plot_spn(spn_classification, 'basicspn-original.png')
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
@@ -95,26 +93,38 @@ for train_index, test_index in kf.split(credit):
 
 
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,samples_rp=20,leaves_size=20,prob=0.25,height=5)
+	original = time.time();
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
 	print("Building tree complete")
-	T.update_ids()
-
-
-
-	spn = T.spn_node_object()
-	plot_spn(spn, 'basicspn.png')
+	
+	T= T.build_spn();
+	T.update_ids();
+	from spn.io.Text import spn_to_str_equation
+	spn = T.spn_node;
+	ours_time = time.time()-original;
+	ours_time_list.append(ours_time)
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
 	ll_test=ll_test[ll_test>-1000]
-	print(numpy.mean(ll_test))
 	print(numpy.mean(ll_test_original))
-
-	
+	print(numpy.mean(ll_test))
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
-	break;
-print(numpy.mean(theirs))
+	theirs_time_list.append(theirs_time)
+
+plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
+print(theirs)
+print(ours)
+print(original)
+print('---Time---')
+print(numpy.mean(ours_time_list))
+print(numpy.mean(theirs_time_list))
+print('---ll---')
 print(numpy.mean(ours))
+print(numpy.mean(theirs))
+
+
 
 
 
