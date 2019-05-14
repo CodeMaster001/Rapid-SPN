@@ -53,7 +53,7 @@ class SPNRPBuilder(object):
     def build_spn(self):
         while SPNRPBuilder.tasks:
             sp,data,kwargs =  SPNRPBuilder.tasks.pop();
-            sp.split(self.data,**kwargs)
+            sp.split(data,**kwargs)
             print(kwargs)
 
 
@@ -249,7 +249,7 @@ class spatialtree(object):
 
         # Project onto split direction
         wx = {}
-        for i in numpy.arange(0,data.shape[0]):
+        for i in self.__indices:
             wx[i] = numpy.dot(self.__w, data[i])
             pass
 
@@ -359,7 +359,7 @@ class spatialtree(object):
                 child_count = child_count + 1
                 spatial_tree = spatialtree(numpy.array(data_slice),children,scope=scope_slice,ds_context = self.ds_context, **kwargs)
                 rptree.append(spatial_tree)
-                SPNRPBuilder.tasks.append([spatial_tree,data,kwargs])
+                SPNRPBuilder.tasks.append([spatial_tree,data_slice,kwargs])
         if len(data_set) != 0 or child_count > 0:
             self.spn_node.children.append(node)
             self.spn_node.weights.append(sum_weight) 
@@ -782,7 +782,7 @@ class spatialtree(object):
 
         # sample directions from d-dimensional normal
         print(self.__d)
-        W   = numpy.random.randn( k, 9)
+        W   = numpy.random.randn( k, self.__d)
 
         # normalize each sample to get a sample from unit sphere
         for i in range(k):
