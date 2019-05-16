@@ -210,7 +210,7 @@ for train_index, test_index in kf.split(credit):
 
 	print('Building tree...')
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=6,spill=0.3)
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
 	print("Building tree complete")
 	
 	T= T.build_spn();
@@ -227,7 +227,6 @@ for train_index, test_index in kf.split(credit):
 	print("--ll--")
 	print(numpy.mean(ll_test_original))
 	print(numpy.mean(ll_test))
-	break;
 	theirs.append(numpy.mean(ll_test_original))
 	ours.append(numpy.mean(ll_test))
 	theirs_time_list.append(theirs_time)
