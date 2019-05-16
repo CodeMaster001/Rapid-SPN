@@ -92,7 +92,9 @@ def optimize_tf_graph(
 
     # Collect loss
     loss_list = [0]
-    with tf.Session() as sess:
+    config = tf.ConfigProto(
+        device_count = {'GPU': 0})
+    with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         if not batch_size:
             batch_size = data.shape[0]
