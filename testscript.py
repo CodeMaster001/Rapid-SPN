@@ -100,8 +100,9 @@ def optimize_tf_graph(
             batch_size = data.shape[0]
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
+        counter = 0;
         # Iterate over epochs
-        while  True:
+        while (True):
   
 
             # Collect loss over batches for one epoch
@@ -123,9 +124,14 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            if old_loss<0.0002:
+                counter = counter + 1
+            if old_loss>0.0002:
+                counter = 0;
+            if counter>10:
+                break;
+
             print(old_loss)
-            if np.abs(old_loss) < 0.0002:
-         	   break;
 
         tf_graph_to_spn(variable_dict)
 
@@ -166,8 +172,19 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='phoneme', version=1,return_X_y=True)[0]
-credit = pd.DataFrame(credit)
+
+
+
+
+credit = fetch_openml(name='sonar', version=1,return_X_y=True)[0]
+credit = pd.DataFrame(data=credit)
+print(credit.shape)
+kf = KFold(n_splits=10,shuffle=True)
+theirs = list()
+ours = list()
+print(credit.head())
+credit.values.astype(float)
+
 
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -175,63 +192,61 @@ ours = list()
 ours_time_list = list()
 theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
-	X = credit.values[train_index,:]
-	X=numpy.nan_to_num(X)
-	X = preprocessing.normalize(X, norm='l2')
-	X_test = credit.values[test_index];	
-	#X_test = numpy.nan_to_num(X_test)
-	X_test = preprocessing.normalize(X_test, norm='l2')
-	X = X.astype(numpy.float32)
-	X_test =X_test.astype(numpy.float32)
-	context = list()
-	for i in range(0,X.shape[1]):
-		context.append(Gaussian)
+    X = credit.values[train_index,:]
+    X=numpy.nan_to_num(X)
+    X = preprocessing.normalize(X, norm='l2')
+    X_test = credit.values[test_index];	
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    context = list()
+    for i in range(0,X.shape[1]):
+        context.append(Gaussian)
 
 	
 
 
 
-	ds_context = Context(parametric_types=context).add_domains(X)
-	print("training normnal spm")
-	
-	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
-	spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.000000001)) 
-		#tf.train.AdamOptimizer(1e-4))
-	
-	#theirs_time = time.time()-theirs_time
+    ds_context = Context(parametric_types=context).add_domains(X)
+    print("training normnal spm")
+    theirs_time = time.time()
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+    theirs_time = time.time()-theirs_time
+    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #tf.train.AdamOptimizer(1e-4))
 
-	
-	ll_test = eval_tf(spn_classification, X_test)
-	#print(ll_test)
-	#ll_test = log_likelihood(spn_classification,X_test)
-	ll_test_original=ll_test[ll_test>-1000]
-	
+
+    ll_test = eval_tf(spn_classification, X_test)
+    #print(ll_test)
+    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test_original=ll_test[ll_test>-1000]
 
 
 
-	print('Building tree...')
-	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-	print("Building tree complete")
-	
-	T= T.build_spn();
-	T.update_ids();
-	from spn.io.Text import spn_to_str_equation
-	spn = T.spn_node;
-	ours_time = time.time()-original;
-	ours_time_list.append(ours_time)
-	bfs(spn,print_prob)
-	#ll = log_likelihood(spn, X)
-	spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.000000001))
-	ll_test = eval_tf(spn,X)
-	ll_test=ll_test[ll_test>-1000]
-	print("--ll--")
-	print(numpy.mean(ll_test_original))
-	print(numpy.mean(ll_test))
-	theirs.append(numpy.mean(ll_test_original))
-	ours.append(numpy.mean(ll_test))
-	theirs_time_list.append(theirs_time)
+
+    print('Building tree...')
+    original = time.time();
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
+    print("Building tree complete")
+    
+
+    T= T.build_spn();
+    T.update_ids();
+    from spn.io.Text import spn_to_str_equation
+    spn = T.spn_node;
+    ours_time = time.time()-original;
+    ours_time_list.append(ours_time)
+    bfs(spn,print_prob)
+    #ll = log_likelihood(spn, X)
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X)
+    ll_test=ll_test[ll_test>-1000]
+    print("--ll--")
+    print(numpy.mean(ll_test_original))
+    print(numpy.mean(ll_test))
+    theirs.append(numpy.mean(ll_test_original))
+    ours.append(numpy.mean(ll_test))
+    theirs_time_list.append(theirs_time)
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
