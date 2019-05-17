@@ -176,7 +176,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='liver_disorders', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='liver_disorder', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)
@@ -210,7 +210,7 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,threshold=0.3,min_instances_slice=2)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
