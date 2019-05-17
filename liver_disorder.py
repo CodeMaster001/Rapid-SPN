@@ -176,7 +176,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='liver_disorder', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='liver_disorders', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)
