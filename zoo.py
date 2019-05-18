@@ -48,8 +48,11 @@ def one_hot(df,col):
 
 
 
-credit,target = fetch_openml(name='molecular-biology_promoters', version=1,return_X_y=True)
+credit,target = fetch_openml(name='zoo', version=1,return_X_y=True)
 credit= pd.DataFrame(data=credit)
+credit = credit.astype(int)
+
+print(credit.head())
 credit = credit.apply(LabelEncoder().fit_transform)
 theirs = list()
 ours = list()
@@ -79,13 +82,12 @@ for train_index, test_index in kf.split(credit):
 	print("training normnal spm")
 	
 	theirs_time = time.time()
-	spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=5,threshold=0.8)
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
 	
 	
 	theirs_time = time.time()-theirs_time
 
 	ll_original = log_likelihood(spn_classification, X)
-	plot_spn(spn_classification, 'basicspn-original.png')
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
 	ll_test_original=ll_test[ll_test>-1000]
@@ -95,14 +97,13 @@ for train_index, test_index in kf.split(credit):
 
 	print('Building tree...')
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.5,rule="rp")
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,prob=0.5,leaves_size=2,height=2,spill=0.2,rule='rp',threshold=0.3,samples_rp=20)
 	print("Building tree complete")
 	
 	T= T.build_spn();
 	T.update_ids();
 	from spn.io.Text import spn_to_str_equation
 	spn = T.spn_node;
-	plot_spn(spn, 'basicspn.png')
 	ours_time = time.time()-original;
 	print(ours_time)
 	ours_time_list.append(ours_time)
@@ -110,12 +111,14 @@ for train_index, test_index in kf.split(credit):
 	ll_test = log_likelihood(spn,X_test)
 	print(ll_test)
 	ll_test=ll_test[ll_test>-1000]
-	#print(numpy.mean(ll_test_original))
+	print(numpy.mean(ll_test_original))
 	print(numpy.mean(ll_test))
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
 	theirs_time_list.append(theirs_time)
-	break;
+
+plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
