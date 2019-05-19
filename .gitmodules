@@ -2,6 +2,3 @@
 	path = spflow-spnrp
 	url = https://github.com/CodeMaster001/spflow-spnrp.git
 
-[submodule "fashion-mnist"]
-	path = fashion-mnist
-	url = https://github.com/zalandoresearch/fashion-mnist.git
