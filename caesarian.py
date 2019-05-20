@@ -211,7 +211,7 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification =  learn_parametric(X,ds_context,threshold=0.1,min_instances_slice=2)
+    spn_classification =  learn_parametric(X,ds_context,threshold=0.3,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
     #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -240,8 +240,8 @@ for train_index, test_index in kf.split(credit):
     #bfs(spn,print_prob)
     ll = log_likelihood(spn, X)
     
-    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X)
     ll_test=ll[ll>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
@@ -250,7 +250,7 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
-#plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
