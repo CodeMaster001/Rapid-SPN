@@ -124,7 +124,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.40,spill=0.25)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=5,samples_rp=20,prob=0.40,spill=0.25)
     print("Building tree complete")
     
 
@@ -134,6 +134,7 @@ for train_index, test_index in kf.split(credit):
     spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
+    plot_spn(spn, 'basicspn.png')
     ll = log_likelihood(spn, X)
     
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
