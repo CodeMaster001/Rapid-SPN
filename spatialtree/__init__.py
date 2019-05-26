@@ -17,6 +17,7 @@ import sys
 sys.setrecursionlimit(1000000000)
 import numpy
 import scipy.stats
+from itertools import islice
 import random
 import heapq
 from spn.algorithms.TransformStructure import Prune,Compress
@@ -49,6 +50,7 @@ class SPNRPBuilder(object):
         self.root= spatialtree(data,spn_object=self.spn_object,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=self.scope,threshold=self.threshold,prob=self.prob,ohe=self.ohe,proportion=self.proportion,**kwargs)
         SPNRPBuilder.tasks.append([self.root,data,kwargs])
 
+
     
     def build_spn(self):
         while SPNRPBuilder.tasks:
@@ -72,10 +74,21 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,ohe=True, **kwargs):
+    def split_cols(self,data,scope, n=2):
+
+        """Yield successive n-sized chunks from l"""
+        for i in range(0, len(scope), n):
+            yield data[:,i:i+n],scope[i:i + n]
+
+
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7, **kwargs):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
+        self.scope = scope
+        self.ds_context = ds_context
+        self.prob = prob
+
         tasks = deque()
         '''
         T = spatialtree(    data, 
@@ -118,17 +131,53 @@ class spatialtree(object):
 
 
 
-        if scope is None:
-            scope = list(set(list(range(0,data.shape[1]))))
 
-        self.split_cols =  get_split_cols_RDC_py(rand_gen=numpy.random.RandomState(17), ohe=ohe,threshold=threshold, n_jobs=5)
-        self.spn_node = spn_object #sph_node
-        self.scope = scope; #scope
-        self.ds_context = ds_context
 
      
+    def project(self,data,**kwargs):
+        self.__w = self.splitF(data, **kwargs)
+
+
+        # Project onto split direction
+        wx = {}
+        for i in self.__indices:
+            wx[i] = numpy.dot(self.__w, data[i])
+            pass
+
+
+
+        # Compute the bias points
+        self.__thresholds = scipy.stats.mstats.mquantiles(list(wx.values()), [self.prob - self.__spill/2, (1-self.prob) + self.__spill/2])
+        # Partition the data
+        left_set    = set()
+        right_set   = set()
+
+        right_data = list();
+        left_data = list();
+
+
+
+        for (i, val) in wx.items():
+            if val >= self.__thresholds[0]:
+                right_set.add(i)
+                right_data.append(data[i])
+
+        for (i, val) in wx.items():   
+            if val < self.__thresholds[-1]:
+                left_set.add(i)
+                left_data.append(data[i])
+        del wx  # Don't need scores anymore
+
+        return left_set,left_data,right_set,right_data
+    
 
     def split(self, data,**kwargs):
+  
+        # Store bookkeeping information
+
+        if self.scope is None:
+            self.scope = list(set(list(range(0,data.shape[1]))))
+
         if 'indices' not in kwargs:
             if isinstance(data, dict):
                 kwargs['indices']   = data.keys() #data 
@@ -173,10 +222,6 @@ class spatialtree(object):
             kwargs['samples_rp']    = 10
             pass
 
-
-        # All information is now contained in kwargs, we may proceed
-
-        # Store bookkeeping information
         self.__indices      = set(kwargs['indices']) #remeber indices
 
         self.__splitRule    = kwargs['rule'] 
@@ -203,13 +248,13 @@ class spatialtree(object):
         # First, find the split rule
     
         if kwargs['rule'] == 'pca':
-            splitF  =   self.__PCA
+            self.splitF  =   self.__PCA
         elif kwargs['rule'] == 'kd':
-            splitF  =   self.__KD
+            self.splitF  =   self.__KD
         elif kwargs['rule'] == '2-means':
-            splitF  =   self.__2means
+            self.splitF  =   self.__2means
         elif kwargs['rule'] == 'rp':
-            splitF  =   self.__RP
+            self.splitF  =   self.__RP
         else:
             raise ValueError('Unsupported split rule: %s' % kwargs['rule'])
 
@@ -244,43 +289,10 @@ class spatialtree(object):
         if kwargs['height'] == 0 or len(kwargs['indices']) < kwargs['min_items']:
             return  0
         # Compute the split direction 
-        self.__w = splitF(data, **kwargs)
-
-
-        # Project onto split direction
-        wx = {}
-        for i in self.__indices:
-            wx[i] = numpy.dot(self.__w, data[i])
-            pass
-
-
-
-        # Compute the bias points
-        self.__thresholds = scipy.stats.mstats.mquantiles(list(wx.values()), [self.prob - self.__spill/2, (1-self.prob) + self.__spill/2])
-        # Partition the data
-        left_set    = set()
-        right_set   = set()
-
-        right_data = list();
-        left_data = list();
-
-
-
-        for (i, val) in wx.items():
-            if val >= self.__thresholds[0]:
-                right_set.add(i)
-                right_data.append(data[i])
-
-        for (i, val) in wx.items():   
-            if val < self.__thresholds[-1]:
-                left_set.add(i)
-                left_data.append(data[i])
-            pass
-
+        left_set,left_data,right_set,right_data = self.project(data,**kwargs)
 
         print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
 
-        del wx  # Don't need scores anymore
 
         # Construct the children
         self.__children     = list()
@@ -344,7 +356,7 @@ class spatialtree(object):
         node= Product();
         rptree = list()
         child_count = 0;
-        for data_slice, scope_slice, _ in self.split_cols(data, self.ds_context, scope):
+        for data_slice, scope_slice in self.split_cols(data,  scope):
             if len(scope_slice) == 1 and len(data_slice) !=0:
                 children = self.produce_node(NODE_TYPE.LEAF_NODE,data,scope_slice)
                 node.scope.extend(scope_slice) 
