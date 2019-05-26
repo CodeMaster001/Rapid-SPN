@@ -9,6 +9,8 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+
+import random
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -86,7 +88,7 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00000001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
@@ -166,7 +168,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='iris', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='letter', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -174,66 +176,72 @@ theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
+ours_time_tf = list()
+theirs_time_tf = list();
 for train_index, test_index in kf.split(credit):
-	X = credit.values[train_index,:]
-	X=numpy.nan_to_num(X)
-	X = preprocessing.normalize(X, norm='l2')
-	X_test = credit.values[test_index];	
-	#X_test = numpy.nan_to_num(X_test)
-	X_test = preprocessing.normalize(X_test, norm='l2')
-	X = X.astype(numpy.float32)
-	X_test =X_test.astype(numpy.float32)
-	context = list()
-	for i in range(0,X.shape[1]):
-		context.append(Gaussian)
-
-	
-
+    X = credit.values[train_index,:]
+    print(X.shape)
+    X=numpy.nan_to_num(X)
+    X = preprocessing.normalize(X, norm='l2')
+    X_test = credit.values[test_index];	
+    #X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    context = list()
+    for i in range(0,X.shape[1]):
+       context.append(Gaussian)
 
 
-	ds_context = Context(parametric_types=context).add_domains(X)
-	print("training normnal spm")
-	
-	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
-	spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
-		#tf.train.AdamOptimizer(1e-4))
-	
-	theirs_time = time.time()-theirs_time
+    ds_context = Context(parametric_types=context).add_domains(X)
+    print("training normnal spm")
 
-	
-	ll_test = eval_tf(spn_classification, X_test)
-	#print(ll_test)
-	#ll_test = log_likelihood(spn_classification,X_test)
-	ll_test_original=ll_test[ll_test>-1000]
-	
+    original = time.time()
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=500)
+
+    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #tf.train.AdamOptimizer(1e-4))
+
+    theirs_time = time.time()-original
 
 
+    #ll_test = eval_tf(spn_classification, X_test)
+    #print(ll_test)
+    ll_test = log_likelihood(spn_classification,X_test)
+    theirs_time_tf = time.time() -original
 
-	print('Building tree...')
-	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-	print("Building tree complete")
-	
-	T= T.build_spn();
-	T.update_ids();
-	from spn.io.Text import spn_to_str_equation
-	spn = T.spn_node;
-	ours_time = time.time()-original;
-	ours_time_list.append(ours_time)
-	bfs(spn,print_prob)
-	#ll = log_likelihood(spn, X)
-	spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
-	ll_test = eval_tf(spn,X)
-	ll_test=ll_test[ll_test>-1000]
-	print("--ll--")
-	print(numpy.mean(ll_test_original))
-	print(numpy.mean(ll_test))
-	theirs.append(numpy.mean(ll_test_original))
-	ours.append(numpy.mean(ll_test))
-	theirs_time_list.append(theirs_time)
+    ll_test_original=ll_test[ll_test>-1000]
 
-#plot_spn(spn_classification, 'basicspn-original.png')
+
+    print('Building tree...')
+    original = time.time();
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=3,spill=0.3)
+    print("Building tree complete")
+
+    T= T.build_spn();
+    T.update_ids();
+    from spn.io.Text import spn_to_str_equation
+    spn = T.spn_node;
+    ours_time = time.time()-original
+    ours_time_list.append(ours_time)
+    #fs(spn,print_prob)
+    ll_test = log_likelihood(spn, X_test)
+    #spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    #ll_test = eval_tf(spn,X)
+    ours_time_tf = time.time()-original
+    #ll_test=ll[ll>-1000]
+    print("--ll--")
+    print(numpy.mean(ll_test_original))
+    print(numpy.mean(ll_test))
+    print(theirs_time)
+    print(ours_time)
+    print(theirs_time_tf)
+    print(ours_time_tf)
+    theirs.append(numpy.mean(ll_test_original))
+    ours.append(numpy.mean(ll_test))
+    theirs_time_list.append(theirs_time)
+
+    #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)

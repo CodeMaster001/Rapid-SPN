@@ -97,7 +97,7 @@ for train_index, test_index in kf.split(credit):
 
 	print('Building tree...')
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,height=8,spill=0.75,rule='rp')
+	T = SPNRPBuilder(ata=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
 	print("Building tree complete")
 	
 	T= T.build_spn();

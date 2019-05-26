@@ -20,6 +20,7 @@ from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_R
 from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
+from spn.algorithms.TransformStructure import Prune,Compress,SPN_Reshape
 from spn.algorithms.LearningWrappers import learn_parametric
 from spn.gpu.TensorFlow import optimize_tf
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
@@ -81,7 +82,7 @@ for train_index, test_index in kf.split(credit):
 	print("training normnal spm")
 	
 	theirs_time = time.time()
-	#spn_classification =  learn_parametric(numpy.array(X),ds_context,threshold=0.3,min_instances_slice=100)
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,threshold=0.3,min_instances_slice=100)
 	
 	
 	

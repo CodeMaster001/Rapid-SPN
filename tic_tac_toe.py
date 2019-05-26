@@ -176,7 +176,7 @@ def one_hot(df,col):
 
 
 
-credit,target = fetch_openml(name='tic-tac-toe', version=1,return_X_y=True)
+credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=False)
 credit = pd.DataFrame(data=credit)
 credit = credit.apply(LabelEncoder().fit_transform)
 print(credit.shape)
