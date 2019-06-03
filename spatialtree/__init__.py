@@ -37,6 +37,29 @@ class NODE_TYPE:
     PRODUCT_NODE = 1;
     LEAF_NODE=3
 
+def gini(data,index):
+    """Calculate the Gini coefficient of a numpy array."""
+    # based on bottom eq:
+    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
+    # from:
+    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    # All values are treated equally, arrays must be 1d:
+    data = data[:,index]
+    data = data.flatten()
+    if np.amin(data) < 0:
+        # Values cannot be negative:
+        data -= np.amin(data)
+    # Values cannot be 0:
+    data += 0.0000001
+    # Values must be sorted:
+    data = np.sort(data)
+    # Index per array element:
+    index = np.arange(1,data.shape[0]+1)
+    # Number of array elements:
+    n = data.shape[0]
+    # Gini coefficient:
+    return ((np.sum((2 * index - n  - 1) * data)) / (n * np.sum(data)))
+
 class SPNRPBuilder(object):
     
     tasks =list()
@@ -52,9 +75,7 @@ class SPNRPBuilder(object):
         self.proportion = proportion
 
         self.root= spatialtree(data,spn_object=self.spn_object,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=self.scope,threshold=self.threshold,prob=self.prob,ohe=self.ohe,proportion=self.proportion,**kwargs)
-        self.root.calculate_gini(data)
-        sys.exit(-1)
-        #SPNRPBuilder.tasks.append([self.root,data,kwargs])
+        SPNRPBuilder.tasks.append([self.root,data,kwargs])
 
 
     
@@ -80,40 +101,20 @@ class spatialtree(object):
         rebuild_scopes_bottom_up(self.spn_node)
         self.spn_node = Prune(self.spn_node)
 
-    def gini(self,data,index):
-        """Calculate the Gini coefficient of a numpy array."""
-        # based on bottom eq:
-        # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
-        # from:
-        # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
-        # All values are treated equally, arrays must be 1d:
-        data = data[:,index]
-        data = data.flatten()
-        if np.amin(data) < 0:
-            # Values cannot be negative:
-            data -= np.amin(data)
-        # Values cannot be 0:
-        data += 0.0000001
-        # Values must be sorted:
-        data = np.sort(data)
-        # Index per array element:
-        index = np.arange(1,data.shape[0]+1)
-        # Number of array elements:
-        n = data.shape[0]
-        # Gini coefficient:
-        return ((np.sum((2 * index - n  - 1) * data)) / (n * np.sum(data)))
-
+    
     def calculate_gini(self,data,k=2):
         split_cols = list()
         gini_values = np.zeros(shape=(data.shape[1],data.shape[1]))
-        p = Pool(10)
         for i in range(0,data.shape[1]):
+            p = Pool(10)
             process = list()
             for j in range(0,data.shape[1]):
-                gini_values[i,j] = p.apply(self.gini, (data,[i,j]))
+                gini_values[i,j] = p.apply(gini, (data,[i,j]))
+            p.close()
+            p.join()
         kmeans = KMeans(n_clusters=k, random_state=0).fit(gini_values)
         for i in range(0,k):
-            first_index = np.where(kmeans.labels_==i)
+            first_index = np.where(kmeans.labels_==i)[0]
             split_cols.append(first_index)
         return split_cols
 
@@ -122,10 +123,12 @@ class spatialtree(object):
 
 
     def split_cols(self,data,scope, n=2):
-
+        data = data[:,scope]
+        cols_split = self.calculate_gini(data)
+        data[:,cols_split[0]]
         """Yield successive n-sized chunks from l"""
-        for i in range(0, len(scope), n):
-            yield data[:,i:i+n],scope[i:i + n]
+        for i in range(0, len(cols_split)):
+            yield data[:,cols_split[i]], [scope[i] for i in cols_split[i]]
 
 
     def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7, **kwargs):
