@@ -169,12 +169,14 @@ def one_hot(df,col):
 credit = fetch_openml(name='glass', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=100,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
+counter =0;
 for train_index, test_index in kf.split(credit):
+
     print(train_index)
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
@@ -228,8 +230,12 @@ for train_index, test_index in kf.split(credit):
     ll_test = eval_tf(spn,X)
     ll_test=ll[ll>-1000]
     print("--ll--")
-    print(numpy.mean(ll_test_original))
-    print(numpy.mean(ll_test))
+    print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
+    print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
+    print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
+    print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
+    print("---ended---")
+    counter = counter + 1
     del spn
     del spn_classification
     del T
@@ -237,10 +243,10 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-
+ 
 
 #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
@@ -251,12 +257,12 @@ print('---ll---')
 print(numpy.mean(ours))
 ours = np.array(ours)
 theirs = np.array(theirs)
-result= np.array([ours,theirs])
-np.savetxt('glass.out',result,delimiter=',')
+ours_time_list = np.array(ours_time_list)
+theirs_time_list = np.array(theirs_time_list)
+result = np.vstack((ours,theirs))
+np.savetxt('glass.outll',result,delimiter=',')
+result = np.vstack((ours_time_list,theirs_time_list))
+np.savetxt('glass.outtt',result,delimiter=',')
 print(numpy.mean(theirs))
-
-
-
-
 
 
