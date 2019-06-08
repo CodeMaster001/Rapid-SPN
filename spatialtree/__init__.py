@@ -29,7 +29,7 @@ from collections import deque
 from multiprocessing import Process
 import numpy as np
 from sklearn.cluster import KMeans
-from multiprocessing import Pool
+import multiprocessing
 
 import sys;
 class NODE_TYPE:
@@ -105,13 +105,13 @@ class spatialtree(object):
     def calculate_gini(self,data,k=2):
         split_cols = list()
         gini_values = np.zeros(shape=(data.shape[1],data.shape[1]))
+        p = multiprocessing.pool.ThreadPool(10)
         for i in range(0,data.shape[1]):
-            p = Pool(10)
             process = list()
             for j in range(0,data.shape[1]):
                 gini_values[i,j] = p.apply(gini, (data,[i,j]))
-            p.close()
-            p.join()
+        p.close()
+        p.join()
         kmeans = KMeans(n_clusters=k, random_state=0).fit(gini_values)
         for i in range(0,k):
             first_index = np.where(kmeans.labels_==i)[0]
@@ -123,7 +123,6 @@ class spatialtree(object):
 
 
     def split_cols(self,data,scope, n=2):
-        data = data[:,scope]
         cols_split = self.calculate_gini(data)
         data[:,cols_split[0]]
         """Yield successive n-sized chunks from l"""
