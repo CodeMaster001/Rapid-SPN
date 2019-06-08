@@ -20,6 +20,7 @@ from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from spn.algorithms.LearningWrappers import learn_parametric
+from spatialtree import SPNRPBuilder
 
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from sklearn.metrics import accuracy_score
@@ -32,7 +33,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from spn.algorithms.Statistics import get_structure_stats
-
+import numpy as np
+import time
 numpy.random.seed(42)
 numpy.random.seed(42)
 
@@ -48,7 +50,7 @@ def one_hot(df,col):
 	df.drop()
 
 
-credit=pd.read_csv("cropland_pasture.csv",delimiter=",") 
+credit=pd.read_csv("dataset/Pasture.csv",delimiter=",") 
 credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
 
 print(credit.shape)
@@ -63,13 +65,10 @@ print(credit.head())
 credit= (credit - credit.mean()) / (credit.max() - credit.min())
 credit.values.astype(float)
 credit.to_csv('credit.csv')
-
-half_dataset = credit.values[:int(credit.values.shape[0]/2.0),:]
-nan_dataset = [np.nan]*half_dataset.shape[0]*half_dataset.shape[1]
-nan_dataset =nan_dataset.reshape(half_dataset.shape[0],half_dataset.shape[1])
-test_query = np.concatenate((half_dataset, nan_dataset), axis=1)
-print(sample_instances(spn, np.array([np.nan, np.nan, np.nan] * 5).reshape(-1, 3), RandomState(123)))
-
+ours_time_list = list();
+theirs_time_list = list();
+theirs_time = 0
+ours_time =0 
 for train_index, test_index in kf.split(credit):
 	X = credit.values[train_index]
 	X_test = credit.values[test_index];
@@ -90,28 +89,29 @@ for train_index, test_index in kf.split(credit):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	print("training normnal spm")
+	original = time.time()
 	spn_classification = learn_parametric(numpy.array(X),ds_context)
 
 
 	ll_original = log_likelihood(spn_classification, X)
 	ll = log_likelihood(spn_classification, X)
 	ll_test = log_likelihood(spn_classification,X_test)
+	theirs_time = time.time()-original
 	ll_test_original=ll_test[ll_test>-1000]
 
-
+	original = time.time()
 	print('Building tree...')
-	T = spatialtree(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=4,spill=0.25)
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
 	print("Building tree complete")
-	T.update_ids()
-
-
+	T= T.build_spn();
+	T.update_ids();
 
 	spn = T.spn_node_object()
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
+	ours_time = time.time()-original
 	ll_test=ll_test[ll_test>-1000]
 	ll =ll[ll>-1000]
-
 
 	print(numpy.mean(ll_test))
 	print(numpy.mean(ll_test_original))
@@ -119,12 +119,17 @@ for train_index, test_index in kf.split(credit):
 	plot_spn(spn_classification, 'basicspn-original.png')
 	theirs.extend(ll_test_original)
 	ours.extend(ll_test)
+	print(numpy.mean(ll_test_original))
+	print(numpy.mean(ll_test))
+	theirs.extend(ll_test_original)
+	ours.extend(ll_test)
+	theirs_time_list.append(theirs_time)
+	ours_time_list.append(ours_time)
 
 
 print(get_structure_stats(spn))
 print(numpy.mean(theirs))
 print(numpy.mean(ours))
-
-
-
+print(numpy.mean(theirs_time_list))
+print(numpy.mean(ours_time_list))
 
