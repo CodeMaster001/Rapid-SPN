@@ -123,7 +123,7 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            if np.abs(old_loss)<0.02:
+            if old_loss<0.02:
                 break;
             print(old_loss)
 
@@ -233,7 +233,6 @@ for train_index, test_index in kf.split(credit):
     print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
-    sys.exit(-1)
     print("---ended---")
     counter = counter + 1
     del spn
@@ -260,9 +259,9 @@ theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
 theirs_time_list = np.array(theirs_time_list)
 result = np.vstack((ours,theirs))
-np.savetxt('ionosphere.outll',result,delimiter=',')
+np.savetxt('sonar.outll',result,delimiter=',')
 result = np.vstack((ours_time_list,theirs_time_list))
-np.savetxt('ionosphere.outtt',result,delimiter=',')
+np.savetxt('sonar.outtt',result,delimiter=',')
 print(numpy.mean(theirs))
 
 

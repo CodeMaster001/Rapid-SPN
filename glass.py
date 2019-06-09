@@ -123,7 +123,7 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            if np.abs(old_loss)<0.02:
+            if old_loss<0.02:
                 break;
             print(old_loss)
 
@@ -169,7 +169,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='glass', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=5,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()

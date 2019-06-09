@@ -167,8 +167,8 @@ def one_hot(df,col):
 
 credit = fetch_openml(name='cars', version=2,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
-
-kf = KFold(n_splits=40,shuffle=True)
+credit = credit.fillna(0)
+kf = KFold(n_splits=80,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -179,10 +179,10 @@ for train_index, test_index in kf.split(credit):
     print(train_index)
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
-    X = preprocessing.normalize(X, norm='l2')
+    #X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
-    #X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
+    X_test = numpy.nan_to_num(X_test)
+    #X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
@@ -197,7 +197,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context)
     spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
@@ -260,9 +260,9 @@ theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
 theirs_time_list = np.array(theirs_time_list)
 result = np.vstack((ours,theirs))
-np.savetxt('ionosphere.outll',result,delimiter=',')
+np.savetxt('cars.outll',result,delimiter=',')
 result = np.vstack((ours_time_list,theirs_time_list))
-np.savetxt('ionosphere.outtt',result,delimiter=',')
+np.savetxt('cars.outtt',result,delimiter=',')
 print(numpy.mean(theirs))
 
 
