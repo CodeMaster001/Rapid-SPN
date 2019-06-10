@@ -251,17 +251,22 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
+print("--ll--")
 print(theirs)
-print(ours)
-print(original)
-print('---Time---')
-print(numpy.mean(ours_time_list))
-print(numpy.mean(theirs_time_list))
-print('---ll---')
-print(numpy.mean(ours))
-print(numpy.mean(theirs))
+print(np.mean(theirs))
+print(np.var(theirs))
+print(np.mean(ours))
+print(np.var(ours))
+print("------")
 
 
+
+print("--tt--")
+print(np.mean(theirs_time_list))
+print(np.var(theirs_time_list))
+print(np.mean(ours_time_list))
+print(np.var(ours_time_list))
+print("------")
 
 
 

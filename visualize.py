@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import sys
 ll_theirs = np.loadtxt(sys.argv[1],delimiter=',')[1]
 time_theirs= np.loadtxt(sys.argv[2],delimiter=',')[1]
-ours_ll= np.loadtxt(sys.argv[3],delimiter=',')
-ours_time = np.loadtxt(sys.argv[4],delimiter=',')
+ours_ll= np.loadtxt(sys.argv[1],delimiter=',')[0]
+ours_time = np.loadtxt(sys.argv[2],delimiter=',')[0]
 
 fig, axes = plt.subplots(nrows=2, ncols=2)
 axes[0,0].plot(range(0,len(ll_theirs)),ll_theirs, color='red',label="LEARNSPN LL")

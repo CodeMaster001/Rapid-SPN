@@ -212,7 +212,7 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -251,17 +251,25 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
 print('---Time---')
-print(numpy.mean(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
+print(numpy.var(theirs))
 
-
+print(numpy.mean(ours))
+print(numpy.var(ours))
+theirs = np.array(theirs)
+ours_time_list = np.array(ours_time_list)
+theirs_time_list = np.array(theirs_time_list)
+result = np.vstack((ours,theirs))
+np.savetxt('pasture.outll',result,delimiter=',')
+result = np.vstack((ours_time_list,theirs_time_list))
+np.savetxt('pasture.outtt',result,delimiter=',')
+print(numpy.mean(theirs))
 
 
 
