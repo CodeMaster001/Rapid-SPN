@@ -123,7 +123,7 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            if np.abs(old_loss)<0.02:
+            if old_loss<0.02:
                 break;
             print(old_loss)
 
@@ -197,24 +197,24 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30)
-    spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
+    #spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
-    theirs_time = time.time()-theirs_time
+    #theirs_time = time.time()-theirs_time
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    #ll_test_original=ll_test[ll_test>-1000]
 
 
 
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=10,prob=0.40,height=4,min_items=10)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4,spill=0.3)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -224,24 +224,23 @@ for train_index, test_index in kf.split(credit):
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     bfs(spn,print_prob)
-    ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
-    print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
-    print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
+    #print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
+    #print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
     print("---ended---")
     counter = counter + 1
     del spn
-    del spn_classification
+    #del spn_classification
     del T
     
-    theirs.append(numpy.mean(ll_test_original))
+    #theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
+    #theirs_time_list.append(theirs_time)
  
 
 #plot_spn(spn_classification, 'basicspn-original.png')
@@ -251,16 +250,16 @@ print(ours)
 print(original)
 print('---Time---')
 print(numpy.mean(ours_time_list))
-print(numpy.mean(theirs_time_list))
+#print(numpy.mean(theirs_time_list))
 print('---ll---')
 print(numpy.mean(ours))
 ours = np.array(ours)
-theirs = np.array(theirs)
+#theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
-theirs_time_list = np.array(theirs_time_list)
-result = np.vstack((ours,theirs))
+#theirs_time_list = np.array(theirs_time_list)
+result = np.vstack((ours))
 np.savetxt('ionosphere.outll',result,delimiter=',')
-result = np.vstack((ours_time_list,theirs_time_list))
+result = np.vstack((theirs_time_list))
 np.savetxt('ionosphere.outtt',result,delimiter=',')
 print(numpy.mean(theirs))
 
