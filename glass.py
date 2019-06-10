@@ -169,7 +169,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='glass', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=5,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -228,7 +228,7 @@ for train_index, test_index in kf.split(credit):
     ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
     print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
@@ -252,9 +252,14 @@ print(ours)
 print(original)
 print('---Time---')
 print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
 print('---ll---')
 print(numpy.mean(ours))
+print(numpy.var(ours))
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
 ours = np.array(ours)
 theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
