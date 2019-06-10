@@ -168,7 +168,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='letter', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='iris', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -197,7 +197,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=500)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
 
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -215,7 +215,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=3,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -247,12 +247,16 @@ print(theirs)
 print(ours)
 print(original)
 print('---Time---')
-print(numpy.mean(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
+print(numpy.var(theirs))
 
+print(numpy.mean(ours))
+print(numpy.var(ours))
 
 
 
