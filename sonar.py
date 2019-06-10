@@ -165,7 +165,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='ionosphere', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='sonar', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
 kf = KFold(n_splits=40,shuffle=True)
@@ -214,7 +214,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,leaves_size=2,height=4)
     print("Building tree complete")
 
     T= T.build_spn();
