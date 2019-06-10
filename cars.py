@@ -168,7 +168,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='cars', version=2,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 credit = credit.fillna(0)
-kf = KFold(n_splits=80,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -215,7 +215,7 @@ for train_index, test_index in kf.split(credit):
     print('Building tree...')
     original = time.time();
    
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,height=3,leaves_size=100)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,height=4,leaves_size=100)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -228,7 +228,7 @@ for train_index, test_index in kf.split(credit):
     ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
     print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
@@ -251,11 +251,16 @@ print(theirs)
 print(ours)
 print(original)
 print('---Time---')
-print(numpy.mean(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+
 print(numpy.mean(ours))
-ours = np.array(ours)
+print(numpy.var(ours))
 theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
 theirs_time_list = np.array(theirs_time_list)
