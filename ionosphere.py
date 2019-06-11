@@ -197,7 +197,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=80)
     spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
@@ -246,10 +246,10 @@ for train_index, test_index in kf.split(credit):
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
