@@ -168,7 +168,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='ionosphere', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -197,17 +197,17 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     theirs_time = time.time()
-    #spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
-    #spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
+    spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
-    #theirs_time = time.time()-theirs_time
+    theirs_time = time.time()-theirs_time
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
-    #print(ll_test)
+    ll_test = eval_tf(spn_classification, X_test)
+    print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    #ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original=ll_test[ll_test>-1000]
 
 
 
@@ -229,37 +229,39 @@ for train_index, test_index in kf.split(credit):
     ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
-    #print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
-    #print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
+    print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
+    print("ll:"+str(counter)+":"+str(numpy.mean(ll_test_original)))
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
     print("---ended---")
     counter = counter + 1
     del spn
-    #del spn_classification
+    del spn_classification
     del T
     
-    #theirs.append(numpy.mean(ll_test_original))
+    theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
-    #theirs_time_list.append(theirs_time)
+    theirs_time_list.append(theirs_time)
  
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
 print('---Time---')
 print(numpy.mean(ours_time_list))
-#print(numpy.mean(theirs_time_list))
+print(numpy.var(ours_time_list))
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
 print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
 print(numpy.mean(ours))
+print(numpy.var(ours))
 ours = np.array(ours)
 #theirs = np.array(theirs)
 ours_time_list = np.array(ours_time_list)
 #theirs_time_list = np.array(theirs_time_list)
-result = np.vstack((ours))
+result = np.vstack((ours,theirs))
 np.savetxt('ionosphere.outll',result,delimiter=',')
-result = np.vstack((theirs_time_list))
+result = np.vstack((ours_time_list,theirs_time_list))
 np.savetxt('ionosphere.outtt',result,delimiter=',')
 print(numpy.mean(theirs))
 
