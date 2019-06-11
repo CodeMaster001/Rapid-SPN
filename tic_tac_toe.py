@@ -176,7 +176,7 @@ def one_hot(df,col):
 
 
 
-credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=False)
+credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 credit = credit.apply(LabelEncoder().fit_transform)
 print(credit.shape)
@@ -252,12 +252,16 @@ print(theirs)
 print(ours)
 print(original)
 print('---Time---')
-print(numpy.mean(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
+print(numpy.var(theirs))
 
+print(numpy.mean(ours))
+print(numpy.var(ours))
 
 
 
