@@ -195,10 +195,10 @@ theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
-    #X = preprocessing.normalize(X, norm='l2')
+    X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
-    #X_test = numpy.nan_to_num(X_test)
-    #X_test = preprocessing.normalize(X_test, norm='l2')
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
@@ -228,7 +228,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=3,spill=0.25)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.75,leaves_size=2,height=2,spill=0.25)
     print("Building tree complete")
 
     T= T.build_spn();
