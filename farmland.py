@@ -195,10 +195,10 @@ theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
-    #X = preprocessing.normalize(X, norm='l2')
+    X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
-    #X_test = numpy.nan_to_num(X_test)
-    #X_test = preprocessing.normalize(X_test, norm='l2')
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
