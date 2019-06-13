@@ -171,7 +171,6 @@ def one_hot(df,col):
 credit = fetch_openml(name='BNG(mv)', version=1,return_X_y=True)[0]
 #/credit = np.ones(shape=(100000,10))
 print(credit.shape)
-
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -180,19 +179,28 @@ theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
 print(credit.shape)
+Categorical_index = [6,7]
 for train_index, test_index in kf.split(credit):
     X = credit[train_index,:]
     print(X.shape)
     X=numpy.nan_to_num(X)
-    X = preprocessing.normalize(X, norm='l2')
+    X_temp = preprocessing.normalize(X, norm='l2')
+    X_temp[:,Categorical_index] = X[:,Categorical_index]
+    X= np.array(X_temp)
+    
     X_test = credit[test_index];	
-    #X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
+    X_temp = preprocessing.normalize(X_test, norm='l2')
+    X_temp[:,Categorical_index] = X_test[:,Categorical_index]
+    X_test= np.array(X_temp)
+    #X_test = numpy.nan_to_num(X_test
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
     for i in range(0,X.shape[1]):
-       context.append(Gaussian)
+        if i not in Categorical_index:
+            context.append(Gaussian)
+        else:
+            context.append(Categorical)
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
