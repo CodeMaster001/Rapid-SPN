@@ -124,7 +124,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=5,samples_rp=20,prob=0.40,spill=0.25)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.40,spill=0.25)
     print("Building tree complete")
     
 
@@ -134,7 +134,6 @@ for train_index, test_index in kf.split(credit):
     spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    plot_spn(spn, 'basicspn.png')
     ll = log_likelihood(spn, X)
     
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
@@ -149,15 +148,21 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
-print('---Time---')
-print(numpy.mean(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
+print(numpy.var(theirs))
+
+print(numpy.mean(ours))
+print(numpy.var(ours))
+
+
+
+
+
 
 
 
