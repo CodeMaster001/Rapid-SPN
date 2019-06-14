@@ -172,7 +172,7 @@ credit = fetch_openml(name='wine_quality', version=1,return_X_y=True)[0]
 #/credit = np.ones(shape=(100000,10))
 print(credit.shape)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -199,7 +199,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=200)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=80)
 
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -216,7 +216,7 @@ for train_index, test_index in kf.split(credit):
 
 
     #print('Building tree...')
-    #original = time.time();
+    original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
     print("Building tree complete")
 
@@ -233,7 +233,7 @@ for train_index, test_index in kf.split(credit):
     ours_time_tf = time.time()-original
     ll_test=ll_test[ll_test>-1000]
     print("--ll--")
-    #print(numpy.mean(ll_test_original))
+    print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     print(theirs_time)
     print(ours_time)
@@ -244,7 +244,7 @@ for train_index, test_index in kf.split(credit):
     theirs_time_list.append(theirs_time)
 
     #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
