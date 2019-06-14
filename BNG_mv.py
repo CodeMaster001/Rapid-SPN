@@ -171,7 +171,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='BNG(mv)', version=1,return_X_y=True)[0]
 #/credit = np.ones(shape=(100000,10))
 print(credit.shape)
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=80,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -207,7 +207,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.4)
 
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -225,7 +225,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.2,leaves_size=2,height=2,spill=0.3)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -236,10 +236,10 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
     ll_test = log_likelihood(spn, X_test)
-    #spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
+    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
-    #ll_test=ll[ll>-1000]
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
@@ -252,7 +252,7 @@ for train_index, test_index in kf.split(credit):
     theirs_time_list.append(theirs_time)
 
     #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
