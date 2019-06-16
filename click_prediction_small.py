@@ -196,7 +196,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.6)
+    #spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.6)
 
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -206,10 +206,10 @@ for train_index, test_index in kf.split(credit):
 
     #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    theirs_time_tf = time.time() -original
+    #ll_test = log_likelihood(spn_classification,X_test)
+    #theirs_time_tf = time.time() -original
 
-    ll_test_original=ll_test[ll_test>-1000]
+    #ll_test_original=ll_test[ll_test>-1000]
 
 
     print('Building tree...')
@@ -231,29 +231,29 @@ for train_index, test_index in kf.split(credit):
     ours_time_tf = time.time()-original
     ll_test=ll_test[ll_test>-1000]
     print("--ll--")
-    print(numpy.mean(ll_test_original))
+    #print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
-    print(theirs_time)
+    #print(theirs_time)
     print(ours_time)
     #print(theirs_time_tf)
     #print(ours_time_tf)
     #theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
+    #theirs_time_list.append(theirs_time)
 
     #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
+#print(theirs)
 print(ours)
-print(original)
+#print(original)
 print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
+#print(numpy.mean(theirs_time_list))
+#print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
+#print(numpy.mean(theirs))
+#print(numpy.var(theirs))
 
 print(numpy.mean(ours))
 print(numpy.var(ours))
