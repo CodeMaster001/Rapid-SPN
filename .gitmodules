@@ -1,0 +1,4 @@
+[submodule "spflow-spnrp"]
+	path = spflow-spnrp
+	url = https://github.com/CodeMaster001/spflow-spnrp.git
+
