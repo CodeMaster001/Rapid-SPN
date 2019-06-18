@@ -6,11 +6,9 @@ Spatial tree demo for matrix data
 '''
 import logging
 logger = logging.getLogger('spnrp')
-logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler('spnrp.log')
-fh.setLevel(logging.DEBUG)
-logger.addHandler(fh)
+logging.basicConfig(filename='spnrpp.log',level=logging.DEBUG)
+
 
 
 import numpy
@@ -255,17 +253,11 @@ logging.info(ours)
 #print(original)
 logging.info('---Time---')
 logging.info(numpy.mean(theirs_time_list))
-logging.ifno(numpy.var(theirs_time_list))
+logging.info(numpy.var(theirs_time_list))
 logging.info(numpy.mean(ours_time_list))
 logging.info(numpy.var(ours_time_list))
 logging.info('---ll---')
 logging.info(numpy.mean(theirs))
 logging.info(numpy.var(theirs))
-
 logging.info(numpy.mean(ours))
-logging.info((numpy.var(ours))
-
-
-
-
-
+logging.info(numpy.var(ours))
