@@ -4,12 +4,17 @@ CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
 Spatial tree demo for matrix data
 '''
+import logging
+logger = logging.getLogger('spnrp')
+# create file handler which logs even debug messages
+logging.basicConfig(filename='spnrpp.log',level=logging.DEBUG)
+
 
 
 import numpy
 import sys
 import os
-print('loaded')
+
 import random
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
@@ -41,7 +46,6 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
-import logging
 
 
 def optimize_tf(
@@ -136,8 +140,8 @@ def optimize_tf_graph(
 
 
 #tf.logging.set_verbosity(tf.logging.INFO)
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+#logging.getLogger().setLevel(logging.INFO)
+#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 def bfs(root, func):
     seen, queue = set([root]), collections.deque([root])
@@ -168,7 +172,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='Click_prediction_small', version=3,return_X_y=True)[0]
+credit = fetch_openml(name='Click_prediction_small', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -193,30 +197,30 @@ for train_index, test_index in kf.split(credit):
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spm")
+    logging.info("training normnal spm")
 
     original = time.time()
-    
-    #spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.6)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30000,threshold=0.6)
 
-    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
-    #theirs_time = time.time()-original
+    theirs_time = time.time()-original
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
-    #print(ll_test)
+    ll_test = eval_tf(spn_classification, X_test)
+    print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    #theirs_time_tf = time.time() -original
+    theirs_time_tf = time.time() -original
 
-    #ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original=ll_test[ll_test>-1000]
 
 
-    print('Building tree...')
+    logging.info('Building tree...')
     original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.3)
-    print("Building tree complete")
+    logging.info("Building tree complete")
 
     T= T.build_spn();
     T.update_ids();
@@ -226,17 +230,17 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
     
-    #ll_test = log_likelihood(spn, X_test)
+    ll_test = log_likelihood(spn, X_test)
+    logging.info(np.mean(ll_test))
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
-    print(ll_test)
     ll_test=ll_test[ll_test>-1000]
-    print("--ll--")
-    #print(numpy.mean(ll_test_original))
-    print(numpy.mean(ll_test))
-    print(theirs_time)
-    print(ours_time)
+    logging.info("--ll--")
+    logging.info(numpy.mean(ll_test_original))
+    logging.info(numpy.mean(ll_test))
+    logging.info(theirs_time)
+    logging.info(ours_time)
     print(theirs_time_tf)
     print(ours_time_tf)
     theirs.append(numpy.mean(ll_test_original))
@@ -245,22 +249,16 @@ for train_index, test_index in kf.split(credit):
 
     #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
-print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
-print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
-
-print(numpy.mean(ours))
-print(numpy.var(ours))
-
-
-
-
-
+logging.info(theirs)
+logging.info(ours)
+#print(original)
+logging.info('---Time---')
+logging.info(numpy.mean(theirs_time_list))
+logging.info(numpy.var(theirs_time_list))
+logging.info(numpy.mean(ours_time_list))
+logging.info(numpy.var(ours_time_list))
+logging.info('---ll---')
+logging.info(numpy.mean(theirs))
+logging.info(numpy.var(theirs))
+logging.info(numpy.mean(ours))
+logging.info(numpy.var(ours))

@@ -172,7 +172,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='Buzzinsocialmedia_Twitter', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='Click_prediction_small', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -200,26 +200,26 @@ for train_index, test_index in kf.split(credit):
     logging.info("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5000,threshold=0.6)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30000,threshold=0.6)
 
     
-    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
     theirs_time = time.time()-original
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
-    #print(ll_test)
+    ll_test = eval_tf(spn_classification, X_test)
+    print(ll_test)
     ll_test = log_likelihood(spn_classification,X_test)
-    #theirs_time_tf = time.time() -original
+    theirs_time_tf = time.time() -original
 
     ll_test_original=ll_test[ll_test>-1000]
 
 
     logging.info('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.33,leaves_size=2,height=3,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=5,spill=0.3)
     logging.info("Building tree complete")
 
     T= T.build_spn();
@@ -230,7 +230,8 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
     
-    #ll_test = log_likelihood(spn, X_test)
+    ll_test = log_likelihood(spn, X_test)
+    logging.info(np.mean(ll_test))
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
@@ -240,8 +241,8 @@ for train_index, test_index in kf.split(credit):
     logging.info(numpy.mean(ll_test))
     logging.info(theirs_time)
     logging.info(ours_time)
-    #print(theirs_time_tf)
-    #print(ours_time_tf)
+    print(theirs_time_tf)
+    print(ours_time_tf)
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
