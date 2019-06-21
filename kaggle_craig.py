@@ -42,7 +42,9 @@ import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
 import logging
-
+logger = logging.getLogger('spnrp')
+# create file handler which logs even debug messages
+logging.basicConfig(filename='spnrpp.log',level=logging.DEBUG)
 
 def optimize_tf(
     spn: Node,
@@ -135,9 +137,6 @@ def optimize_tf_graph(
 
 
 
-#tf.logging.set_verbosity(tf.logging.INFO)
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 def bfs(root, func):
     seen, queue = set([root]), collections.deque([root])
@@ -191,8 +190,6 @@ le = preprocessing.LabelEncoder()
 credit_categorical = credit_categorical.astype(str)
 credit_categorical = credit_categorical.apply(le.fit_transform)
 credit = np.concatenate((credit_gaussian, credit_categorical), axis=1)
-credit = credit[:10000,:]
-print(credit)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -219,7 +216,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.1)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=100000,threshold=0.6)
 
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -227,18 +224,18 @@ for train_index, test_index in kf.split(credit):
     theirs_time = time.time()-original
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
+    #ll_test = log_likelihood(spn_classification,X_test)
     theirs_time_tf = time.time() -original
 
     ll_test_original=ll_test[ll_test>-1000]
 
 
-    print('Building tree...')
+    logging.info('Building tree...')
     original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.3)
-    print("Building tree complete")
+    logging.info("Building tree complete")
 
     T= T.build_spn();
     T.update_ids();
@@ -252,33 +249,33 @@ for train_index, test_index in kf.split(credit):
     ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
     #ll_test=ll[ll>-1000]
-    print("--ll--")
-    print(numpy.mean(ll_test_original))
-    print(numpy.mean(ll_test))
-    print(theirs_time)
-    print(ours_time)
-    print(theirs_time_tf)
-    print(ours_time_tf)
+    logging.info("--ll--")
+    logging.info(numpy.mean(ll_test_original))
+    logging.info(numpy.mean(ll_test))
+    logging.info(theirs_time)
+    logging.info(ours_time)
+    logging.info(theirs_time_tf)
+    logging.info(ours_time_tf)
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
     #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
-print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
-print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
+logging.info(theirs)
+logging.info(ours)
+logging.info(original)
+logging.info('---Time---')
+logging.info(numpy.mean(theirs_time_list))
+logging.info(numpy.var(theirs_time_list))
+logging.info(numpy.mean(ours_time_list))
+logging.info(numpy.var(ours_time_list))
+logging.info('---ll---')
+logging.info(numpy.mean(theirs))
+logging.info(numpy.var(theirs))
 
-print(numpy.mean(ours))
-print(numpy.var(ours))
+logging.info(numpy.mean(ours))
+logging.info(numpy.var(ours))
 
 
 
