@@ -85,11 +85,9 @@ def optimize_tf(
 def optimize_tf_graph(
     tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
 ) -> List[float]:
-    if optimizer is None:
-        optimizer = tf.train.GradientDescentOptimizer(0.001)
+    original_optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00000001)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=2.0)
     opt_op = optimizer.minimize(loss)
 
     # Collect loss
@@ -103,6 +101,7 @@ def optimize_tf_graph(
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
         # Iterate over epochs
+        i = 0;
         while  True:
   
 
@@ -125,10 +124,9 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            print(old_loss)
-            if np.abs(old_loss) < 0.0002:
-         	   break;
-
+            if old_loss<0.0002 and i>500:
+                break;
+            i =i+1
         tf_graph_to_spn(variable_dict)
 
     return loss_list
@@ -197,7 +195,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=400,threshold=0.1)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000000,threshold=0.1)
 
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -215,7 +213,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=4,spill=0.9)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -226,7 +224,7 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
     ll_test = log_likelihood(spn, X_test)
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    spn=optimize_tf(spn,X,epochs=600,optimizer= tf.train.AdamOptimizer(0.001))
     #ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
     ll_test=ll_test[ll_test>-1000]

@@ -90,9 +90,8 @@ def optimize_tf_graph(
     tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
 ) -> List[float]:
     if optimizer is None:
-        optimizer = tf.train.GradientDescentOptimizer(0.001)
+        original_optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00000001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
