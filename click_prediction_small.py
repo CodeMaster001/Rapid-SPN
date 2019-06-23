@@ -99,6 +99,7 @@ def optimize_tf_graph(
     loss_list = [0]
     config = tf.ConfigProto(
         device_count = {'GPU': 0})
+    i = 0;
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         if not batch_size:
@@ -129,9 +130,9 @@ def optimize_tf_graph(
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
             print(old_loss)
-            if np.abs(old_loss) < 0.0002:
+            if np.abs(old_loss) < 0.0002 or i >200:
          	   break;
-
+            i = i + 1;
         tf_graph_to_spn(variable_dict)
 
     return loss_list
