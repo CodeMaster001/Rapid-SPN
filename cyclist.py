@@ -47,6 +47,106 @@ logger = logging.getLogger('spnrp')
 # create file handler which logs even debug messages
 logging.basicConfig(filename='spnrpp.log',level=logging.DEBUG)
 
+import numpy as np
+import tensorflow as tf
+from tensorflow.python.client import timeline
+from typing import Union, Tuple, List
+
+from spn.algorithms.TransformStructure import Copy
+from spn.structure.Base import Product, Sum, eval_spn_bottom_up, Node
+from spn.structure.leaves.histogram.Histograms import Histogram
+from spn.structure.leaves.histogram.Inference import histogram_likelihood
+from spn.structure.leaves.parametric.Parametric import Gaussian
+
+
+
+def log_sum_to_tf_graph(node, children, data_placeholder=None, variable_dict=None, log_space=True, dtype=np.float32):
+    assert log_space
+    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
+        softmaxInverse = np.log(node.weights / np.max(node.weights)+0.00000001).astype(dtype)
+        tfweights = tf.nn.softmax(tf.get_variable("weights", initializer=tf.constant(softmaxInverse)))
+        variable_dict[node] = tfweights
+        childrenprob = tf.stack(children, axis=1)
+        return tf.reduce_logsumexp(childrenprob + tf.log(tfweights), axis=1)
+
+
+def tf_graph_to_sum(node, tfvar):
+    node.weights = tfvar.tolist()
+
+
+def log_prod_to_tf_graph(node, children, data_placeholder=None, variable_dict=None, log_space=True, dtype=np.float32):
+    assert log_space
+    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
+        return tf.add_n(children)
+
+
+def histogram_to_tf_graph(node, data_placeholder=None, log_space=True, variable_dict=None, dtype=np.float32):
+    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
+        inps = np.arange(int(max(node.breaks))).reshape((-1, 1))
+        tmpscope = node.scope[0]
+        node.scope[0] = 0
+        hll = histogram_likelihood(node, inps)
+        node.scope[0] = tmpscope
+        if log_space:
+            hll = np.log(hll)
+
+        lls = tf.constant(hll.astype(dtype))
+
+        col = data_placeholder[:, node.scope[0]]
+
+        return tf.squeeze(tf.gather(lls, col))
+
+
+_node_log_tf_graph = {Sum: log_sum_to_tf_graph, Product: log_prod_to_tf_graph, Histogram: histogram_to_tf_graph}
+
+
+def add_node_to_tf_graph(node_type, lambda_func):
+    _node_log_tf_graph[node_type] = lambda_func
+
+
+_tf_graph_to_node = {Sum: tf_graph_to_sum}
+
+
+def add_tf_graph_to_node(node_type, lambda_func):
+    _tf_graph_to_node[node_type] = lambda_func
+
+
+def spn_to_tf_graph(node, data, batch_size=None, node_tf_graph=_node_log_tf_graph, log_space=True, dtype=None):
+    tf.reset_default_graph()
+    if not dtype:
+        dtype = data.dtype
+    # data is a placeholder, with shape same as numpy data
+    data_placeholder = tf.placeholder(data.dtype, (batch_size, data.shape[1]))
+    variable_dict = {}
+    tf_graph = eval_spn_bottom_up(
+        node,
+        node_tf_graph,
+        data_placeholder=data_placeholder,
+        log_space=log_space,
+        variable_dict=variable_dict,
+        dtype=dtype,
+    )
+    return tf_graph, data_placeholder, variable_dict
+
+
+def tf_graph_to_spn(variable_dict, tf_graph_to_node=_tf_graph_to_node):
+    tensors = []
+
+    for n, tfvars in variable_dict.items():
+        tensors.append(tfvars)
+
+    variable_list = tf.get_default_session().run(tensors)
+
+    for i, (n, tfvars) in enumerate(variable_dict.items()):
+        tf_graph_to_node[type(n)](n, variable_list[i])
+
+
+def likelihood_loss(tf_graph):
+    # minimize negative log likelihood
+    return -tf.reduce_sum(tf_graph)
+
+
+
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
