@@ -23,7 +23,7 @@ from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from spn.algorithms.LearningWrappers import learn_parametric
-from spn.gpu.TensorFlow import *
+from TensorFlow import *
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from sklearn.metrics import accuracy_score
 from numpy.random.mtrand import RandomState
@@ -36,7 +36,7 @@ from sklearn.datasets import fetch_openml
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
-from spn.gpu.TensorFlow import eval_tf
+from TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
@@ -57,133 +57,6 @@ from spn.structure.Base import Product, Sum, eval_spn_bottom_up, Node
 from spn.structure.leaves.histogram.Histograms import Histogram
 from spn.structure.leaves.histogram.Inference import histogram_likelihood
 from spn.structure.leaves.parametric.Parametric import Gaussian
-
-
-
-def log_sum_to_tf_graph(node, children, data_placeholder=None, variable_dict=None, log_space=True, dtype=np.float32):
-    assert log_space
-    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
-        softmaxInverse = np.log(node.weights / np.max(node.weights)+0.00000001).astype(dtype)
-        tfweights = tf.nn.softmax(tf.get_variable("weights", initializer=tf.constant(softmaxInverse)))
-        variable_dict[node] = tfweights
-        childrenprob = tf.stack(children, axis=1)
-        return tf.reduce_logsumexp(childrenprob + tf.log(tfweights), axis=1)
-
-
-def tf_graph_to_sum(node, tfvar):
-    node.weights = tfvar.tolist()
-
-
-def log_prod_to_tf_graph(node, children, data_placeholder=None, variable_dict=None, log_space=True, dtype=np.float32):
-    assert log_space
-    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
-        return tf.add_n(children)
-
-
-def histogram_to_tf_graph(node, data_placeholder=None, log_space=True, variable_dict=None, dtype=np.float32):
-    with tf.variable_scope("%s_%s" % (node.__class__.__name__, node.id)):
-        inps = np.arange(int(max(node.breaks))).reshape((-1, 1))
-        tmpscope = node.scope[0]
-        node.scope[0] = 0
-        hll = histogram_likelihood(node, inps)
-        node.scope[0] = tmpscope
-        if log_space:
-            hll = np.log(hll)
-
-        lls = tf.constant(hll.astype(dtype))
-
-        col = data_placeholder[:, node.scope[0]]
-
-        return tf.squeeze(tf.gather(lls, col))
-
-
-_node_log_tf_graph = {Sum: log_sum_to_tf_graph, Product: log_prod_to_tf_graph, Histogram: histogram_to_tf_graph}
-
-
-def add_node_to_tf_graph(node_type, lambda_func):
-    _node_log_tf_graph[node_type] = lambda_func
-
-
-_tf_graph_to_node = {Sum: tf_graph_to_sum}
-
-
-def add_tf_graph_to_node(node_type, lambda_func):
-    _tf_graph_to_node[node_type] = lambda_func
-
-
-def spn_to_tf_graph(node, data, batch_size=None, node_tf_graph=_node_log_tf_graph, log_space=True, dtype=None):
-    tf.reset_default_graph()
-    if not dtype:
-        dtype = data.dtype
-    # data is a placeholder, with shape same as numpy data
-    data_placeholder = tf.placeholder(data.dtype, (batch_size, data.shape[1]))
-    variable_dict = {}
-    tf_graph = eval_spn_bottom_up(
-        node,
-        node_tf_graph,
-        data_placeholder=data_placeholder,
-        log_space=log_space,
-        variable_dict=variable_dict,
-        dtype=dtype,
-    )
-    return tf_graph, data_placeholder, variable_dict
-
-
-def tf_graph_to_spn(variable_dict, tf_graph_to_node=_tf_graph_to_node):
-    tensors = []
-
-    for n, tfvars in variable_dict.items():
-        tensors.append(tfvars)
-
-    variable_list = tf.get_default_session().run(tensors)
-
-    for i, (n, tfvars) in enumerate(variable_dict.items()):
-        tf_graph_to_node[type(n)](n, variable_list[i])
-
-
-def likelihood_loss(tf_graph):
-    # minimize negative log likelihood
-    return -tf.reduce_sum(tf_graph)
-
-
-
-def optimize_tf(
-    spn: Node,
-    data: np.ndarray,
-    epochs=1000,
-    batch_size: int = None,
-    optimizer: tf.train.Optimizer = None,
-    return_loss=False,
-) -> Union[Tuple[Node, List[float]], Node]:
-    """
-    Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
-    function.
-    :param spn: SPN which is to be optimized
-    :param data: Input data
-    :param epochs: Number of epochs
-    :param batch_size: Size of each minibatch for SGD
-    :param optimizer: Optimizer procedure
-    :param return_loss: Whether to also return the list of losses for each epoch or not
-    :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
-    returned, else only a copy of the optimized SPN is returned
-    """
-    # Make sure, that the passed SPN is not modified
-    spn_copy = Copy(spn)
-
-    # Compile the SPN to a static tensorflow graph
-    tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
-
-    # Optimize the tensorflow graph
-    loss_list = optimize_tf_graph(
-        tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
-    )
-
-    # Return loss as well if flag is set
-    if return_loss:
-        return spn_copy, loss_list
-
-    return spn_copy
-
 
 def optimize_tf_graph(
     tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
@@ -268,7 +141,7 @@ def one_hot(df,col):
 
 
 
-credit = pd.read_csv('2012Q1-capitalbikeshare-tripdata.csv', delimiter=',')
+credit = pd.read_csv('dataset/2012Q1-capitalbikeshare-tripdata.csv', delimiter=',')
 credit = credit.drop('Bike number',axis=1)
 print(credit.columns)
 credit = credit.drop('Start date',axis=1)
