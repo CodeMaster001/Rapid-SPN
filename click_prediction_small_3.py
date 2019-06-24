@@ -172,7 +172,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='Click_prediction_small', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='Click_prediction_small', version=3,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
