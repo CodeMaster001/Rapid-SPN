@@ -23,7 +23,7 @@ from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from spn.algorithms.LearningWrappers import learn_parametric
-from TensorFlow import *
+from spn.gpu.TensorFlow import *
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from sklearn.metrics import accuracy_score
 from numpy.random.mtrand import RandomState
@@ -36,7 +36,7 @@ from sklearn.datasets import fetch_openml
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
-from TensorFlow import eval_tf
+from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
@@ -191,7 +191,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5000000,threshold=0.6)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5000,threshold=0.6)
 
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -209,7 +209,7 @@ for train_index, test_index in kf.split(credit):
 
     logging.info('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=4,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=6,spill=0.1)
     logging.info("Building tree complete")
 
     T= T.build_spn();
@@ -220,7 +220,7 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #bfs(spn,print_prob)
     ll_test = log_likelihood(spn, X_test)
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    #spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     #ll_test = eval_tf(spn,X)
     ours_time_tf = time.time()-original
     ll_test=ll_test[ll_test>-1000]
@@ -235,7 +235,6 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    sys.exit(-1)
     #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
 logging.info(theirs)

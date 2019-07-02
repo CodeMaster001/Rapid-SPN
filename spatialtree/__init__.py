@@ -52,13 +52,13 @@ def gini(data,index):
     # Values cannot be 0:
     data += 0.0000001
     # Values must be sorted:
-    data = np.sort(data)
+    #data = np.sort(data)
     # Index per array element:
-    index = np.arange(1,data.shape[0]+1)
+    index_shape = np.arange(1,data.shape[0]+1)
     # Number of array elements:
     n = data.shape[0]
     # Gini coefficient:
-    return ((np.sum((2 * index - n  - 1) * data)) / (n * np.sum(data)))
+    return ((np.sum((2 * index_shape - n  - 1) * data)) / (n * np.sum(data)))
 
 class SPNRPBuilder(object):
     
@@ -83,7 +83,7 @@ class SPNRPBuilder(object):
         while SPNRPBuilder.tasks:
             sp,data,kwargs =  SPNRPBuilder.tasks.pop();
             sp.split(data,**kwargs)
-            print(kwargs)
+            #print(kwargs)
 
 
         return self.root
@@ -110,6 +110,7 @@ class spatialtree(object):
             process = list()
             for j in range(0,data.shape[1]):
                 gini_values[i,j] = p.apply(gini, (data,[i,j]))
+            print(i)
         p.close()
         p.join()
         kmeans = KMeans(n_clusters=k, random_state=0).fit(gini_values)
@@ -340,7 +341,7 @@ class spatialtree(object):
         # Compute the split direction 
         left_set,left_data,right_set,right_data = self.project(data,**kwargs)
 
-        print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
+        #print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
 
 
         # Construct the children
@@ -391,7 +392,7 @@ class spatialtree(object):
         self.spn_node.children.append(children)
         self.spn_node.weights.append(kwargs['proportion'])
         spatial_tree= spatialtree(numpy.array(data),children,ds_context = self.ds_context, **kwargs)
-        print('ADDED')
+        #print('ADDED')
         SPNRPBuilder.tasks.append([spatial_tree,data,kwargs])
         return spatial_tree
 
@@ -424,8 +425,8 @@ class spatialtree(object):
         if len(data_set) != 0 or child_count > 0:
             self.spn_node.children.append(node)
             self.spn_node.weights.append(sum_weight) 
-        print('length')
-        print(len(rptree))
+        #print('length')
+        #print(len(rptree))
         return rptree
 
 

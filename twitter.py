@@ -200,18 +200,19 @@ for train_index, test_index in kf.split(credit):
     logging.info("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30000,threshold=0.6)
+    #spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30000,threshold=0.6)
 
     
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
     theirs_time = time.time()-original
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
+    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test=[0.0]
     theirs_time_tf = time.time() -original
 
     ll_test_original=ll_test[ll_test>-1000]
@@ -219,7 +220,7 @@ for train_index, test_index in kf.split(credit):
 
     logging.info('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=5,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.3)
     logging.info("Building tree complete")
 
     T= T.build_spn();
