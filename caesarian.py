@@ -176,10 +176,10 @@ def one_hot(df,col):
 
 
 
-credit = pd.read_csv('caesarian.csv',delimiter=',')
+credit = pd.read_csv('dataset/caesarian.csv',delimiter=',')
 credit = credit.apply(LabelEncoder().fit_transform)
 print(credit.shape)
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 print(credit.head())
@@ -250,12 +250,17 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
-plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn_classification, 'basicspn-original.png')
+#plot_spn(spn, 'basicspn.png')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
+numpy.savetxt('ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('theirs.ll',theirs, delimiter=',')
+numpy.savetxt('ours.ll',ours, delimiter=',')
+
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
