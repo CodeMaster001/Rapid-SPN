@@ -227,12 +227,17 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',height=2,prob=0.6,spill=0.76)
-    print("Building tree complete")
     
-
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=2,spill=0.76)
+    print("Building tree complete")
     T= T.build_spn();
     T.update_ids();
+    spn_1 = T.spn_node;
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=2,spill=0.76)
+    T= T.build_spn();
+    T.update_ids();
+    spn_2 = T.spn_node;
+    spn = Sum(weights=[0.2, 0.2], children=[spn_1, spn_2])
     from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
     ours_time = time.time()-original;
@@ -250,7 +255,7 @@ for train_index, test_index in kf.split(credit):
     theirs_time_list.append(theirs_time)
 
 #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
@@ -261,7 +266,10 @@ print(numpy.var(theirs))
 
 print(numpy.mean(ours))
 print(numpy.var(ours))
-
+numpy.savetxt('ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('theirs.ll',theirs, delimiter=',')
+numpy.savetxt('ours.ll',ours, delimiter=',')
 
 
 
