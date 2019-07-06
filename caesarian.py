@@ -178,15 +178,13 @@ def one_hot(df,col):
 
 credit = pd.read_csv('dataset/caesarian.csv',delimiter=',')
 credit = credit.apply(LabelEncoder().fit_transform)
-print(credit.shape)
-kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
+
+kf = KFold(n_splits=10,shuffle=True)
 print(credit.head())
 credit = credit.astype(np.float32)
 credit = numpy.nan_to_num(credit)
-
-kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -238,17 +236,21 @@ for train_index, test_index in kf.split(credit):
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     #bfs(spn,print_prob)
-    ll = log_likelihood(spn, X)
     
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
+    ll_test = eval_tf(spn,X_test)
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn_classification))
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn))
+    
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
