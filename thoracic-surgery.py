@@ -149,11 +149,13 @@ for train_index, test_index in kf.split(credit):
     spn = bfs(spn,print_prob)
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll = log_likelihood(spn, X_test)
+    ll_test = log_likelihood(spn, X_test)
     
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
+    
+
+    #l_test = eval_tf(spn,X)
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
@@ -168,7 +170,9 @@ print(ours)
 print(original)
 print('---Time---')
 print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
 print('---ll---')
 print(numpy.mean(ours))
 print(numpy.mean(theirs))
