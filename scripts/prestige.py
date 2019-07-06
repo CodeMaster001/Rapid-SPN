@@ -197,10 +197,10 @@ for train_index, test_index in kf.split(credit):
 
     theirs_time = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context)
+    theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
-    theirs_time = time.time()-theirs_time
 
 
     ll_test = eval_tf(spn_classification, X_test)
@@ -232,6 +232,7 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
+
     
 
 #plot_spn(spn_classification, 'basicspn-original.png')
