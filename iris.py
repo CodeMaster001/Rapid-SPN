@@ -41,7 +41,6 @@ import numpy as np, numpy.random
 numpy.random.seed(42)
 import logging
 
-
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
@@ -86,8 +85,7 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
     # Collect loss
@@ -130,6 +128,7 @@ def optimize_tf_graph(
         tf_graph_to_spn(variable_dict)
 
     return loss_list
+
 
 
 
@@ -212,7 +211,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=3,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
     print("Building tree complete")
     
     T= T.build_spn();
@@ -221,7 +220,7 @@ for train_index, test_index in kf.split(credit):
     from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X)
+    ll_test = eval_tf(spn,X_test)
     ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
@@ -230,6 +229,13 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
     ours_time_list.append(ours_time)
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn_classification))
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn))
+    
+
+
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 print(theirs)
