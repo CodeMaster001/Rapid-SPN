@@ -116,7 +116,7 @@ for train_index, test_index in kf.split(credit):
 
     ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
+    #ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test[ll_test>-1000]
 
 
@@ -134,7 +134,7 @@ for train_index, test_index in kf.split(credit):
     spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll = log_likelihood(spn, X)
+    ll = log_likelihood(spn, X_test)
     
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     #ll_test = eval_tf(spn,X)
@@ -146,8 +146,9 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
+
 #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
@@ -158,6 +159,11 @@ print(numpy.var(theirs))
 
 print(numpy.mean(ours))
 print(numpy.var(ours))
+numpy.savetxt('ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('theirs.ll',theirs, delimiter=',')
+numpy.savetxt('ours.ll',ours, delimiter=',')
+
 
 
 
