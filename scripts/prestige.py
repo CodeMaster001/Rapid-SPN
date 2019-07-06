@@ -9,6 +9,7 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -40,6 +41,7 @@ import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
 import logging
+
 
 def optimize_tf(
     spn: Node,
@@ -85,7 +87,8 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
     # Collect loss
@@ -123,12 +126,11 @@ def optimize_tf_graph(
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
             print(old_loss)
             if np.abs(old_loss) < 0.0002:
-               break;
+         	   break;
 
         tf_graph_to_spn(variable_dict)
 
     return loss_list
-
 
 
 
@@ -148,24 +150,24 @@ def bfs(root, func):
                     queue.append(c)
 
 def print_prob(node):
-    if isinstance(node,Sum):
-        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+	if isinstance(node,Sum):
+		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-    if i == 'g':
-        return 0;
-    else:
-        return 1;
+	if i == 'g':
+		return 0;
+	else:
+		return 1;
 
 def one_hot(df,col):
-    df = pd.get_dummies([col])
-    df.drop()
+	df = pd.get_dummies([col])
+	df.drop()
 
 
 
 
 
 
-credit = fetch_openml(name='iris', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='irish', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -177,8 +179,8 @@ for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
     X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index]; 
-    #X_test = numpy.nan_to_num(X_test)
+    X_test = credit.values[test_index];	
+    X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
@@ -186,72 +188,69 @@ for train_index, test_index in kf.split(credit):
     for i in range(0,X.shape[1]):
         context.append(Gaussian)
 
-    
+
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spm")
-    
+    print("training normnal spn")
+
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context)
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
-        #tf.train.AdamOptimizer(1e-4))
-    
+    #tf.train.AdamOptimizer(1e-4))
+
     theirs_time = time.time()-theirs_time
 
-    
+
     ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
-    
+    ll_test_original=ll_test
+
 
 
 
     print('Building tree...')
     original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-    print("Building tree complete")
-    
     T= T.build_spn();
     T.update_ids();
-    ours_time = time.time()-original;
+    print("Building tree complete")
+
     from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
+    ours_time = time.time()-original;
+    ours_time_list.append(ours_time)
+    bfs(spn,print_prob)
+    #ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    ours_time_list.append(ours_time)
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn_classification))
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn))
     
 
-
-
 #plot_spn(spn_classification, 'basicspn-original.png')
-print(theirs)
-print(ours)
-print(original)
+from spn.algorithms.Statistics import get_structure_stats
+print(get_structure_stats(spn_classification))
+from spn.algorithms.Statistics import get_structure_stats
+print(get_structure_stats(spn))
+#plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(ours_time_list))
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
 print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
-numpy.savetxt('ours.ll',ours, delimiter=',')
+print(numpy.var(theirs))
 
+print(numpy.mean(ours))
+print(numpy.var(ours))
 
 
 
