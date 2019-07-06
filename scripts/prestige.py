@@ -9,7 +9,6 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -178,10 +177,10 @@ theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
-    X = preprocessing.normalize(X, norm='l2')
+    #X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
-    X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
+    #X_test = numpy.nan_to_num(X_test)
+    #X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
@@ -193,20 +192,20 @@ for train_index, test_index in kf.split(credit):
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spn")
+    print("training normnal spm")
 
     theirs_time = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context)
-    theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
+    theirs_time = time.time()-theirs_time
 
 
     ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test
+    ll_test_original=ll_test[ll_test>-1000]
 
 
 
@@ -214,10 +213,10 @@ for train_index, test_index in kf.split(credit):
     print('Building tree...')
     original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-    T= T.build_spn();
-    T.update_ids();
     print("Building tree complete")
 
+    T= T.build_spn();
+    T.update_ids();
     from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
     ours_time = time.time()-original;
@@ -225,22 +224,22 @@ for train_index, test_index in kf.split(credit):
     bfs(spn,print_prob)
     #ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X_test)
+    ll_test = eval_tf(spn,X)
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-
-    
+    break;
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn_classification))
 from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn))
-#plot_spn(spn, 'basicspn.png')
+plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
