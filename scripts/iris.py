@@ -233,11 +233,11 @@ for train_index, test_index in kf.split(credit):
     print(get_structure_stats(spn_classification))
     from spn.algorithms.Statistics import get_structure_stats
     print(get_structure_stats(spn))
-    
+    break;
 
 
 
-#plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
