@@ -88,7 +88,7 @@ def optimize_tf_graph(
     loss = -tf.reduce_sum(tf_graph)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
-
+    i = 0;
     # Collect loss
     loss_list = [0]
     config = tf.ConfigProto(
@@ -101,6 +101,7 @@ def optimize_tf_graph(
         old_loss = 0;
         # Iterate over epochs
         while  True:
+            i = i+1;
   
 
             # Collect loss over batches for one epoch
@@ -197,7 +198,7 @@ for train_index, test_index in kf.split(credit):
     theirs_time = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
     theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
         #tf.train.AdamOptimizer(1e-4))
 
 
@@ -205,8 +206,7 @@ for train_index, test_index in kf.split(credit):
     ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
-    
+    ll_test_original=ll_test
 
 
 
@@ -219,9 +219,9 @@ for train_index, test_index in kf.split(credit):
     T.update_ids();
     ours_time = time.time()-original;
     spn = T.spn_node;
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.0001))
     ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test[ll_test>-1000]
+    ll_test=ll_test
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
@@ -233,7 +233,6 @@ for train_index, test_index in kf.split(credit):
     print(get_structure_stats(spn_classification))
     from spn.algorithms.Statistics import get_structure_stats
     print(get_structure_stats(spn))
-    break;
 
 
 
