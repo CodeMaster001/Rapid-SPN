@@ -10,6 +10,7 @@ import numpy
 import sys
 sys.path.append('/Users/prajay/spnrp/spflow-spnrp/src')
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -124,14 +125,14 @@ for train_index, test_index in kf.split(credit):
     theirs_time = time.time()
     spn_classification =   learn_parametric(X_test,ds_context)
     theirs_time = time.time()-theirs_time
-    #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test_original=ll_test
 
 
 
@@ -146,25 +147,23 @@ for train_index, test_index in kf.split(credit):
     T.update_ids();
     from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
-    spn = bfs(spn,print_prob)
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll_test = log_likelihood(spn, X_test)
     
-    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     
 
-    #l_test = eval_tf(spn,X)
-    ll_test=ll_test[ll_test>-1000]
+    l_test = eval_tf(spn,X_test)
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-
-#plot_spn(spn_classification, 'basicspn-original.png')
-#plot_spn(spn, 'basicspn.png')
+    print("called")
+print(ours)
+plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
@@ -176,6 +175,7 @@ print(numpy.var(theirs_time_list))
 print('---ll---')
 print(numpy.mean(ours))
 print(numpy.mean(theirs))
+print("rr")
 print(numpy.var(ours))
 print(numpy.var(theirs))
 numpy.savetxt('ours.time', ours_time_list, delimiter=',')
