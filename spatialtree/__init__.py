@@ -14,6 +14,7 @@ See: docs for spatialtree.spatialtree
 '''
 
 import sys
+import os
 sys.setrecursionlimit(1000000000)
 import numpy
 import scipy.stats
@@ -32,6 +33,9 @@ from sklearn.cluster import KMeans
 import multiprocessing
 
 import sys;
+
+
+
 class NODE_TYPE:
     SUM_NODE= 0;
     PRODUCT_NODE = 1;
@@ -312,8 +316,7 @@ class spatialtree(object):
 
 
         if 'NODE_TYPE'  not in kwargs:
-            self.spn_node = self.produce_node(NODE_TYPE.SUM_NODE,data,self.scope)
-            self.spn_node.scope.extend(self.scope)
+            self.spn_node =None
             kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
 
 
@@ -387,6 +390,9 @@ class spatialtree(object):
         kwargs['indices']   = data_set
         kwargs['proportion'] =sum_weight
         scope= list(set(scope))
+        if self.spn_node is None:
+            self.spn_node = self.produce_node(kwargs['NODE_TYPE'],data,scope)
+
         children = self.produce_node(kwargs['NODE_TYPE'],data,scope)
 
         self.spn_node.children.append(children)
@@ -403,9 +409,13 @@ class spatialtree(object):
         kwargs['height']    =current_height
         kwargs['indices']   = data_set
         kwargs['proportion'] =sum_weight
+        if self.spn_node is None:
+            self.spn_node = Product();
+            
         node= Product();
         rptree = list()
         child_count = 0;
+        print("called")
         for data_slice, scope_slice in self.split_cols(data,  scope):
             if len(scope_slice) == 1 and len(data_slice) !=0:
                 children = self.produce_node(NODE_TYPE.LEAF_NODE,data,scope_slice)
