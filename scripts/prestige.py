@@ -201,7 +201,6 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    break;
 
     
 
@@ -219,9 +218,13 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
+os.makedirs("results/prestige")
+numpy.savetxt('results/prestige/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/prestige/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/prestige/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/prestige/ours.ll',ours, delimiter=',')
 
 
 

@@ -233,7 +233,6 @@ for train_index, test_index in kf.split(credit):
     print(get_structure_stats(spn_classification))
     from spn.algorithms.Statistics import get_structure_stats
     print(get_structure_stats(spn))
-    break;
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
@@ -245,13 +244,19 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
-numpy.savetxt('ours.ll',ours, delimiter=',')
+os.makedirs("results/hayes")
+numpy.savetxt('results/hayes/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/hayes/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/hayes/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/hayes/ours.ll',ours, delimiter=',')
+
+
+
+
+
+
 
 
 
