@@ -9,7 +9,7 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import random
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
@@ -225,7 +225,7 @@ for train_index, test_index in kf.split(credit):
     #fs(spn,print_prob)
     ll_test = log_likelihood(spn, X_test)
     spn=optimize_tf(spn,X,epochs=600,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
+    ll_test = eval_tf(spn,X_test)
     ours_time_tf = time.time()-original
     ll_test=ll_test[ll_test>-1000]
     print("--ll--")
