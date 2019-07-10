@@ -229,7 +229,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',height=3,prob=0.8,spill=0.76)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,leaves_size=20,target=X.shape[1]-1,rule='rp',height=2,prob=0.8,spill=0.76)
     print("Building tree complete")
     
 
@@ -250,8 +250,7 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
-plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
@@ -259,9 +258,18 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
+os.makedirs("results/krvsk")
+numpy.savetxt('results/krvsk/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/krvsk/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/krvsk/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/krvsk/ours.ll',ours, delimiter=',')
+
+
+
+
+
 
 
 

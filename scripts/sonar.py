@@ -124,7 +124,7 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            if old_loss<0.02:
+            if old_loss<0.0002:
                 break;
             print(old_loss)
 

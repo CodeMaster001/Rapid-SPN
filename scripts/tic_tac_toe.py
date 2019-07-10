@@ -254,9 +254,6 @@ print(get_structure_stats(spn))
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -265,19 +262,13 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
-
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
-print(numpy.mean(theirs_time_list))
-print('---ll---')
-print(numpy.mean(ours))
-print(numpy.mean(theirs))
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
-numpy.savetxt('ours.ll',ours, delimiter=',')
-
+os.makedirs("results/tic")
+numpy.savetxt('results/tic/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/tic/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/tic/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/tic/ours.ll',ours, delimiter=',')
 
 
 
