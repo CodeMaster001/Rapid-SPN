@@ -9,6 +9,7 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -172,7 +173,7 @@ def one_hot(df,col):
 
 
 
-credit = pd.read_csv('dataset/caesarian.csv',delimiter=',')
+credit = pd.read_csv('../dataset/caesarian.csv',delimiter=',')
 credit = credit.apply(LabelEncoder().fit_transform)
 theirs = list()
 ours = list()
@@ -221,12 +222,11 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=5,prob=0.25,spill=0.75)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=5,prob=0.20,spill=0.75)
     
 
     T= T.build_spn();
     T.update_ids();
-    from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
     print("Building tree complete")
     ours_time = time.time()-original;
