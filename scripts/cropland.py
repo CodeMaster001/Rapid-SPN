@@ -134,22 +134,25 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print("--ll--")
-print(theirs)
-print(np.mean(theirs))
-print(np.var(theirs))
-print(np.mean(ours))
-print(np.var(ours))
-print("------")
+#plot_spn(spn_classification, 'basicspn-original.png')
+#plot_spn(spn, 'basicspn.png')
+print('---Time---')
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
+print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/cropland")
+numpy.savetxt('results/cropland/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/cropland/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/cropland/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/cropland/ours.ll',ours, delimiter=',')
 
 
-
-print("--tt--")
-print(np.mean(theirs_time_list))
-print(np.var(theirs_time_list))
-print(np.mean(ours_time_list))
-print(np.var(ours_time_list))
-print("------")
 
 
 
