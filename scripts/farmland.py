@@ -213,7 +213,7 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=40)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -240,7 +240,7 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     bfs(spn,print_prob)
     #ll = log_likelihood(spn, X)
-    spn=optimize_tf(spn,X_test,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
     print("--ll--")
     print(numpy.mean(ll_test_original))
@@ -251,23 +251,22 @@ for train_index, test_index in kf.split(credit):
     
 
 #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
-print("--ll--")
-print(theirs)
-print(np.mean(theirs))
-print(np.var(theirs))
-print(np.mean(ours))
-print(np.var(ours))
-print("------")
-
-
-
-print("--tt--")
-print(np.mean(theirs_time_list))
-print(np.var(theirs_time_list))
-print(np.mean(ours_time_list))
-print(np.var(ours_time_list))
-print("------")
+#plot_spn(spn, 'basicspn.png')
+print('---Time---')
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
+print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/farmland")
+numpy.savetxt('results/farmland/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/farmland/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/farmland/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/farmland/ours.ll',ours, delimiter=',')
 
 
 
