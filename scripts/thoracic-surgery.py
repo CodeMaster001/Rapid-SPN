@@ -139,7 +139,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.40,spill=0.25)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.70,spill=0.25)
     print("Building tree complete")
     
 
@@ -154,7 +154,7 @@ for train_index, test_index in kf.split(credit):
     
 
     ll_test =log_likelihood(spn,X_test)
-    ll_test =ll_test[ll_test>-1000]
+    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
@@ -165,26 +165,19 @@ for train_index, test_index in kf.split(credit):
 print(ours)
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
+plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
 print(numpy.mean(theirs))
-print(numpy.var(ours))
 print(numpy.var(theirs))
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
-numpy.savetxt('ours.ll',ours, delimiter=',')
-
-
-
-
-
-
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/surgery")
+numpy.savetxt('results/surgery/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/surgery/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/surgery/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/surgery/ours.ll',ours, delimiter=',')
