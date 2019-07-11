@@ -196,7 +196,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spn")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=60)
     spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
@@ -213,7 +213,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.2,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.7)
 
     T= T.build_spn();
     T.update_ids();

@@ -224,7 +224,7 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X)
+    ll_test = eval_tf(spn,X_test)
     ll_test=ll_test
     print("--ll--")
     print(numpy.mean(ll_test_original))
@@ -235,22 +235,24 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print("--ll--")
-print(theirs)
-print(np.mean(theirs))
-print(np.var(theirs))
-print(np.mean(ours))
-print(np.var(ours))
-print("------")
+print('---Time---')
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
+print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/liver")
+numpy.savetxt('results/liver/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/liver/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/liver/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/liver/ours.ll',ours, delimiter=',')
 
 
 
-print("--tt--")
-print(np.mean(theirs_time_list))
-print(np.var(theirs_time_list))
-print(np.mean(ours_time_list))
-print(np.var(ours_time_list))
-print("------")
 
 
 
