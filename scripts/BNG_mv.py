@@ -251,9 +251,6 @@ for train_index, test_index in kf.split(credit):
 
     #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -262,9 +259,14 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
+os.makedirs("results/bngmv")
+numpy.savetxt('results/bngmv/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/bngmv/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/bngmv/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/bngmv/ours.ll',ours, delimiter=',')
+
 
 
 

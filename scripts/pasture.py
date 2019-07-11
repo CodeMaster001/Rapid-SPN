@@ -249,6 +249,7 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
+    break;
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
