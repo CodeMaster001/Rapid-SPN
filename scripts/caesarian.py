@@ -249,21 +249,22 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
+print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
-numpy.savetxt('ours.ll',ours, delimiter=',')
-
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
+os.makedirs("results/caesarian")
+numpy.savetxt('results/caesarian/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/caesarian/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/caesarian/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/caesarian/ours.ll',ours, delimiter=',')
+
 
 
 
