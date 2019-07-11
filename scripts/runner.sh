@@ -1,4 +1,5 @@
 mkdir results
+<<comment
 nohup python iris.py &
 cp nohup.out results/iris/iris.txt
 wait
@@ -23,11 +24,9 @@ wait
 nohup python  farmland.py  &
 cp nohup.out results/farmland/farmland.txt
 wait
-
 nohup python  pasture.py  &
 cp nohup.out results/pasture/pasture.txt
-
-
+wait
 nohup python  autos.py  &
 cp nohup.out results/autos/pasture.txt
 wait
@@ -43,18 +42,25 @@ wait
 
 nohup python caesarian.py &
 cp nohup.out results/caesarian/caesarian.txt
-
+wait
 nohup python autos.py &
 cp nohup.out results/autos/autos.txt
-
+wait
 nohup python BNG_mv.py &
 cp nohup.out results/bngmv/bngmv.txt
-
-
-
+wait
 nohup python thoracic-surgery.py &
 cp nohup.out results/surgery/surgery.txt
+wait
+comment
 
 
-
-
+nohup python higgs.py &
+cp nohup.out results/higgs/sonar.txt
+wait
+nohup python sonar.py &
+cp nohup.out results/sonar/sonar.txt
+wait
+nohup python wine_quality.py &
+cp nohup.out results/wine/wine.txt
+wait
