@@ -236,9 +236,6 @@ for train_index, test_index in kf.split(credit):
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
     print("---ended---")
     counter = counter + 1
-    del spn
-    del spn_classification
-    del T
     
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
@@ -247,9 +244,10 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
+ 
+
+plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -258,16 +256,12 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
-theirs = np.array(theirs)
-ours_time_list = np.array(ours_time_list)
-theirs_time_list = np.array(theirs_time_list)
-result = np.vstack((ours,theirs))
-np.savetxt('cars.outll',result,delimiter=',')
-result = np.vstack((ours_time_list,theirs_time_list))
-np.savetxt('cars.outtt',result,delimiter=',')
-print(numpy.mean(theirs))
+os.makedirs("results/cars")
+numpy.savetxt('results/cars/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/cars/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/cars/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/cars/ours.ll',ours, delimiter=',')
 
 
