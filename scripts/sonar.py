@@ -208,7 +208,7 @@ for train_index, test_index in kf.split(credit):
     ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original=ll_test
 
 
 
@@ -226,7 +226,6 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test[ll_test>-1000]
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))
     print("tt:"+str(counter)+":"+str(numpy.mean(theirs_time_list)))
@@ -245,27 +244,21 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
+plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(ours))
-print(numpy.var(ours))
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-ours = np.array(ours)
-theirs = np.array(theirs)
-ours_time_list = np.array(ours_time_list)
-theirs_time_list = np.array(theirs_time_list)
-result = np.vstack((ours,theirs))
-np.savetxt('sonar.outll',result,delimiter=',')
-result = np.vstack((ours_time_list,theirs_time_list))
-np.savetxt('sonar.outtt',result,delimiter=',')
-print(numpy.mean(theirs))
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/sonar")
+numpy.savetxt('results/sonar/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/sonar/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/sonar/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/sonar/ours.ll',ours, delimiter=',')
 
 
