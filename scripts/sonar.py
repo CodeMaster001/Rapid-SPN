@@ -233,8 +233,8 @@ for train_index, test_index in kf.split(credit):
     print("ll:"+str(counter)+":"+str(numpy.mean(ll_test)))
     print("---ended---")
     counter = counter + 1
-    del spn
-    del spn_classification
+    #del spn
+    #del spn_classification
     del T
     
     theirs.append(numpy.mean(ll_test_original))
@@ -244,7 +244,7 @@ for train_index, test_index in kf.split(credit):
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
