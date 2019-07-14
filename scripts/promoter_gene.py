@@ -180,11 +180,6 @@ def one_hot(df,col):
 credit = fetch_openml(name='molecular-biology_promoters', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 print(credit.shape)
-kf = KFold(n_splits=10,shuffle=True)
-theirs = list()
-ours = list()
-print(credit.head())
-credits = credit.values.astype(int)
 
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -194,9 +189,10 @@ ours_time_list = list()
 theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
-    #X=numpy.nan_to_num(X)
+    X=numpy.nan_to_num(X)
     #X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
+    X_test=numpy.nan_to_num(X_test)
     #X_test = preprocessing.normalize(X_test, norm='l2')
     #X = X.astype(numpy.float32)
     #X_test =X_test.astype(numpy.float32)
@@ -211,16 +207,16 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=20,threshold=0.3)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=40,threshold=0.4)
     #spn_classification = bfs(spn_classification,print_prob)
     theirs_time = time.time()-theirs_time
     #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
 
 
@@ -249,8 +245,6 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
-#plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -259,8 +253,14 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
+os.makedirs("results/gene")
+numpy.savetxt('results/gene/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/gene/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/gene/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/gene/ours.ll',ours, delimiter=',')
+
+
 
 

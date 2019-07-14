@@ -170,7 +170,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='iris', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()

@@ -169,7 +169,7 @@ def one_hot(df,col):
 credit = fetch_openml(name='sonar', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -198,7 +198,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spm")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=80)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000)
     spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
@@ -215,7 +215,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,leaves_size=2,height=2)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2)
     print("Building tree complete")
 
     T= T.build_spn();

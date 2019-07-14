@@ -9,6 +9,8 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -253,6 +255,7 @@ from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn))
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
+print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
@@ -260,12 +263,16 @@ print(numpy.var(ours_time_list))
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
-
 print(numpy.mean(ours))
 print(numpy.var(ours))
-numpy.savetxt('ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('theirs.ll',theirs, delimiter=',')
+os.makedirs("results/breast")
+numpy.savetxt('results/breast/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/breast/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/breast/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/breast/ours.ll',ours, delimiter=',')
+
+
+
 numpy.savetxt('ours.ll',ours, delimiter=',')
 
 
