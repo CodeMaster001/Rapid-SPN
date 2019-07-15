@@ -139,7 +139,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.70,spill=0.25)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.20,spill=0.25)
     print("Building tree complete")
     
 
@@ -172,11 +172,11 @@ print(numpy.mean(theirs))
 print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/surgery")
-numpy.savetxt('results/surgery/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/surgery/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/surgery/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/surgery/ours.ll',ours, delimiter=',')
+os.makedirs("results/surgery_40")
+numpy.savetxt('results/surgery_40/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/surgery_40/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/surgery_40/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/surgery_40/ours.ll',ours, delimiter=',')
 
 
 

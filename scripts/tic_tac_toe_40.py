@@ -10,7 +10,6 @@ import numpy
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -88,7 +87,7 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
@@ -178,18 +177,15 @@ def one_hot(df,col):
 
 
 
-credit,target = fetch_openml(name='breast-cancer', version=1,return_X_y=True)
+credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 credit = credit.apply(LabelEncoder().fit_transform)
 print(credit.shape)
-kf = KFold(n_splits=40,shuffle=True)
-theirs = list()
-ours = list()
 print(credit.head())
 credit = credit.astype(float)
 credit = numpy.nan_to_num(credit)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -199,9 +195,10 @@ for train_index, test_index in kf.split(credit):
     X=numpy.nan_to_num(X)
     #X = preprocessing.normalize(X, norm='l2')
     X_test = credit[test_index];	
+    X_test=numpy.nan_to_num(X_test)
     #X_test = preprocessing.normalize(X_test, norm='l2')
-    X = X.astype(numpy.float32)
-    X_test =X_test.astype(numpy.float32)
+    #X = X.astype(numpy.float32)
+    #X_test =X_test.astype(numpy.float32)
     context = list()
     for i in range(0,X.shape[1]):
         context.append(Categorical)
@@ -213,7 +210,7 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,threshold=0.2,min_instances_slice=50)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
     theirs_time = time.time()-theirs_time
     #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -222,26 +219,26 @@ for train_index, test_index in kf.split(credit):
     #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
-
+    ll_test_original=ll_test
 
 
 
     print('Building tree...')
     original = time.time();
+    T =  SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=20,height=2,spill=0.75)
     
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=2,spill=0.76)
-    print("Building tree complete")
+
     T= T.build_spn();
     T.update_ids();
-    spn =T.spn_node
     from spn.io.Text import spn_to_str_equation
+    spn = T.spn_node;
+    print("Building tree complete")
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll = log_likelihood(spn, X_test)
-    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
-    ll_test=ll_test[ll_test>-1000]
+    bfs(spn,print_prob)
+    #ll = log_likelihood(spn, X)
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X_test)
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
@@ -249,12 +246,13 @@ for train_index, test_index in kf.split(credit):
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
 
+#plot_spn(spn_classification, 'basicspn-original.png')
 from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn_classification))
 from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn))
+
 #plot_spn(spn_classification, 'basicspn-original.png')
-#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -265,19 +263,11 @@ print(numpy.mean(theirs))
 print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/breast")
-numpy.savetxt('results/breast/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/breast/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/breast/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/breast/ours.ll',ours, delimiter=',')
-
-
-
-
-
-
-
-
+os.makedirs("results/tic_40")
+numpy.savetxt('results/tic_40/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/tic_40/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/tic_40/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/tic_40/ours.ll',ours, delimiter=',')
 
 
 
