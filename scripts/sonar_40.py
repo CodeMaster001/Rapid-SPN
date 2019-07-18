@@ -215,7 +215,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,leaves_size=2,height=4)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,leaves_size=2,height=3,spill=0.3)
     print("Building tree complete")
 
     T= T.build_spn();
@@ -240,7 +240,7 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    break;
+    #break;
  
 
 #plot_spn(spn_classification, 'basicspn-original.png')
@@ -256,10 +256,10 @@ print(numpy.mean(theirs))
 print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/sonar")
-numpy.savetxt('results/sonar/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/sonar/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/sonar/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/sonar/ours.ll',ours, delimiter=',')
+os.makedirs("results/sonar_40")
+numpy.savetxt('results/sonar_40/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/sonar_40/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/sonar_40/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/sonar_40/ours.ll',ours, delimiter=',')
 
 
