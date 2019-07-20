@@ -4,17 +4,12 @@ CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
 Spatial tree demo for matrix data
 '''
-import logging
-logger = logging.getLogger('spnrpx')
-# create file handler which logs even debug messages
-logging.basicConfig(filename='spnrppx.log',level=logging.DEBUG)
-
 
 
 import numpy
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print('loaded')
 import random
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
@@ -46,6 +41,7 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
+import logging
 
 
 def optimize_tf(
@@ -82,15 +78,17 @@ def optimize_tf(
     # Return loss as well if flag is set
     if return_loss:
         return spn_copy, loss_list
-    logging.info('spn copied')
+
     return spn_copy
 
 
 def optimize_tf_graph(
     tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
 ) -> List[float]:
-    original_optimizer = tf.train.GradientDescentOptimizer(0.001)
+    if optimizer is None:
+        optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00000001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
@@ -98,14 +96,12 @@ def optimize_tf_graph(
     loss_list = [0]
     config = tf.ConfigProto(
         device_count = {'GPU': 0})
-    i = 0;
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         if not batch_size:
             batch_size = data.shape[0]
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
-        logging.info('spn iteration initiated')
         # Iterate over epochs
         while  True:
   
@@ -120,19 +116,19 @@ def optimize_tf_graph(
                 _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
            
                 epoch_loss += batch_loss
-                #logging.info(j)
               
            
             # Build mean
             epoch_loss /= data.shape[0]
 
 
-            logging.info("Epoch: %s, Loss: %s", i, epoch_loss)
+            print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            if np.abs(old_loss) < 0.0002 and i >1000:
+            print(old_loss)
+            if np.abs(old_loss) < 0.0002:
          	   break;
-            i = i + 1;
+
         tf_graph_to_spn(variable_dict)
 
     return loss_list
@@ -140,8 +136,8 @@ def optimize_tf_graph(
 
 
 #tf.logging.set_verbosity(tf.logging.INFO)
-#logging.getLogger().setLevel(logging.INFO)
-#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 def bfs(root, func):
     seen, queue = set([root]), collections.deque([root])
@@ -172,7 +168,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='Click_prediction_small', version=3,return_X_y=True)[0]
+credit = fetch_openml(name='BNG(autos,nominal,1000000)', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -185,42 +181,42 @@ for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     print(X.shape)
     X=numpy.nan_to_num(X)
-    X = preprocessing.normalize(X, norm='l2')
+    #X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index];	
     X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
+    #X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
     for i in range(0,X.shape[1]):
-       context.append(Gaussian)
+       context.append(Categorical)
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    logging.info("training normnal spm")
+    print("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=3000000,threshold=0.6)
-
     
-    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.6)
+
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
     theirs_time = time.time()-original
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    theirs_time_tf = time.time() -original
+    #ll_test = log_likelihood(spn_classification,X_test)
+    #theirs_time_tf = time.time() -original
 
-    ll_test_original=ll_test
+    #ll_test_original=ll_test[ll_test>-1000]
 
 
-    logging.info('Building tree...')
+    print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=2,spill=0.3)
-    logging.info("Building tree complete")
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.7,leaves_size=2,height=3,spill=0.3)
+    print("Building tree complete")
 
     T= T.build_spn();
     T.update_ids();
@@ -230,17 +226,16 @@ for train_index, test_index in kf.split(credit):
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
     
-    ll_test = log_likelihood(spn, X_test)
-    logging.info(np.mean(ll_test))
-    #spn=optimize_tf(spn,X,epochs=60000,batch_size=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    #ll_test = eval_tf(spn,X)
+    #ll_test = log_likelihood(spn, X_test)
+    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X_test)
     ours_time_tf = time.time()-original
-    ll_test=ll_test[ll_test>-1000]
-    logging.info("--ll--")
-    logging.info(numpy.mean(ll_test_original))
-    logging.info('ours:'+str(numpy.mean(ll_test)))
-    logging.info(theirs_time)
-    logging.info(ours_time)
+    print(ll_test)
+    print("--ll--")
+    #print(numpy.mean(ll_test_original))
+    print(numpy.mean(ll_test))
+    print(theirs_time)
+    print(ours_time)
     print(theirs_time_tf)
     print(ours_time_tf)
     theirs.append(numpy.mean(ll_test_original))
@@ -249,16 +244,21 @@ for train_index, test_index in kf.split(credit):
 
     #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-logging.info(theirs)
-logging.info(ours)
-#print(original)
-logging.info('---Time---')
-logging.info(numpy.mean(theirs_time_list))
-logging.info(numpy.var(theirs_time_list))
-logging.info(numpy.mean(ours_time_list))
-logging.info(numpy.var(ours_time_list))
-logging.info('---ll---')
-logging.info(numpy.mean(theirs))
-logging.info(numpy.var(theirs))
-logging.info(numpy.mean(ours))
-logging.info(numpy.var(ours))
+print(theirs)
+print(ours)
+print(original)
+print('---Time---')
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
+print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+
+print(numpy.mean(ours))
+print(numpy.var(ours))
+
+
+
+
