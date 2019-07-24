@@ -89,14 +89,14 @@ def optimize_tf(
 def optimize_tf_graph(
     tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
 ) -> List[float]:
-    optimizer = tf.train.GradientDescentOptimizer(0.001)
+    if optimizer is None:
+        optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    #original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00000001)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
     # Collect loss
-    i = 0;
     loss_list = [0]
     config = tf.ConfigProto(
         device_count = {'GPU': 0})
@@ -106,8 +106,9 @@ def optimize_tf_graph(
             batch_size = data.shape[0]
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
+        counter = 0;
         # Iterate over epochs
-        while  True:
+        while (True):
   
 
             # Collect loss over batches for one epoch
@@ -126,18 +127,21 @@ def optimize_tf_graph(
             epoch_loss /= data.shape[0]
 
 
-            logging.info("Epoch: %s, Loss: %s", i, epoch_loss)
+            print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            if old_loss<0.0002:
+                counter = counter + 1
+            if old_loss>0.0002:
+                counter = 0;
+            if counter>10:
+                break;
+
             print(old_loss)
-            if np.abs(old_loss) < 0.0002 or i>10000:
-               break;
-            i = i +1
 
         tf_graph_to_spn(variable_dict)
 
     return loss_list
-
 
 
 #tf.logging.set_verbosity(tf.logging.INFO)
