@@ -48,6 +48,96 @@ import numpy as np, numpy.random
 numpy.random.seed(42)
 
 
+def optimize_tf(
+    spn: Node,
+    data: np.ndarray,
+    epochs=1000,
+    batch_size: int = None,
+    optimizer: tf.train.Optimizer = None,
+    return_loss=False,
+) -> Union[Tuple[Node, List[float]], Node]:
+    """
+    Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
+    function.
+    :param spn: SPN which is to be optimized
+    :param data: Input data
+    :param epochs: Number of epochs
+    :param batch_size: Size of each minibatch for SGD
+    :param optimizer: Optimizer procedure
+    :param return_loss: Whether to also return the list of losses for each epoch or not
+    :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
+    returned, else only a copy of the optimized SPN is returned
+    """
+    # Make sure, that the passed SPN is not modified
+    spn_copy = Copy(spn)
+
+    # Compile the SPN to a static tensorflow graph
+    tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
+
+    # Optimize the tensorflow graph
+    loss_list = optimize_tf_graph(
+        tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
+    )
+
+    # Return loss as well if flag is set
+    if return_loss:
+        return spn_copy, loss_list
+
+    return spn_copy
+
+
+def optimize_tf_graph(
+    tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
+) -> List[float]:
+    optimizer = tf.train.GradientDescentOptimizer(0.001)
+    loss = -tf.reduce_sum(tf_graph)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
+    opt_op = optimizer.minimize(loss)
+
+    # Collect loss
+    i = 0;
+    loss_list = [0]
+    config = tf.ConfigProto(
+        device_count = {'GPU': 0})
+    with tf.Session(config=config) as sess:
+        sess.run(tf.global_variables_initializer())
+        if not batch_size:
+            batch_size = data.shape[0]
+        batches_per_epoch = data.shape[0] // batch_size
+        old_loss = 0;
+        # Iterate over epochs
+        while  True:
+  
+
+            # Collect loss over batches for one epoch
+            epoch_loss = 0.0
+
+            # Iterate over batches
+            for j in range(batches_per_epoch):
+                data_batch = data[j * batch_size : (j + 1) * batch_size, :]
+         
+                _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
+           
+                epoch_loss += batch_loss
+              
+           
+            # Build mean
+            epoch_loss /= data.shape[0]
+
+
+            logging.info("Epoch: %s, Loss: %s", i, epoch_loss)
+            loss_list.append(epoch_loss)
+            old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            print(old_loss)
+            if np.abs(old_loss) < 0.0002 or i>1000:
+               break;
+            i = i +1
+
+        tf_graph_to_spn(variable_dict)
+
+    return loss_list
+
 
 
 #tf.logging.set_verbosity(tf.logging.INFO)
@@ -82,10 +172,10 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='blogger', version=1,return_X_y=True)[0]
+
+credit = fetch_openml(name='machine_cpu', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
-print(credit.head())
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -96,33 +186,33 @@ for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     print(X.shape)
     X=numpy.nan_to_num(X)
-    #X = preprocessing.normalize(X, norm='l2')
+    X = preprocessing.normalize(X, norm='l2')
     X_test = credit.values[test_index]; 
     X_test = numpy.nan_to_num(X_test)
-    #X_test = preprocessing.normalize(X_test, norm='l2')
+    X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
     for i in range(0,X.shape[1]):
-       context.append(Categorical)
+       context.append(Gaussian)
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
     logging.info("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10,threshold=0.7)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=80,threshold=0.2)
 
     
-    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
     theirs_time = time.time()-original
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
    # print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
+    #ll_test = log_likelihood(spn_classification,X_test)
     theirs_time_tf = time.time() -original
 
     ll_test_original=ll_test
@@ -130,7 +220,7 @@ for train_index, test_index in kf.split(credit):
 
     logging.info('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=2,spill=0.7)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.3)
     logging.info("Building tree complete")
 
     T= T.build_spn();
