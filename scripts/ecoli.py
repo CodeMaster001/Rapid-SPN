@@ -202,11 +202,9 @@ for train_index, test_index in kf.split(credit):
     original = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20,threshold=0.2)
 
-    
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
-    #tf.train.AdamOptimizer(1e-4))
-
     theirs_time = time.time()-original
+    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #tf.train.AdamOptimizer(1e-4)
 
 
     ll_test = eval_tf(spn_classification, X_test)
@@ -229,8 +227,6 @@ for train_index, test_index in kf.split(credit):
     ours_time = time.time()-original
     ours_time_list.append(ours_time)
     #fs(spn,print_prob)
-    
-    ll_test = log_likelihood(spn, X_test)
     logging.info(np.mean(ll_test))
     spn=optimize_tf(spn,X,epochs=2000,batch_size=1000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
