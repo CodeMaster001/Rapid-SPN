@@ -201,7 +201,7 @@ for train_index, test_index in kf.split(credit):
     logging.info("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=50,threshold=0.6)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10,threshold=0.2)
 
     
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
@@ -212,10 +212,10 @@ for train_index, test_index in kf.split(credit):
 
     #ll_test = eval_tf(spn_classification, X_test)
    # print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
+    ll_test_original = log_likelihood(spn_classification,X_test)
+    ll_test_original = ll_test_original[ll_test_original>-1000]
     theirs_time_tf = time.time() -original
 
-    ll_test_original=ll_test[ll_test>-1000]
 
 
     logging.info('Building tree...')
@@ -236,7 +236,6 @@ for train_index, test_index in kf.split(credit):
     spn=optimize_tf(spn,X,epochs=2000,batch_size=1000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
     ours_time_tf = time.time()-original
-    ll_test=ll_test[ll_test>-1000]
     logging.info("--ll--")
     logging.info(numpy.mean(ll_test_original))
     logging.info(numpy.mean(ll_test))
