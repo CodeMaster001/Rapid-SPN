@@ -125,7 +125,7 @@ for train_index, test_index in kf.split(credit):
     ll_test = log_likelihood(spn_classification,X_test)
     theirs_time_tf = time.time() -original
 
-    ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original=ll_test
 
 
     logging.info('Building tree...')
