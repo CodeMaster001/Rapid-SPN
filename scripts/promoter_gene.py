@@ -210,11 +210,10 @@ for train_index, test_index in kf.split(credit):
     theirs_time = time.time()-theirs_time
     #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
-
+    ll_test = log_likelihood(spn_classification, X_test)
 
     #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
 
 
@@ -231,8 +230,8 @@ for train_index, test_index in kf.split(credit):
     print("Building tree complete")
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    bfs(spn,print_prob)
-    #ll = log_likelihood(spn, X)
+    #bfs(spn,print_prob)
+    ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
     ll_test=ll_test
