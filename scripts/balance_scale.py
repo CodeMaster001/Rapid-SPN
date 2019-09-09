@@ -111,7 +111,7 @@ for train_index, test_index in kf.split(credit):
 	ours.extend(ll_test)
 	theirs_time_list.append(theirs_time)
 
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
