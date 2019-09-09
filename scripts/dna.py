@@ -208,7 +208,7 @@ for train_index, test_index in kf.split(credit):
     ll_test = log_likelihood(spn_classification,X_test)
     theirs_time_tf = time.time() -original
 
-    ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original=ll_test#[ll_test>-1000]
 
 
     print('Building tree...')
@@ -227,7 +227,7 @@ for train_index, test_index in kf.split(credit):
     spn=optimize_tf(spn,X,epochs=600,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
     ours_time_tf = time.time()-original
-    ll_test=ll_test[ll_test>-1000]
+    ll_test=ll_test#[ll_test>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
