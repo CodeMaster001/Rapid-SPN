@@ -209,7 +209,7 @@ from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn_classification))
 from spn.algorithms.Statistics import get_structure_stats
 print(get_structure_stats(spn))
-plot_spn(spn, 'basicspn.png')
+#lot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
