@@ -236,7 +236,7 @@ for train_index, test_index in kf.split(credit):
 
 
 
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print(theirs)
 print(ours)
 print(original)
