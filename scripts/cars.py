@@ -216,7 +216,7 @@ for train_index, test_index in kf.split(credit):
     print('Building tree...')
     original = time.time();
    
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,height=2,leaves_size=100)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.4,height=3,leaves_size=100)
 
     T= T.build_spn();
     T.update_ids()
@@ -246,8 +246,8 @@ for train_index, test_index in kf.split(credit):
 #plot_spn(spn, 'basicspn.png')
  
 
-plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn_classification, 'basicspn-original.png')
+#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
