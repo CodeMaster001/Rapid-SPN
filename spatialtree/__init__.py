@@ -423,7 +423,7 @@ class spatialtree(object):
                 node.children.append(children)
                 child_count = child_count + 1
 
-            elif len(data_slice) !=0:
+            elif len(data_slice) !=0 and len(self.scope)>1:
                 children = self.produce_node(NODE_TYPE.SUM_NODE,data,scope_slice)
                 node.scope.extend(scope_slice) 
                 node.children.append(children)
