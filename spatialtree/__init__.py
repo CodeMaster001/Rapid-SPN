@@ -9,6 +9,8 @@ Implementation of spatial trees:
     * RP tree
 
 Also supports spill trees.
+Prajay Shetty
+
 
 See: docs for spatialtree.spatialtree
 '''
