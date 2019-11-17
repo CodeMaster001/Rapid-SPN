@@ -179,14 +179,13 @@ credit=credit.drop(credit.columns[-1],axis=1)
 credit_labels=pd.read_csv("../dataset/madelon_train.labels") 
 print(credit.head())
 credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
+credit_labels.values[credit_labels.values[:,-1]==-1]=0
 
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 
 credit.values.astype(float)
-
-
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -236,21 +235,30 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
+    labels = np.unique(X[:,-1]);
     S=Sum();
-    T = SPNRPBuilder(data=X,ds_context=ds_context,prob=0.75,leaves_size=2,height=3,spill=0.25)
-    T= T.build_spn();
-    T.update_ids();
-    spn = T.spn_node;
-
+    for i in labels:
+        batch=X[X[:,-1]==i]
+        T = SPNRPBuilder(data=batch,ds_context=ds_context,prob=0.5,leaves_size=40,height=5,min_items=40,spill=0.25,samples_rp=20,target_index=i,target_shape=X.shape[1])
+        T= T.build_spn();
+        T.update_ids();
+        spn = T.spn_node;
+        S.weights.append(len(batch)/X.shape[0])
+        S.scope.extend(spn.scope)
+        S.children.append(spn)
+    assign_ids(S)
+    spn=S;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     #bfs(spn,print_prob)
     #ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test =log_likelihood(spn,X_test)
+    print(ll_test)
     X_test_eval =np.copy(X_test)
     X_test_eval[:,-1]=np.nan
-    print(mpe(spn, X_test_eval))
+    X_test_eval=mpe(spn, X_test_eval)
+    count = X_test[[X_test_eval[:,-1]==X_test[:,-1]]]
+    print(count/X_test.shape[0])
     plot_spn(spn, 'basicspn.png')
     print(ll_test)
     print("--ll--")
