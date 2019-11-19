@@ -199,7 +199,7 @@ for train_index, test_index in kf.split(credit):
 
     theirs_time = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=80)
-    spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001),batch_size=100) 
     #tf.train.AdamOptimizer(1e-4))
 
     theirs_time = time.time()-theirs_time
@@ -215,7 +215,7 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=4,spill=0.3)
 
     T= T.build_spn();
     T.update_ids();
@@ -225,7 +225,7 @@ for train_index, test_index in kf.split(credit):
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     bfs(spn,print_prob)
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
+    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001),batch_size=100)
     ll_test = eval_tf(spn,X_test)
     print("--ll--")
     print("tt:"+str(counter)+":"+str(numpy.mean(ours_time_list)))

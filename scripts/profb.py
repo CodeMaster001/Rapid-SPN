@@ -87,7 +87,7 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.0001)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
@@ -156,49 +156,40 @@ def bfs(root, func):
                     queue.append(c)
 
 def print_prob(node):
-	if isinstance(node,Sum):
-		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+    if isinstance(node,Sum):
+        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-	if i == 'g':
-		return 0;
-	else:
-		return 1;
+    if i == 'g':
+        return 0;
+    else:
+        return 1;
 
 def one_hot(df,col):
-	df = pd.get_dummies([col])
-	df.drop()
+    df = pd.get_dummies([col])
+    df.drop()
 
 
 
 
 
 
-credit=pd.read_csv("../dataset/Cropland.csv",delimiter=",") 
-credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
-
-print(credit.shape)
-kf = KFold(n_splits=10,shuffle=True)
-theirs = list()
+credit,target = fetch_openml(name='profb', version=1,return_X_y=True)
+credit = pd.DataFrame(data=credit)
 ours = list()
-credit =credit.drop(credit.columns[1], axis=1)
-credit =credit.drop(credit.columns[2], axis=1)
-credit =credit.drop(credit.columns[-1], axis=1)
-credit =credit.drop(credit.columns[1], axis=1)
-print(credit.head())
-credit.values.astype(float)
-
 
 kf = KFold(n_splits=10,shuffle=True)
+print(credit.head())
+credit = credit.astype(np.float32)
+credit = numpy.nan_to_num(credit)
 theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
-    X = credit.values[train_index,:]
+    X = credit[train_index,:]
     X=numpy.nan_to_num(X)
     X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index];	
-    X_test = numpy.nan_to_num(X_test)
+    X_test = credit[test_index];    
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
@@ -206,14 +197,14 @@ for train_index, test_index in kf.split(credit):
     for i in range(0,X.shape[1]):
         context.append(Gaussian)
 
-	
+    
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=50)
+    spn_classification =  learn_parametric(X,ds_context,threshold=0.3,min_instances_slice=40)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -229,30 +220,34 @@ for train_index, test_index in kf.split(credit):
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.30,leaves_size=2,height=3,spill=0.25)
-    print("Building tree complete")
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=5,prob=0.20,spill=0.75)
+    
 
     T= T.build_spn();
     T.update_ids();
-    from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
+    print("Building tree complete")
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll_test = log_likelihood(spn, X_test)
+    ll_test = log_likelihood(spn_classification,X_test)
+    #bfs(spn,print_prob)
+    
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn_classification))
+    from spn.algorithms.Statistics import get_structure_stats
+    print(get_structure_stats(spn))
+    
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-#plot_spn(spn_classification, 'basicspn-original.png')
-#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -263,11 +258,17 @@ print(numpy.mean(theirs))
 print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/pasture")
-numpy.savetxt('results/pasture/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/pasture/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/pasture/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/pasture/ours.ll',ours, delimiter=',')
+os.makedirs("results/profb")
+numpy.savetxt('results/profb/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/profb/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/profb/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/profb/ours.ll',ours, delimiter=',')
+
+
+
+
+
+
 
 
 

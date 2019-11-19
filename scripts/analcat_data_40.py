@@ -194,6 +194,7 @@ for train_index, test_index in kf.split(credit):
     #X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
+    X=X[X[:,-1]==-1]   
     context = list()
     for i in range(0,X.shape[1]):
        context.append(Categorical)

@@ -168,6 +168,8 @@ def one_hot(df,col):
 credit = fetch_openml(name='glass', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
 
+
+
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -196,7 +198,7 @@ for train_index, test_index in kf.split(credit):
     print("training normnal spn")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=60)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=5000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
@@ -237,7 +239,6 @@ for train_index, test_index in kf.split(credit):
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')

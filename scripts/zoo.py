@@ -86,7 +86,7 @@ for train_index, test_index in kf.split(credit):
 	print("training normnal spm")
 	
 	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
 	
 	
 	theirs_time = time.time()-theirs_time
@@ -101,7 +101,7 @@ for train_index, test_index in kf.split(credit):
 
 	print('Building tree...')
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,prob=0.5,leaves_size=2,height=2,spill=0.2,rule='rp',threshold=0.3,samples_rp=20)
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,prob=0.5,leaves_size=2,height=2,spill=0.2,rule='rp',threshold=0.3,samples_rp=50)
 	
 	T= T.build_spn();
 	T.update_ids();

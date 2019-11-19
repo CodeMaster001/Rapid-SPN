@@ -12,7 +12,6 @@ sys.path.append('/Users/prajay/spnrp/spflow-spnrp/src')
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
-from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -31,6 +30,7 @@ from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
 from spn.algorithms.TransformStructure import Prune,Compress,SPN_Reshape
 import urllib
 import tensorflow as tf
+from spatialtree import *
 from sklearn.preprocessing import LabelEncoder
 from sklearn.datasets import fetch_openml
 import pandas as pd
@@ -44,21 +44,6 @@ numpy.random.seed(42)
 import logging
 
 
-def bfs(root, func):
-    seen, queue = set([root]), collections.deque([root])
-    while queue:
-        node = queue.popleft()
-        func(node)
-        if not isinstance(node, Leaf):
-            for c in node.children:
-                if c not in seen:
-                    seen.add(c)
-                    queue.append(c)
-    return root
-
-def print_prob(node):
-    if isinstance(node,Sum):
-        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
@@ -86,21 +71,20 @@ ours_time_list=list()
 theirs_time_list=list()
 theirs = list()
 ours = list();
-credit,target = fetch_openml(name='thoracic-surgery', version=1,return_X_y=True)
+credit,target = fetch_openml(name='acute-inflammations', version=1,return_X_y=True)
 credit = pd.DataFrame(data=credit)
 target = pd.DataFrame(data=target)
 target.columns = [credit.shape[1]+1]
 credit.columns = list(range(0,credit.shape[1]))
 credit = credit.join(target)
 kf = KFold(n_splits=10,shuffle=True)
-Gaussian_index = [0,1,15]
+Categorical_index = [1,2,3,4,5,6,7]
 print(len(credit.columns.values))
 credit = credit.fillna(0)
 for i in range(0,len(credit.columns.values)):
-    if i  not in Gaussian_index:
+    if i in Categorical_index:
         credit[credit.columns.values[i]] = pd.get_dummies(credit[credit.columns.values[i]])
-for i in range(10):
-    X, X_test = train_test_split(credit.values, train_size=0.10)
+for train_index, test_index in kf.split(credit):
     X = credit.values[train_index]
     X=X.astype(numpy.float32)
     X_test = credit.values[test_index];
@@ -113,56 +97,57 @@ for i in range(10):
 
 
     context = list()
+    Gaussian_index = [1,2,3,4,5,6,7]
     for i in range(0,X.shape[1]):
-        if i not in Gaussian_index:
+        if i in Gaussian_index:
             context.append(Categorical)
-            continue;
-        context.append(Gaussian)
+        else:
+            context.append(Gaussian)
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spm")
+    print("training normnal spn")
     theirs_time = time.time()
-    spn_classification =   learn_parametric(X_test,ds_context)
+    spn_classification =   learn_parametric(X,ds_context,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
-    #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test_original=ll_test
 
 
 
 
     print('Building tree...')
     original = time.time();
-    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.70,spill=0.25)
-    print("Building tree complete")
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=2,samples_rp=20,prob=0.40,spill=0.25)
     
 
     T= T.build_spn();
     T.update_ids();
-    from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
+    print("Building tree complete")
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
+    ll_test = log_likelihood(spn, X_test)
     
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    
-    ll_test = log_likelihood(spn,X_test)
-    ll_test=ll_test[ll_test>-1000]
-    #ll_test = eval_tf(spn,X_test) 
+    #ll_test = eval_tf(spn,X)
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    print("called")
+
+
+#plot_spn(spn_classification, 'basicspn-original.png')
+plot_spn(spn, 'basicspn.png')
 print('---Time---')
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
@@ -173,11 +158,15 @@ print(numpy.mean(theirs))
 print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/surgery")
-numpy.savetxt('results/surgery/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/surgery/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/surgery/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/surgery/ours.ll',ours, delimiter=',')
+os.makedirs("results/autos")
+numpy.savetxt('results/autos/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/autos/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/autos/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/autos/ours.ll',ours, delimiter=',')
+
+
+
+
 
 
 

@@ -176,7 +176,8 @@ theirs_time_list = list();
 counter =0;
 
 for i in range(10):
-    X, X_test = train_test_split(credit, train_size=0.05)
+    X, X_test = train_test_split(credit, train_size=0.10)
+    print(X.shape)
     X=numpy.nan_to_num(X)
     X = preprocessing.normalize(X, norm='l2')
     X_test = numpy.nan_to_num(X_test)

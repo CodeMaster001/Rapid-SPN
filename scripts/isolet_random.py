@@ -39,6 +39,7 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
+from spn.algorithms.MPE import mpe
 numpy.random.seed(42)
 import logging
 
@@ -87,7 +88,7 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.0001)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
     optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
 
@@ -173,21 +174,19 @@ def one_hot(df,col):
 
 
 
-credit=pd.read_csv("../dataset/Cropland.csv",delimiter=",") 
+credit=pd.read_csv("../dataset/isolet.data",delimiter=',')
+credit.drop(credit.columns[[-1]], axis=1, inplace=True)
+print(credit.head())
 credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
 
 print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
-credit =credit.drop(credit.columns[1], axis=1)
-credit =credit.drop(credit.columns[2], axis=1)
-credit =credit.drop(credit.columns[-1], axis=1)
-credit =credit.drop(credit.columns[1], axis=1)
-print(credit.head())
+
 credit.values.astype(float)
 
-
+credit = credit.fillna(0)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -202,6 +201,9 @@ for train_index, test_index in kf.split(credit):
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
+    X_test_eval = np.copy(X_test)
+    X_test_eval[:,400:]=np.nan
+    print(X_test_eval.shape)
     context = list()
     for i in range(0,X.shape[1]):
         context.append(Gaussian)
@@ -213,16 +215,16 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=50)
-    theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=500)
+    #theirs_time = time.time()-theirs_time
+    #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test
+    #ll_test_original=ll_test
 
 
 
@@ -238,38 +240,39 @@ for train_index, test_index in kf.split(credit):
     spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll_test = log_likelihood(spn, X_test)
-    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test
+    #bfs(spn,print_prob)
+    #ll = log_likelihood(spn, X)
+    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test =log_likelihood(spn,X_test)
+    X_test_eval= mpe(spn,X_test_eval)
+
+    print(np.mean(ll_test))
+    print(ll_test)
     print("--ll--")
-    print(numpy.mean(ll_test_original))
+    #print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
-    theirs.append(numpy.mean(ll_test_original))
+    #theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
+    #theirs_time_list.append(theirs_time)
+    
 
 #plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
-#plot_spn(spn_classification, 'basicspn-original.png')
-#plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
+#print(numpy.mean(theirs_time_list))
+#print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
+#print(numpy.mean(theirs))
+#print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/pasture")
-numpy.savetxt('results/pasture/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/pasture/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/pasture/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/pasture/ours.ll',ours, delimiter=',')
-
-
+os.makedirs("results/isolet")
+numpy.savetxt('results/isolet/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/isolet/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/isolet/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/isolet/ours.ll',ours, delimiter=',')
 
 
 

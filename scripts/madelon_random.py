@@ -10,6 +10,7 @@ import numpy
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from spatialtree import SPNRPBuilder
 from spn.structure.Base import Context
@@ -170,17 +171,22 @@ def one_hot(df,col):
 	df.drop()
 
 
-
+def bfs(root, func):
+    seen, queue = set([root]), collections.deque([root])
+    while queue:
+        node = queue.popleft()
+        func(node)
+        if not isinstance(node, Leaf):
+            for c in node.children:
+                if c not in seen:
+                    seen.add(c)
 
 
 
 credit=pd.read_csv("../dataset/madelon_train.data",delimiter=' ') 
-credit=credit.drop(credit.columns[-1],axis=1)
-credit_labels=pd.read_csv("../dataset/madelon_train.labels") 
+credit.drop(credit.columns[[-1]], axis=1, inplace=True)
 print(credit.head())
 credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
-credit_labels.values[credit_labels.values[:,-1]==-1]=0
-
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -201,16 +207,11 @@ for train_index, test_index in kf.split(credit):
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     print(X.shape)
-    Y=credit_labels.values[train_index]
-    X=np.append(X,Y,1)
-    X_test=np.append(X_test,credit_labels.values[test_index],1)
-    print(np.isnan(X_test).any())
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
-    for i in range(0,X.shape[1]-1):
+    for i in range(0,X.shape[1]):
         context.append(Gaussian)
-    context.append(Categorical)
 
 	
 
@@ -236,53 +237,47 @@ for train_index, test_index in kf.split(credit):
     print('Building tree...')
     original = time.time();
     labels = np.unique(X[:,-1]);
-    S=Sum();
-    for i in labels:
-        batch=X[X[:,-1]==i]
-        T = SPNRPBuilder(data=batch,ds_context=ds_context,prob=0.5,leaves_size=40,height=5,min_items=40,spill=0.25,samples_rp=20,target_index=i,target_shape=X.shape[1])
-        T= T.build_spn();
-        T.update_ids();
-        spn = T.spn_node;
-        S.weights.append(len(batch)/X.shape[0])
-        S.scope.extend(spn.scope)
-        S.children.append(spn)
-    assign_ids(S)
-    spn=S;
+    T = SPNRPBuilder(data=X,ds_context=ds_context,prob=0.5,leaves_size=40,height=4,min_items=40,spill=0.25,samples_rp=20,target_index=i,target_shape=X.shape[1])
+    T= T.build_spn();
+    T.update_ids();
+    spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     #bfs(spn,print_prob)
     #ll = log_likelihood(spn, X)
-    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    print(ll_test)
+    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     X_test_eval =np.copy(X_test)
-    X_test_eval[:,-1]=np.nan
+    X_test_eval[:,440:]=np.nan
     X_test_eval=mpe(spn, X_test_eval)
-    count = X_test[[X_test_eval[:,-1]==X_test[:,-1]]]
-    print(count/X_test.shape[0])
-    plot_spn(spn, 'basicspn.png')
+    #   plot_spn(spn, 'basicspn.png')
+    ll_test =log_likelihood(spn,X_test)
+    cor = np.corrcoef(X_test)
+    cor_pred = np.corrcoef(X_test_eval)
+    plt.matshow(cor)
+    plt.matshow(cor_pred)
     print(ll_test)
     print("--ll--")
-    print(numpy.mean(ll_test_original))
+    #print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
-    theirs.append(numpy.mean(ll_test_original))
+    #theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
-    break;
+    #theirs_time_list.append(theirs_time)
+    
     
 
-plot_spn(spn_classification, 'basicspn-original.png')
+#plot_spn(spn_classification, 'basicspn-original.png')
 plot_spn(spn, 'basicspn.png')
 print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
+#print(numpy.mean(theirs_time_list))
+#print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
 print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
+#print(numpy.mean(theirs))
+#print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/farmland")
+os.makedirs("results/cancer")
 numpy.savetxt('results/farmland/ours.time', ours_time_list, delimiter=',')
 numpy.savetxt('results/farmland/theirs.time',theirs_time_list, delimiter=',')
 numpy.savetxt('results/farmland/theirs.ll',theirs, delimiter=',')

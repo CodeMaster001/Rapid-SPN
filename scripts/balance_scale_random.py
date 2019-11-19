@@ -63,8 +63,8 @@ ours_time_list = list();
 theirs_time_list = list();
 
 for i in range(10):
-	X, X_test = train_test_split(credit, train_size=0.40)
-
+	X, X_test = train_test_split(credit, train_size=0.10)
+	print(X.shape)
 	context = list()
 	for i in range(0,X.shape[1]):
 		context.append(Categorical)
