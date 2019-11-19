@@ -82,8 +82,7 @@ class SPNRPBuilder(object):
         self.prob = prob
         self.ohe = ohe
         self.proportion = proportion
-        self.target_shape=kwargs['target_shape']
-        self.target_index=kwargs['target_index']
+        
 
         self.root= spatialtree(data,spn_object=self.spn_object,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=self.scope,threshold=self.threshold,prob=self.prob,ohe=self.ohe,proportion=self.proportion,**kwargs)
         SPNRPBuilder.tasks.append([self.root,data,kwargs])
@@ -148,8 +147,7 @@ class spatialtree(object):
         self.scope = scope
         self.ds_context = ds_context
         self.prob = prob
-        self.target_shape=kwargs['target_shape']
-        self.target_index=kwargs['target_index']
+    
 
         tasks = deque()
         '''
@@ -357,12 +355,15 @@ class spatialtree(object):
             return  0
         # Compute the split direction 
 
-        if len(self.scope) == 1 or len(self.__indices)<self.leaves_size :
-            #self.spn_node.children.append(self.build_spn_leaf(data,scope))
+        if len(self.scope) == 1:
             return 0;
+        self.__children     = list()
+        print(len(list(self.__indices)))
+       
 
         left_set,left_data,right_set,right_data = self.project(data,**kwargs)
-
+        print(len(left_set))
+        print(len(right_set))
 
         #print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
 
@@ -379,30 +380,30 @@ class spatialtree(object):
         print("Leaves:"+str(self.leaves_size))
         if kwargs['NODE_TYPE'] == NODE_TYPE.LEAF_NODE:
             if len(left_set)>0:
-                self.__children.append(self.build_leaf_node(data,left_set,len(left_set)/float(total),0,height-1,self.scope,**kwargs))
+                self.__children.append(self.build_leaf_node(data,left_set,len(left_set)/len(data),0,height-1,self.scope,**kwargs))
             if len(right_set) >0:
-                self.__children.append(self.build_leaf_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
+                self.__children.append(self.build_leaf_node(data,right_set,len(right_set)/len(data),1,height-1,self.scope,**kwargs))
             if len(left_set)==0 and len(right_set)==0:
                 kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
                 kwargs['height'] = 0;
-                self.__children.append(self.__children.append(self.build_leaf_node(data,right_set,len(right_set)/float(total),0,0,self.scope,**kwargs)))
+                self.__children.append(self.__children.append(self.build_leaf_node(data,len(right_set)/len(data),len(right_weight)/float(total),0,0,self.scope,**kwargs)))
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.SUM_NODE :
             if len(left_set) > self.leaves_size:
-                self.__children.append(self.build_sum_node(data,left_set,len(left_set)/float(total),0,height-1,self.scope,**kwargs))
+                self.__children.append(self.build_sum_node(data,left_set,len(left_set)/len(data),0,height-1,self.scope,**kwargs))
             if len(right_set) > self.leaves_size:
-                self.__children.append(self.build_sum_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
+                self.__children.append(self.build_sum_node(data,right_set,len(right_set)/len(data),1,height-1,self.scope,**kwargs))
             if len(left_set)==0 and len(right_set)==0:
                 kwargs['NODE_TYPE'] = NODE_TYPE.LEAF_NODE
-                self.__children.append(self.__children.append(self.build_leaf_node(data,right_set,len(right_set)/float(total),0,0,self.scope,**kwargs)))
+                self.__children.append(self.__children.append(self.build_leaf_node(data,right_weight,len(right_set)/float(total),0,0,self.scope,**kwargs)))
 
         # Done
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             if len(left_set) > self.leaves_size:
-                self.__children.extend(self.build_product_node(data,left_set,len(left_set)/float(total),0,height-1,self.scope,**kwargs))
+                self.__children.extend(self.build_product_node(data,left_set,len(left_set)/len(data),0,height-1,self.scope,**kwargs))
             elif len(right_set) > self.leaves_size:    
-                self.__children.extend(self.build_product_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
+                self.__children.extend(self.build_product_node(data,right_set,len(right_set)/len(data),1,height-1,self.scope,**kwargs))
 
             if len(left_set)==0 and len(right_set)==0:
                 height =0; #insturctu stopping
@@ -473,13 +474,13 @@ class spatialtree(object):
         for data_slice, scope_slice in self.split_cols(data,  scope):
             if len(scope_slice) == 1 and len(data_slice) !=0:
                 children = self.produce_node(NODE_TYPE.LEAF_NODE,data,scope_slice)
-                node.scope.extend(scope_slice) 
+                node.scope.append(scope_slice) 
                 node.children.append(children)
                 child_count = child_count + 1
 
-            elif len(data_slice) !=0 and len(self.scope)>1:
+            elif len(data_slice) !=0    :
                 children = self.produce_node(NODE_TYPE.SUM_NODE,data,scope_slice)
-                node.scope.extend(scope_slice) 
+                node.scope.append(scope_slice) 
                 node.children.append(children)
                 kwargs['NODE_TYPE'] = NODE_TYPE.SUM_NODE
                 child_count = child_count + 1
@@ -515,14 +516,7 @@ class spatialtree(object):
         node_info = data[list(indices),:]
         for i in range(0,len(scope)):
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
-            if isinstance(node,Categorical):
-                temp=list();
-                for i in range(0,self.target_shape):
-                    temp.append(0)
-                temp[int(self.target_index)]=1
-                node.p=temp
             spn_node.children.append(node)
-            spn_node.scope.extend(scope)
             spn_node.weights.append(weights)
 
         return spn_node
@@ -537,12 +531,6 @@ class spatialtree(object):
         node_info = data[list(indices),:]
         for i in range(0,len(scope)):
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
-            if isinstance(node,Categorical):
-                temp=list();
-                for i in range(0,self.target_shape):
-                    temp.append(0)
-                temp[int(self.target_index)]=1
-                node.p=temp
             spn_node.children.append(node)
 
 

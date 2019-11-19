@@ -168,9 +168,9 @@ def one_hot(df,col):
 
 
 credit = fetch_openml(name='iris', version=1,return_X_y=True)[0]
-credit = pd.DataFrame(credit)
+credit = pd.DataFrame(credit).head(50)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -198,14 +198,14 @@ for train_index, test_index in kf.split(credit):
     theirs_time = time.time()
     spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
     theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
+    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
         #tf.train.AdamOptimizer(1e-4))
 
 
     
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
 
 
