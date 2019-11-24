@@ -151,17 +151,17 @@ def bfs(root, func):
                     queue.append(c)
 
 def print_prob(node):
-    if isinstance(node,Sum):
-        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+	if isinstance(node,Sum):
+		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-    if i == 'g':
-        return 0;
-    else:
-        return 1;
+	if i == 'g':
+		return 0;
+	else:
+		return 1;
 
 def one_hot(df,col):
-    df = pd.get_dummies([col])
-    df.drop()
+	df = pd.get_dummies([col])
+	df.drop()
 
 
 
@@ -181,7 +181,7 @@ for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
     #X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index]; 
+    X_test = credit.values[test_index];	
     X_test = numpy.nan_to_num(X_test)
     #X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
@@ -190,7 +190,7 @@ for train_index, test_index in kf.split(credit):
     for i in range(0,X.shape[1]):
         context.append(Gaussian)
 
-    
+	
 
 
 
@@ -224,7 +224,6 @@ for train_index, test_index in kf.split(credit):
     print("Building tree complete")
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    bfs(spn,print_prob)
     ll = log_likelihood(spn, X_test)
     spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.GradientDescentOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
@@ -263,4 +262,5 @@ numpy.savetxt('results/cars/ours.time', ours_time_list, delimiter=',')
 numpy.savetxt('results/cars/theirs.time',theirs_time_list, delimiter=',')
 numpy.savetxt('results/cars/theirs.ll',theirs, delimiter=',')
 numpy.savetxt('results/cars/ours.ll',ours, delimiter=',')
+
 

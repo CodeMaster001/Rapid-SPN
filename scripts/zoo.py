@@ -86,22 +86,22 @@ for train_index, test_index in kf.split(credit):
 	print("training normnal spm")
 	
 	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=10)
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2)
 	
 	
 	theirs_time = time.time()-theirs_time
 
 	ll_original = log_likelihood(spn_classification, X)
 	ll = log_likelihood(spn_classification, X)
-	ll_test = log_likelihood(spn_classification,X_test)
-	ll_test_original=ll_test[ll_test>-1000]
+	ll_test_original = log_likelihood(spn_classification,X_test)
+
 
 
 
 
 	print('Building tree...')
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,prob=0.5,leaves_size=2,height=2,spill=0.2,rule='rp',threshold=0.3,samples_rp=50)
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,prob=0.5,leaves_size=2,height=3,spill=0.2,rule='rp',threshold=0.3,samples_rp=50)
 	
 	T= T.build_spn();
 	T.update_ids();
@@ -114,7 +114,6 @@ for train_index, test_index in kf.split(credit):
 	ll = log_likelihood(spn, X)
 	ll_test = log_likelihood(spn,X_test)
 	print(ll_test)
-	ll_test=ll_test[ll_test>-1000]
 	print(numpy.mean(ll_test_original))
 	print(numpy.mean(ll_test))
 	theirs.extend(ll_test_original)

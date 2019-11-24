@@ -62,9 +62,15 @@ print(credit.shape)
 ours_time_list = list();
 theirs_time_list = list();
 
-for i in range(10):
-	X, X_test = train_test_split(credit, train_size=0.40)
-
+for train_index, test_index in kf.split(credit):
+	X = credit.values[train_index,:]
+	X=numpy.nan_to_num(X)
+	#X = preprocessing.normalize(X, norm='l2')
+	X_test = credit.values[test_index]; 
+	X_test = numpy.nan_to_num(X_test)
+	#X_test = preprocessing.normalize(X_test, norm='l2')
+	X = X.astype(numpy.float32)
+	X_test =X_test.astype(numpy.float32)
 	context = list()
 	for i in range(0,X.shape[1]):
 		context.append(Categorical)

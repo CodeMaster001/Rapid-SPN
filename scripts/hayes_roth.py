@@ -175,18 +175,18 @@ theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
-for i in range(10):
-    X, X_test = train_test_split(credit.values, train_size=0.10)
+for train_index, test_index in kf.split(credit):
+    X = credit.values[train_index,:]
     X=numpy.nan_to_num(X)
     X = preprocessing.normalize(X, norm='l2')
-    #X_test = numpy.nan_to_num(X_test)
+    X_test = credit.values[test_index]; 
+    X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
     for i in range(0,X.shape[1]):
-    	context.append(Gaussian)
-
+        context.append(Gaussian)
 
 
 
@@ -195,23 +195,23 @@ for i in range(10):
     print("training normnal spm")
 
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=4)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     	#tf.train.AdamOptimizer(1e-4))
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    ll_test_original = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test
+
 
 
 
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=3,spill=0.3)
 
     T= T.build_spn();
     T.update_ids();

@@ -122,14 +122,13 @@ for train_index, test_index in kf.split(credit):
     #ll_test = eval_tf(spn_classification, X_test)
    # print(ll_test)
     ll_test_original = log_likelihood(spn_classification,X_test)
-    ll_test_original = ll_test_original[ll_test_original>-1000]
     theirs_time_tf = time.time() -original
 
 
 
     logging.info('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=2,spill=0.3)
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=2,height=3,spill=0.3)
     logging.info("Building tree complete")
 
     T= T.build_spn();
