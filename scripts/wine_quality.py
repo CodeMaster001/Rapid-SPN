@@ -173,7 +173,7 @@ credit = fetch_openml(name='wine_quality', version=1,return_X_y=True)[0]
 #/credit = np.ones(shape=(100000,10))
 print(credit.shape)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -181,12 +181,12 @@ theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
 print(credit.shape)
-for i in range(10):
-    X, X_test = train_test_split(credit, train_size=0.1)
-    print(X.shape)
+for train_index, test_index in kf.split(credit):
+    X = credit[train_index,:]
     X=numpy.nan_to_num(X)
     X = preprocessing.normalize(X, norm='l2')
-    #X_test = numpy.nan_to_num(X_test)
+    X_test=credit[test_index,:]
+    X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
