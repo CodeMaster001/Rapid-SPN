@@ -220,16 +220,16 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    #spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=500)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
-    #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    #ll_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
-    #ll_test_original=ll_test
+    ll_test_original=ll_test
 
 
 
@@ -258,8 +258,8 @@ for train_index, test_index in kf.split(credit):
     print("--ll--")
     print(numpy.mean(ll_test))
     ours.extend(ll_test)
-    #theirs.append(numpy.mean(ll_test_original))
-    #theirs_time_list.append(theirs_time)
+    theirs.append(numpy.mean(ll_test_original))
+    theirs_time_list.append(theirs_time)
     
     
 
