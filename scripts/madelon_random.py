@@ -255,12 +255,10 @@ for train_index, test_index in kf.split(credit):
     cor_pred = np.corrcoef(X_test_eval)
     plt.matshow(cor)
     plt.matshow(cor_pred)
-    print(ll_test)
     print("--ll--")
-    #print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
+    ours.extend(ll_test)
     #theirs.append(numpy.mean(ll_test_original))
-    ours.append(numpy.mean(ll_test))
     #theirs_time_list.append(theirs_time)
     
     
@@ -277,11 +275,11 @@ print('---ll---')
 #print(numpy.var(theirs))
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/cancer")
-numpy.savetxt('results/farmland/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/farmland/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/farmland/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/farmland/ours.ll',ours, delimiter=',')
+os.makedirs("results/madelon")
+numpy.savetxt('results/madelon/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/madelon/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/madelon/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/madelon/ours.ll',ours, delimiter=',')
 
 
 

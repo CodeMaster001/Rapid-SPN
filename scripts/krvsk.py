@@ -88,8 +88,8 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=1.0)
     opt_op = optimizer.minimize(loss)
 
     # Collect loss
@@ -121,6 +121,7 @@ def optimize_tf_graph(
            
             # Build mean
             epoch_loss /= data.shape[0]
+            print(data.shape[0])
 
 
             print("Epoch: %s, Loss: %s", i, epoch_loss)
@@ -221,8 +222,8 @@ for train_index, test_index in kf.split(credit):
 
     #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original = log_likelihood(spn_classification,X_test)
+
 
 
 

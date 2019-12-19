@@ -221,8 +221,7 @@ for train_index, test_index in kf.split(credit):
 
     #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    ll_test = log_likelihood(spn_classification,X_test)
-    ll_test_original=ll_test[ll_test>-1000]
+    ll_test_original = log_likelihood(spn_classification,X_test)
 
 
 
@@ -239,10 +238,9 @@ for train_index, test_index in kf.split(credit):
     spn = T.spn_node;
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
-    ll = log_likelihood(spn, X_test)
+    ll_test = log_likelihood(spn, X_test)
     #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     #ll_test = eval_tf(spn,X)
-    ll_test=ll[ll>-1000]
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))

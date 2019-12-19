@@ -168,7 +168,7 @@ def one_hot(df,col):
 
 
 
-credit = fetch_openml(name='BNG(mv)', version=1,return_X_y=True)[0]
+credit = fetch_openml(name='mfeat-factors', version=1,return_X_y=True)[0]
 #/credit = np.ones(shape=(100000,10))
 print(credit.shape)
 kf = KFold(n_splits=10,shuffle=True)

@@ -231,7 +231,6 @@ for train_index, test_index in kf.split(credit):
     ours_time = time.time()-original;
     ours_time_list.append(ours_time)
     #bfs(spn,print_prob)
-    ll = log_likelihood(spn, X)
     spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
     ll_test = eval_tf(spn,X_test)
     ll_test=ll_test

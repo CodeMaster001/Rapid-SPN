@@ -174,3 +174,10 @@ logging.info(numpy.mean(theirs))
 logging.info(numpy.var(theirs))
 logging.info(numpy.mean(ours))
 logging.info(numpy.var(ours))
+
+os.makedirs("results/blogger")
+numpy.savetxt('results/blogger/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/blogger/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/blogger/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/blogger/ours.ll',ours, delimiter=',')
+
