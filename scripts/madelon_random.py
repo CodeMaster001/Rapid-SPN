@@ -220,15 +220,15 @@ for train_index, test_index in kf.split(credit):
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
     theirs_time = time.time()
-    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=20,n_jobs=100)
+    spn_classification = learn_parametric(numpy.array(X),ds_context,min_instances_slice=20,cpus=22)
     theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
-    ll_test = eval_tf(spn_classification, X_test)
+    #ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
+    ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
 
 
@@ -251,14 +251,14 @@ for train_index, test_index in kf.split(credit):
     X_test_eval=mpe(spn, X_test_eval)
     #   plot_spn(spn, 'basicspn.png')
     ll_test =log_likelihood(spn,X_test)
-    cor = np.corrcoef(X_test)
-    cor_pred = np.corrcoef(X_test_eval)
-    plt.matshow(cor)
-    plt.matshow(cor_pred)
+    #cor = np.corrcoef(X_test)
+    #cor_pred = np.corrcoef(X_test_eval)
+    #plt.matshow(cor)
+    #plt.matshow(cor_pred)
     print("--ll--")
     print(numpy.mean(ll_test))
     ours.extend(ll_test)
-    theirs.append(numpy.mean(ll_test_original))
+    theirs.extend(ll_test_original)
     theirs_time_list.append(theirs_time)
     
     
