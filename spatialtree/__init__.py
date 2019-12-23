@@ -32,8 +32,130 @@ import numpy as np
 from sklearn.cluster import KMeans
 import multiprocessing
 
+from spn.structure.Base import Context
+from spn.io.Graphics import plot_spn
+from spn.algorithms.Sampling import sample_instances
+from spn.structure.leaves.parametric.Parametric import Categorical, Gaussian
+from spn.algorithms.Inference import log_likelihood
+from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_rows_RDC_py
+from sklearn.datasets import load_iris,load_digits,fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_breast_cancer
+from spn.algorithms.LearningWrappers import learn_parametric
+from spn.gpu.TensorFlow import *
+from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
+from sklearn.metrics import accuracy_score
+from numpy.random.mtrand import RandomState
+from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
+from spn.algorithms.TransformStructure import Prune,Compress,SPN_Reshape
+import urllib
+import tensorflow as tf
+from sklearn.preprocessing import LabelEncoder
+from sklearn.datasets import fetch_openml
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
+from spn.gpu.TensorFlow import eval_tf
+from spn.structure.Base import *
+import time;
+import numpy as np, numpy.random
+numpy.random.seed(42)
+
 import sys;
 
+
+
+
+
+def optimize_tf(
+    spn: Node,
+    data: np.ndarray,
+    epochs=1000,
+    batch_size: int = None,
+    optimizer: tf.train.Optimizer = None,
+    return_loss=False,
+) -> Union[Tuple[Node, List[float]], Node]:
+    """
+    Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
+    function.
+    :param spn: SPN which is to be optimized
+    :param data: Input data
+    :param epochs: Number of epochs
+    :param batch_size: Size of each minibatch for SGD
+    :param optimizer: Optimizer procedure
+    :param return_loss: Whether to also return the list of losses for each epoch or not
+    :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
+    returned, else only a copy of the optimized SPN is returned
+    """
+    # Make sure, that the passed SPN is not modified
+    spn_copy = Copy(spn)
+
+    # Compile the SPN to a static tensorflow graph
+    tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
+
+    # Optimize the tensorflow graph
+    loss_list = optimize_tf_graph(
+        tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
+    )
+
+    # Return loss as well if flag is set
+    if return_loss:
+        return spn_copy, loss_list
+
+    return spn_copy
+
+
+def optimize_tf_graph(
+    tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
+) -> List[float]:
+    if optimizer is None:
+        optimizer = tf.train.GradientDescentOptimizer(0.001)
+    loss = -tf.reduce_sum(tf_graph)
+    original_optimizer = tf.train.GradientDescentOptimizer(0.001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
+    opt_op = optimizer.minimize(loss)
+
+    # Collect loss
+    loss_list = [0]
+    config = tf.ConfigProto(
+        device_count = {'GPU': 0})
+    with tf.Session(config=config) as sess:
+        sess.run(tf.global_variables_initializer())
+        if not batch_size:
+            batch_size = data.shape[0]
+        batches_per_epoch = data.shape[0] // batch_size
+        old_loss = 0;
+        # Iterate over epochs
+        for i in range(0,epochs):
+  
+
+            # Collect loss over batches for one epoch
+            epoch_loss = 0.0
+
+            # Iterate over batches
+            for j in range(batches_per_epoch):
+                data_batch = data[j * batch_size : (j + 1) * batch_size, :]
+         
+                _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
+           
+                epoch_loss += batch_loss
+              
+           
+            # Build mean
+            epoch_loss /= data.shape[0]
+
+
+            print("Epoch: %s, Loss: %s", i, epoch_loss)
+            loss_list.append(epoch_loss)
+            old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            print(old_loss)
+            if np.abs(old_loss)<0.02:
+                break;
+            print(old_loss)
+
+        tf_graph_to_spn(variable_dict)
+
+    return loss_list
 
 
 class NODE_TYPE:
@@ -82,7 +204,6 @@ class SPNRPBuilder(object):
         SPNRPBuilder.tasks.append([self.root,data,kwargs])
 
 
-    
     def build_spn(self):
         while SPNRPBuilder.tasks:
             sp,data,kwargs =  SPNRPBuilder.tasks.pop();
@@ -109,13 +230,19 @@ class spatialtree(object):
     def calculate_gini(self,data,k=2):
         split_cols = list()
         gini_values = np.zeros(shape=(data.shape[1],data.shape[1]))
-        p = multiprocessing.pool.ThreadPool(10)
+        p = multiprocessing.pool.ThreadPool(30)
         for i in range(0,data.shape[1]):
+            print(i)
             process = list()
             for j in range(0,data.shape[1]):
                 gini_values[i,j] = p.apply(gini, (data,[i,j]))
         p.close()
         p.join()
+        if np.array(gini_values).shape[0]<k:
+            first_index = [0 for i in range(0,gini_values.shape[0])]
+            split_cols.append(first_index)
+            return split_cols;
+
         kmeans = KMeans(n_clusters=k, random_state=0).fit(gini_values)
         for i in range(0,k):
             first_index = np.where(kmeans.labels_==i)[0]
@@ -348,7 +475,10 @@ class spatialtree(object):
 
         # Construct the children
         self.__children     = list()
-        total = len(left_set) + len(right_set)   
+        total = len(left_set) + len(right_set) 
+        print(len(left_set)/total)
+        print(len(right_set)/total)
+        print("....")  
         height=kwargs['height'] 
         print(height)
         if len(self.scope) == 1:
