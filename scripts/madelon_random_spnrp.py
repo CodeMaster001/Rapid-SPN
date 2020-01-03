@@ -254,13 +254,13 @@ for train_index, test_index in kf.split(credit):
     #plt.matshow(cor_pred)
     print("--ll--")
     print(numpy.mean(ll_test))
-    ours.extend(ll_test)
+    ours.extend(numpy.mean(ll_test))
     #theirs.extend(ll_test_original)
     #theirs_time_list.append(theirs_time)
     
 
 #plot_spn(spn_classification, 'basicspn-original.png')
-plot_spn(spn, 'basicspn.png')
+#plot_spn(spn, 'basicspn.png')
 print('---Time---')
 #print(numpy.mean(theirs_time_list))
 #print(numpy.var(theirs_time_list))

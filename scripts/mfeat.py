@@ -42,6 +42,7 @@ import numpy as np, numpy.random
 numpy.random.seed(42)
 import logging
 
+
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
@@ -86,9 +87,10 @@ def optimize_tf_graph(
     if optimizer is None:
         optimizer = tf.train.GradientDescentOptimizer(0.001)
     loss = -tf.reduce_sum(tf_graph)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=5.0)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
     opt_op = optimizer.minimize(loss)
-    i = 0;
+
     # Collect loss
     loss_list = [0]
     config = tf.ConfigProto(
@@ -99,9 +101,9 @@ def optimize_tf_graph(
             batch_size = data.shape[0]
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
+        counter = 0;
         # Iterate over epochs
-        while  True:
-            i = i+1;
+        while (True):
   
 
             # Collect loss over batches for one epoch
@@ -123,14 +125,18 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            if old_loss<0.0002:
+                counter = counter + 1
+            if old_loss>0.0002:
+                counter = 0;
+            if counter>10:
+                break;
+
             print(old_loss)
-            if np.abs(old_loss) < 0.0002:
-               break;
 
         tf_graph_to_spn(variable_dict)
 
     return loss_list
-
 
 
 
@@ -150,113 +156,122 @@ def bfs(root, func):
                     queue.append(c)
 
 def print_prob(node):
-    if isinstance(node,Sum):
-        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+	if isinstance(node,Sum):
+		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-    if i == 'g':
-        return 0;
-    else:
-        return 1;
+	if i == 'g':
+		return 0;
+	else:
+		return 1;
 
 def one_hot(df,col):
-    df = pd.get_dummies([col])
-    df.drop()
+	df = pd.get_dummies([col])
+	df.drop()
 
 
 
 
 
 
-credit = fetch_openml(name='colon-cancer', version=1,return_X_y=True)[0]
-credit = pd.read_csv("../dataset/colon.csv",sep=",")
+
+
+
+
+credit=pd.read_csv("../dataset/jura.csv",delimiter=",") 
+credit = credit.replace(r'^\s+$', numpy.nan, regex=True)
+
+credit = pd.DataFrame(data=credit)
+theirs = list()
+ours = list()
+
+kf = KFold(n_splits=5,shuffle=True)
 print(credit.head())
-kf = KFold(n_splits=10,shuffle=True)
+credit = credit.astype(np.float32)
+credit = numpy.nan_to_num(credit)
 theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
 for train_index, test_index in kf.split(credit):
-    X = credit.values[train_index,1:50]
+    X = credit[train_index,:]
     X=numpy.nan_to_num(X)
-    X = X.astype(numpy.float32)
     X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index,:50]; 
-    #X_test = numpy.nan_to_num(X_test)
+    X_test = credit[test_index];	
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
     context = list()
-    for i in range(0,X.shape[1]):
+    context.append(Gaussian)
+    for i in range(0,X.shape[1]-1):
         context.append(Gaussian)
 
-    
+	
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
     print("training normnal spm")
-    
     theirs_time = time.time()
-    """
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
+    spn_classification =  learn_parametric(X,ds_context,threshold=0.3,min_instances_slice=20)
     theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
-        #tf.train.AdamOptimizer(1e-4))
+    spn_classification = optimize_tf(spn_classification,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #tf.train.AdamOptimizer(1e-4))
 
 
-    lal_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification, X_test)
     #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
-    """
+
+
 
 
     print('Building tree...')
     original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
+    T =  SPNRPBuilder(data=X,ds_context=ds_context,target=X,leaves_size=2,height=3,samples_rp=5,prob=0.25,spill=0.75)
     print("Building tree complete")
     
+
     T= T.build_spn();
     T.update_ids();
-    ours_time = time.time()-original;
+    from spn.io.Text import spn_to_str_equation
     spn = T.spn_node;
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.0001))
-    ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test
+    ours_time = time.time()-original;
+    ours_time_list.append(ours_time)
+    #bfs(spn,print_prob)
+    ll = log_likelihood(spn, X_test)
+    
+    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    ll_test = eval_tf(spn,X)
     print("--ll--")
     print(numpy.mean(ll_test_original))
     print(numpy.mean(ll_test))
     theirs.append(numpy.mean(ll_test_original))
     ours.append(numpy.mean(ll_test))
     theirs_time_list.append(theirs_time)
-    ours_time_list.append(ours_time)
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn_classification))
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn))
 
-
-
+#plot_spn(spn_classification, 'basicspn-original.png')
 #plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
-print("---tt---")
 print(numpy.mean(theirs_time_list))
 print(numpy.var(theirs_time_list))
 print(numpy.mean(ours_time_list))
 print(numpy.var(ours_time_list))
+numpy.savetxt('ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('theirs.ll',theirs, delimiter=',')
+numpy.savetxt('ours.ll',ours, delimiter=',')
+
 print('---ll---')
 print(numpy.mean(theirs))
 print(numpy.var(theirs))
 
 print(numpy.mean(ours))
 print(numpy.var(ours))
-os.makedirs("results/iris")
-numpy.savetxt('results/iris/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/iris/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/iris/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/iris/ours.ll',ours, delimiter=',')
+
+
+
+
+
+
 
 
 

@@ -254,7 +254,7 @@ for train_index, test_index in kf.split(credit):
     print("--ll--")
     print(numpy.mean(ll_test))
     ours.extend(ll_test)
-    theirs.append(numpy.mean(ll_test_original))
+    theirs.extend(ll_test_original)
     theirs_time_list.append(theirs_time)
     
     
