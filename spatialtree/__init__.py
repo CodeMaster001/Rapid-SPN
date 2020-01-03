@@ -324,10 +324,8 @@ class spatialtree(object):
             wx[i] = numpy.dot(self.__w, data[i])
             pass
 
+        threshold = np.mean(list(wx.values()))
 
-
-        # Compute the bias points
-        self.__thresholds = scipy.stats.mstats.mquantiles(list(wx.values()), [self.prob - self.__spill/2, (1-self.prob) + self.__spill/2])
         # Partition the data
         left_set    = set()
         right_set   = set()
@@ -337,18 +335,17 @@ class spatialtree(object):
 
 
 
-        for (i, val) in wx.items():
-            if val >= self.__thresholds[0]:
+        for i in self.__indices:
+            if wx[i] >= threshold:
                 right_set.add(i)
                 right_data.append(data[i])
-
-        for (i, val) in wx.items():   
-            if val < self.__thresholds[-1]:
-                left_set.add(i)
+            else:
                 left_data.append(data[i])
+                left_set.add(i)
+
         del wx  # Don't need scores anymore
 
-        return left_set,left_data,right_set,right_data
+        return left_set,left_data,right_set,right_data,threshold
     
 
     def split(self, data,**kwargs):
@@ -468,7 +465,7 @@ class spatialtree(object):
         if kwargs['height'] == 0 or len(kwargs['indices']) < kwargs['min_items']:
             return  0
         # Compute the split direction 
-        left_set,left_data,right_set,right_data = self.project(data,**kwargs)
+        left_set,left_data,right_set,right_data,threshold = self.project(data,**kwargs)
 
         #print("LEFT:"+str(len(left_set))+"Right_set:"+str(len(right_set)))
 
@@ -968,7 +965,6 @@ class spatialtree(object):
         w /= numpy.sqrt(numpy.sum(w**2))
         return w
 
-
     def __RP(self, data, **kwargs):
         '''
         RP split
@@ -979,9 +975,8 @@ class spatialtree(object):
         '''
         k   = kwargs['samples_rp']
 
-
         # sample directions from d-dimensional normal
-        W   = numpy.random.randn( k, self.__d)
+        W   = numpy.random.randn( k, self.__d )
 
         # normalize each sample to get a sample from unit sphere
         for i in range(k):
@@ -994,13 +989,13 @@ class spatialtree(object):
         max_val = -numpy.inf * numpy.ones(k)
 
         for i in self.__indices:
-
             Wx      = numpy.dot(W, data[i])
             min_val = numpy.minimum(min_val, Wx)
             max_val = numpy.maximum(max_val, Wx)
             pass
 
         return W[numpy.argmax(max_val - min_val)]
+
 
     # end spatialtree class
 
