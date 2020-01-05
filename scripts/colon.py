@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
 Spatial tree demo for matrix data
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 '''
 
 
@@ -43,16 +43,10 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
-import sys;
-
-from pathlib import Path
-FILE_NAME="results/colon.info.15"
-Path("results").mkdir(parents=True, exist_ok=True)
 numpy.random.seed(42)
 import multiprocessing
 import logging
-
-
+import subprocess
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
@@ -177,11 +171,23 @@ def clean_data(x):
 	except:
 		print(str(x))
 
+
+def libsvm_preprocess(file_name,row_size=62,colon_size=200):
+	dataset_label, dataset_feature = svm_read_problem('../dataset/colon.csv')
+	X=list()
+	Y=list()
+	for i in range(0,row_size):
+		temp = list();
+		for j in range(0,colon_size):
+			temp.append(dataset_feature[i][j+1])
+		X.append(temp)
+		Y.append(dataset_label[i])
+	return np.array(X),np.array(Y)
  
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
+def spnrp_train(X,X_test):
 	context = list()
 	for i in range(0,X.shape[1]):
 	    context.append(Gaussian)
@@ -191,29 +197,32 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3)
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=3,height=3,spill=0.3)
 	print("Buiding tree complete")
 
 	T= T.build_spn();
 	T.update_ids();
 	ours_time = time.time()-original;
 	spn = T.spn_node;
-	spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
+	spn=optimize_tf(spn,X,epochs=1000)
 	ll_test = eval_tf(spn,X_test)
 	tf.reset_default_graph()
 	del spn;
 	return np.mean(ll_test),ours_time
 
-def learnspn_train(X,X_test,context,min_instances_slice,epochs):
-	
+def learnspn_train(X,X_test):
+	context = list()
+	for i in range(0,X.shape[1]):
+	    context.append(Gaussian)
+
 
 
 
 	ds_context = Context(parametric_types=context).add_domains(X)
 	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice)
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5)
 	theirs_time = time.time()-theirs_time
-	spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
+	spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
 	    #tf.train.AdamOptimizer(1e-4))
 
 
@@ -225,29 +234,38 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs):
 	del spn_classification
 	return  np.mean(ll_test),theirs_time
 
-# train.npy test.npy 500 1000 2 0.2 20
-train_file_name=sys.argv[1]
-test_file_name=sys.argv[2]
-context = np.load(sys.argv[3],allow_pickle=True)
-min_instances_slice = int(sys.argv[4])
-epochs=int(sys.argv[5])
-height=int(sys.argv[6])
-prob=float(sys.argv[7])
-leaves_size=float(sys.argv[6])
-X=pd.read_csv(train_file_name).values
-X_test=pd.read_csv(test_file_name).values
-X = X.astype(numpy.float32)
-X_test =X_test.astype(numpy.float32)
-print(X)
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
-spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
-f=open(FILE_NAME,'a')
-temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-f.write(temp)
-f.flush()
-f.close()
+dataset_feature,dataset_label = libsvm_preprocess('../dataset/colon.csv')
+print(dataset_feature)
 
-
-
-
+kf = KFold(n_splits=5,shuffle=True)
+theirs = list()
+ours = list()
+ours_time_list = list()
+theirs_time_list = list();
+train_set = list()
+test_set = list();
+counter = 0;
+context = list()
+for i in range(0,dataset_feature.shape[1]):
+    context.append(Gaussian)
+for train_index,test_index in kf.split(dataset_feature):
+    X_train,X_test=dataset_feature[train_index],dataset_feature[test_index]
+    X=numpy.nan_to_num(X_train)
+    X = X.astype(numpy.float32)
+    X = preprocessing.normalize(X, norm='l2') 
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.savetxt('train.csv', X, delimiter=',')
+    np.savetxt("test.csv",X_test,delimiter=',')
+    np.save("context",context)
+    P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy 15 1000 3 0.4 15'],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
