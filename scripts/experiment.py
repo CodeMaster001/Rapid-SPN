@@ -240,10 +240,13 @@ X = X.astype(numpy.float32)
 X_test =X_test.astype(numpy.float32)
 print(X)
 
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
+#spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
 f=open(FILE_NAME,'a')
-temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+f.write(str(sys.argv)+"\n")
+print(spnrp_mean)
+#temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+temp=str(spnrp_time)+","+str(spnrp_mean)+str(min_instances_slice)+"\n"
 f.write(temp)
 f.flush()
 f.close()
