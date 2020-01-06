@@ -292,7 +292,6 @@ class FriendSPN(object):
 
         return left_set,len(left_set)/total,right_set,len(right_set)/total,threshold
     
-        
     def __RP(self,data,scope,sample_rp,**kwargs):
 
         '''
