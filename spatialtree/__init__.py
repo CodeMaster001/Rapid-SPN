@@ -45,6 +45,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
+from spn.structure.leaves.cltree import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
@@ -85,6 +86,7 @@ def gini(data,index):
     n = data.shape[0]
     # Gini coefficient:
     return ((np.sum((2 * index_shape - n  - 1) * data)) / (n * np.sum(data)))
+
 
 
 class FriendSPN(object):
@@ -137,98 +139,6 @@ class FriendSPN(object):
         rebuild_scopes_bottom_up(self.spn_node)
         #self.spn_node = Prune(self.spn_node)
 
-
-
-    def optimize_tf(self,
-        spn: Node,
-        data: np.ndarray,
-        epochs=1000,
-        batch_size: int = None,
-        optimizer: tf.train.Optimizer = None,
-        return_loss=False,
-    ) -> Union[Tuple[Node, List[float]], Node]:
-        """
-        Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
-        function.
-        :param spn: SPN which is to be optimized
-        :param data: Input data
-        :param epochs: Number of epochs
-        :param batch_size: Size of each minibatch for SGD
-        :param optimizer: Optimizer procedure
-        :param return_loss: Whether to also return the list of losses for each epoch or not
-        :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
-        returned, else only a copy of the optimized SPN is returned
-        """
-        # Make sure, that the passed SPN is not modified
-        spn_copy = Copy(spn)
-
-        # Compile the SPN to a static tensorflow graph
-        tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
-
-        # Optimize the tensorflow graph
-        loss_list = optimize_tf_graph(
-            tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
-        )
-
-        # Return loss as well if flag is set
-        if return_loss:
-            return spn_copy, loss_list
-
-        return spn_copy
-
-
-    def optimize_tf_graph(self,
-    tf_graph, variable_dict, data_placeholder, data, epochs=10000, batch_size=None, optimizer=None
-    ) -> List[float]:
-        if optimizer is None:
-            optimizer = tf.train.GradientDescentOptimizer(0.001)
-        loss = -tf.reduce_sum(tf_graph)
-        original_optimizer = tf.train.GradientDescentOptimizer(0.001)
-        optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
-        opt_op = optimizer.minimize(loss)
-
-        # Collect loss
-        loss_list = [0]
-        config =tf.ConfigProto(log_device_placement=True)
-        config.gpu_options.allow_growth = True  
-
-        with tf.Session(config=config) as sess:
-            sess.run(tf.global_variables_initializer())
-            if not batch_size:
-                batch_size = data.shape[0]
-            batches_per_epoch = data.shape[0] // batch_size
-            old_loss = 0;
-            # Iterate over epochs
-            for i in range(0,epochs):
-
-
-                # Collect loss over batches for one epoch
-                epoch_loss = 0.0
-
-                # Iterate over batches
-                for j in range(batches_per_epoch):
-                    data_batch = data[j * batch_size : (j + 1) * batch_size, :]
-             
-                    _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
-               
-                    epoch_loss += batch_loss
-                  
-               
-                # Build mean
-                epoch_loss /= data.shape[0]
-
-
-                print("Epoch: %s, Loss: %s", i, epoch_loss)
-                loss_list.append(epoch_loss)
-                old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-                print(old_loss)
-            
-
-            tf_graph_to_spn(variable_dict)
-
-        return loss_list
-
-    #calculate gini index for each pair and then apply kmenas and return subset of columns
     def __calculate_gini(self,data,scope,k=2):
         temp = data[:,scope] #apply existing scope
         temp = temp[list(self.getIndices()),:] #apply indices
@@ -346,7 +256,6 @@ class FriendSPN(object):
     def split(self,**kwargs):
     # Store bookkeeping information
         #base cases
-      
         if len(self.indices)<10 or len(self.scope)<15:
             node =self.naive_factorization(self.data,self.scope)
             self.spn_node.children[self.index]=node
@@ -354,27 +263,25 @@ class FriendSPN(object):
             return;
 
 
-        if len(self.scope)==1:
+        elif len(self.scope)==1 or self.TYPE==NODE_TYPE.LEAF_NODE:
             self.spn_node.children[self.index]=self.build_leaf_node(self.data,self.scope,self.ds_context)
             return;
 
 
-        if self.TYPE == NODE_TYPE.SUM_NODE:
+        elif self.TYPE == NODE_TYPE.SUM_NODE:
             self.build_sum_node(**kwargs)
 
-        if self.TYPE == NODE_TYPE.PRODUCT_NODE:
+        elif self.TYPE == NODE_TYPE.PRODUCT_NODE:
             print("product called..")
             self.build_product_node(**kwargs)
-
-        if self.TYPE==NODE_TYPE.NAIVE:
-            self.spn_node.children.append(self. naive_factorization(self.data,scope_slice))
-        '''
 
         elif kwargs['NODE_TYPE'] == NODE_TYPE.PRODUCT_NODE:
             print('called')
             self.__children.extend(self.build_product_node(data,left_set,left_weight,0,height-1,self.scope,**kwargs))
             self.__children.extend(self.build_product_node(data,right_set,len(right_set)/float(total),1,height-1,self.scope,**kwargs))
-        '''
+        
+        elif self.TYPE==NODE_TYPE.NAIVE:
+            self.spn_node.children[self.index]=self. naive_factorization(self.data,self.scope)
 
     def build_sum_node(self,**kwargs):
 
@@ -388,10 +295,23 @@ class FriendSPN(object):
         sum_node.scope.extend(self.scope)
         sum_node.weights.append(left_weight)
         sum_node.children.append(None)
-        node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=0)
+        
+        if len(left_set)<10 or len(self.scope)<15:
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=0)
+            pass;
+        else:
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=0)
+        
         sum_node.weights.append(right_weight)
         sum_node.children.append(None)
-        node_right =FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=1)
+
+        if len(right_set)<10 or len(self.scope)<15:
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=1)
+            pass;
+        else:
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,index=1)
+
+
         self.children =[node_left,node_right]
         
         SPNRPBuilder.tasks.append([node_left,kwargs])
@@ -405,7 +325,13 @@ class FriendSPN(object):
 
     def build_product_node(self,**kwargs):
         scope_list = list()
-
+        '''
+        if len(self.indices)<10 or len(self.scope)<15:
+            node = FriendSPN(data=self.data,indices=self.indices,spn_object=self.spn_node,scope=self.scope,ds_context=self.ds_context,height=self.height,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=self.index)
+            SPNRPBuilder.tasks.append([node,kwargs])
+            return;
+        '''
+        #else:
         node= Product();
         rptree = list()
         child_count = -1;
@@ -434,14 +360,13 @@ class FriendSPN(object):
                 node.children.append(None)
                 children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=child_count)
                 SPNRPBuilder.tasks.append([children_friend,kwargs])
-        print(child_count)
-        
-        assert child_count==1;
+                print(child_count)
+        assert child_count == 1;
         if self.spn_node == None:
             self.spn_node = node;
         else:
             self.spn_node.children[self.index]=node;
-            
+        
 
     def naive_factorization(self, data,scope):
 
@@ -480,7 +405,7 @@ class SPNRPBuilder(object):
         self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,TYPE=NODE_TYPE.SUM_NODE)
         SPNRPBuilder.tasks.append([self.root,kwargs])
         self.data=data;
-
+ 
 
     def build_spn(self):
         while SPNRPBuilder.tasks:
@@ -498,6 +423,7 @@ class SPNRPBuilder(object):
         spn_node = Prune(spn_node)
         print("exited")
         print(spn_node)
+        self.root.spn_node=spn_node #apply prune
         return self.root;
 
 
