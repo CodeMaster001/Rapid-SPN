@@ -46,7 +46,7 @@ import numpy as np, numpy.random
 import sys;
 
 from pathlib import Path
-FILE_NAME="results/colon.info.15"
+FILE_NAME_DIR="results/"
 Path("results").mkdir(parents=True, exist_ok=True)
 numpy.random.seed(42)
 import multiprocessing
@@ -111,7 +111,7 @@ def optimize_tf_graph(
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
         # Iterate over epochs
-        while  i<epochs:
+        while i<epochs:
             i = i+1;
   
 
@@ -136,6 +136,7 @@ def optimize_tf_graph(
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
             loss_list.append(old_loss)
 
+           
         tf_graph_to_spn(variable_dict)
 
     return loss_list
@@ -187,8 +188,6 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
         context.append(Gaussian)
 
 
-
-
     ds_context = Context(parametric_types=context).add_domains(X)
     original = time.time();
     T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3)
@@ -198,10 +197,10 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
     T.update_ids();
     ours_time = time.time()-original;
     spn = T.spn_node;
+    spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
     plot_spn(spn,'spn.png')
-    spn=optimize_tf(spn,X,epochs=8000,optimizer= tf.train.AdamOptimizer(0.0001))
     ll_test = eval_tf(spn,X_test)
-    tf.reset_default_graph()
+    tf.reset_default_graph();
     del spn;
     return np.mean(ll_test),ours_time
 
@@ -226,28 +225,27 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs):
     del spn_classification
     return  np.mean(ll_test),theirs_time
 
-# train.npy test.npy 500 1000 2 0.2 20
+# train.npy test.npy context.npy train_context_filename output_file_name test_file_name min_instance_slice epochs height prob leaves_size 
 train_file_name=sys.argv[1]
 test_file_name=sys.argv[2]
 context = np.load(sys.argv[3],allow_pickle=True)
-min_instances_slice = int(sys.argv[4])
-epochs=int(sys.argv[5])
-height=int(sys.argv[6])
-prob=float(sys.argv[7])
-leaves_size=float(sys.argv[6])
+file_name=str(sys.argv[4])
+min_instances_slice = int(sys.argv[5])
+epochs=int(sys.argv[6])
+height=int(sys.argv[7])
+prob=float(sys.argv[8])
+leaves_size=float(sys.argv[9])
 X=pd.read_csv(train_file_name).values
 X_test=pd.read_csv(test_file_name).values
 X = X.astype(numpy.float32)
 X_test =X_test.astype(numpy.float32)
-print(X)
 
-#spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
+spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
-f=open(FILE_NAME,'a')
+f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
-#temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-temp=str(spnrp_time)+","+str(spnrp_mean)+str(min_instances_slice)+"\n"
+temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
 f.write(temp)
 f.flush()
 f.close()

@@ -9,9 +9,13 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
-from spatialtree import SPNRPBuilder
+from sklearn.datasets import load_svmlight_file
+from spatialtree import *;
+from sklearn.model_selection import train_test_split
+from libsvm.svmutil import *
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -40,8 +44,9 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
+import multiprocessing
 import logging
-
+import subprocess
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
@@ -63,6 +68,7 @@ def optimize_tf(
     returned, else only a copy of the optimized SPN is returned
     """
     # Make sure, that the passed SPN is not modified
+    tf.reset_default_graph() 
     spn_copy = Copy(spn)
 
     # Compile the SPN to a static tensorflow graph
@@ -91,8 +97,7 @@ def optimize_tf_graph(
     i = 0;
     # Collect loss
     loss_list = [0]
-    config = tf.ConfigProto(
-        device_count = {'GPU': 0})
+    config =tf.ConfigProto(log_device_placement=True,);
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         if not batch_size:
@@ -100,7 +105,7 @@ def optimize_tf_graph(
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
         # Iterate over epochs
-        while  True:
+        while  i<epochs:
             i = i+1;
   
 
@@ -123,14 +128,11 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            print(old_loss)
-            if np.abs(old_loss) < 0.0002:
-               break;
+            loss_list.append(old_loss)
 
         tf_graph_to_spn(variable_dict)
 
     return loss_list
-
 
 
 
@@ -163,102 +165,125 @@ def one_hot(df,col):
     df.drop()
 
 
+def clean_data(x):
+    try:
+        return str(x).split(':')[-1]
+    except:
+        print(str(x))
 
 
+def libsvm_preprocess(file_name,row_size=62,colon_size=200):
+    dataset_label, dataset_feature = svm_read_problem('../dataset/colon.csv')
+    X=list()
+    Y=list()
+    for i in range(0,row_size):
+        temp = list();
+        for j in range(0,colon_size):
+            temp.append(dataset_feature[i][j+1])
+        X.append(temp)
+        Y.append(dataset_label[i])
+    return np.array(X),np.array(Y)
+ 
 
+#print(credit.head())
 
-credit = fetch_openml(name='colon-cancer', version=1,return_X_y=True)[0]
-credit = pd.read_csv("../dataset/colon.csv",sep=",")
-print(credit.head())
-kf = KFold(n_splits=10,shuffle=True)
-theirs = list()
-ours = list()
-ours_time_list = list()
-theirs_time_list = list();
-for train_index, test_index in kf.split(credit):
-    X = credit.values[train_index,1:50]
-    X=numpy.nan_to_num(X)
-    X = X.astype(numpy.float32)
-    X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index,:50]; 
-    #X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
-    X = X.astype(numpy.float32)
-    X_test =X_test.astype(numpy.float32)
+def spnrp_train(X,X_test):
     context = list()
     for i in range(0,X.shape[1]):
         context.append(Gaussian)
 
-    
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spm")
-    
+    original = time.time();
+    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=3,height=3,spill=0.3)
+    print("Buiding tree complete")
+
+    T= T.build_spn();
+    T.update_ids();
+    ours_time = time.time()-original;
+    spn = T.spn_node;
+    spn=optimize_tf(spn,X,epochs=1000)
+    ll_test = eval_tf(spn,X_test)
+    tf.reset_default_graph()
+    del spn;
+    return np.mean(ll_test),ours_time
+
+def learnspn_train(X,X_test):
+    context = list()
+    for i in range(0,X.shape[1]):
+        context.append(Gaussian)
+
+
+
+
+    ds_context = Context(parametric_types=context).add_domains(X)
     theirs_time = time.time()
-    """
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
         #tf.train.AdamOptimizer(1e-4))
 
 
-    lal_test = eval_tf(spn_classification, X_test)
+    ll_test = eval_tf(spn_classification,X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
     ll_test_original=ll_test
-    """
+    tf.reset_default_graph()
+    del spn_classification
+    return  np.mean(ll_test),theirs_time
 
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
+train_dataset,labels= fetch_openml(name='iris', version=1,return_X_y=True)
+train_dataset_df = pd.DataFrame(train_dataset)
 
-    print('Building tree...')
-    original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-    print("Building tree complete")
-    
-    T= T.build_spn();
-    T.update_ids();
-    ours_time = time.time()-original;
-    spn = T.spn_node;
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.0001))
-    ll_test = eval_tf(spn,X_test)
-    ll_test=ll_test
-    print("--ll--")
-    print(numpy.mean(ll_test_original))
-    print(numpy.mean(ll_test))
-    theirs.append(numpy.mean(ll_test_original))
-    ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
-    ours_time_list.append(ours_time)
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn_classification))
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn))
+kf = KFold(n_splits=10,shuffle=True)
+theirs = list()
+ours = list()
+ours_time_list = list()
+theirs_time_list = list();
+train_set = list()
+test_set = list();
+counter = 0;
+context = list()
 
+#parameters
+output_file_name='iris.log'
+min_instances_slice=10
+epochs=1000
+height=2
+prob=0.4
+leaves_size=15
 
+opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)
 
-#plot_spn(spn, 'basicspn.png')
-print(theirs)
-print(ours)
-print(original)
-print("---tt---")
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
-print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
+for i in range(0,train_dataset_df.shape[1]):
+    context.append(Gaussian)
+for train_index,test_index in kf.split(train_dataset_df):
+    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    X=numpy.nan_to_num(X_train)
+    X = X.astype(numpy.float32)
+    X = preprocessing.normalize(X, norm='l2') 
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.savetxt('train.csv', X, delimiter=',')
+    np.savetxt("test.csv",X_test,delimiter=',')
+    np.save("context",context)
+    P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
+#!/usr/bin/env python
+'''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
-print(numpy.mean(ours))
-print(numpy.var(ours))
-os.makedirs("results/iris")
-numpy.savetxt('results/iris/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/iris/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/iris/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/iris/ours.ll',ours, delimiter=',')
-
-
-
+Spatial tree demo for matrix data
+'''
 
 
