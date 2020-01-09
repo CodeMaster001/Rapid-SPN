@@ -264,7 +264,7 @@ class FriendSPN(object):
             self.build_sum_node(**kwargs)
 
 
-        elif len(self.indices)< 20 or len(self.scope)<0:
+        elif len(self.indices)< self.leaves_size:
             node =self.naive_factorization(self.data,self.scope)
             self.spn_node.children[self.index]=node
             print("going back")

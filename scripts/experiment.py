@@ -136,7 +136,8 @@ def optimize_tf_graph(
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
             loss_list.append(old_loss)
 
-           
+            if np.abs(old_loss) < 0.0002:
+               break;
         tf_graph_to_spn(variable_dict)
 
     return loss_list
@@ -204,14 +205,14 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
     del spn;
     return np.mean(ll_test),ours_time
 
-def learnspn_train(X,X_test,context,min_instances_slice,epochs):
+def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
     
 
 
 
     ds_context = Context(parametric_types=context).add_domains(X)
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
         #tf.train.AdamOptimizer(1e-4))
@@ -220,6 +221,9 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs):
     ll_test = eval_tf(spn_classification,X_test)
     #print(ll_test)
     #ll_test = log_likelihood(spn_classification,X_test)
+    plot_spn(spn_classification,'spn_class.png')
+   
+
     ll_test_original=ll_test
     tf.reset_default_graph()
     del spn_classification
@@ -235,12 +239,13 @@ epochs=int(sys.argv[6])
 height=int(sys.argv[7])
 prob=float(sys.argv[8])
 leaves_size=float(sys.argv[9])
+threshold = float(sys.argv[10])
 X=pd.read_csv(train_file_name).values
 X_test=pd.read_csv(test_file_name).values
 X = X.astype(numpy.float32)
 X_test =X_test.astype(numpy.float32)
 
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs)
+spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")

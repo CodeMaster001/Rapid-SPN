@@ -9,9 +9,13 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
+os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
-from spatialtree import SPNRPBuilder
+from sklearn.datasets import load_svmlight_file
+from spatialtree import *;
+from sklearn.model_selection import train_test_split
+from libsvm.svmutil import *
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -40,100 +44,9 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
+import multiprocessing
 import logging
-
-
-def optimize_tf(
-    spn: Node,
-    data: np.ndarray,
-    epochs=1000,
-    batch_size: int = None,
-    optimizer: tf.train.Optimizer = None,
-    return_loss=False,
-) -> Union[Tuple[Node, List[float]], Node]:
-    """
-    Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
-    function.
-    :param spn: SPN which is to be optimized
-    :param data: Input data
-    :param epochs: Number of epochs
-    :param batch_size: Size of each minibatch for SGD
-    :param optimizer: Optimizer procedure
-    :param return_loss: Whether to also return the list of losses for each epoch or not
-    :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
-    returned, else only a copy of the optimized SPN is returned
-    """
-    # Make sure, that the passed SPN is not modified
-    spn_copy = Copy(spn)
-
-    # Compile the SPN to a static tensorflow graph
-    tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
-
-    # Optimize the tensorflow graph
-    loss_list = optimize_tf_graph(
-        tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
-    )
-
-    # Return loss as well if flag is set
-    if return_loss:
-        return spn_copy, loss_list
-
-    return spn_copy
-
-
-def optimize_tf_graph(
-    tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
-) -> List[float]:
-    if optimizer is None:
-        optimizer = tf.train.GradientDescentOptimizer(0.001)
-    loss = -tf.reduce_sum(tf_graph)
-    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
-    opt_op = optimizer.minimize(loss)
-
-    # Collect loss
-    loss_list = [0]
-    config = tf.ConfigProto(
-        device_count = {'GPU': 0})
-    with tf.Session(config=config) as sess:
-        sess.run(tf.global_variables_initializer())
-        if not batch_size:
-            batch_size = data.shape[0]
-        batches_per_epoch = data.shape[0] // batch_size
-        old_loss = 0;
-        # Iterate over epochs
-        while  True:
-  
-
-            # Collect loss over batches for one epoch
-            epoch_loss = 0.0
-
-            # Iterate over batches
-            for j in range(batches_per_epoch):
-                data_batch = data[j * batch_size : (j + 1) * batch_size, :]
-         
-                _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
-           
-                epoch_loss += batch_loss
-              
-           
-            # Build mean
-            epoch_loss /= data.shape[0]
-
-
-            print("Epoch: %s, Loss: %s", i, epoch_loss)
-            loss_list.append(epoch_loss)
-            old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-            print(old_loss)
-            if np.abs(old_loss) < 0.0002:
-         	   break;
-
-        tf_graph_to_spn(variable_dict)
-
-    return loss_list
-
-
-
+import subprocess
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -150,115 +63,78 @@ def bfs(root, func):
                     queue.append(c)
 
 def print_prob(node):
-	if isinstance(node,Sum):
-		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+    if isinstance(node,Sum):
+        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-	if i == 'g':
-		return 0;
-	else:
-		return 1;
+    if i == 'g':
+        return 0;
+    else:
+        return 1;
 
 def one_hot(df,col):
-	df = pd.get_dummies([col])
-	df.drop()
+    df = pd.get_dummies([col])
+    df.drop()
 
 
+def clean_data(x):
+    try:
+        return str(x).split(':')[-1]
+    except:
+        print(str(x))
 
+ 
 
-
-
-credit = fetch_openml(name='Hayes-roth', version=1,return_X_y=True)[0]
-credit = pd.DataFrame(credit)
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
+train_dataset,labels= fetch_openml(name='Hayes-roth', version=1,return_X_y=True)
+train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
-for train_index, test_index in kf.split(credit):
-    X = credit.values[train_index,:]
-    X=numpy.nan_to_num(X)
-    X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index]; 
+train_set = list()
+test_set = list();
+counter = 0;
+context = list()
+
+#parameters
+output_file_name='hayes.log'
+min_instances_slice=20
+epochs=5000
+height=2
+prob=0.6
+leaves_size=2
+threshold=0.4
+
+opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold)
+
+for i in range(0,train_dataset_df.shape[1]):
+    context.append(Gaussian)
+for train_index,test_index in kf.split(train_dataset_df):
+    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    X=numpy.nan_to_num(X_train)
+    X = X.astype(numpy.float32)
+    X = preprocessing.normalize(X, norm='l2') 
     X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
-    context = list()
-    for i in range(0,X.shape[1]):
-        context.append(Gaussian)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.savetxt('train.csv', X, delimiter=',')
+    np.savetxt("test.csv",X_test,delimiter=',')
+    np.save("context",context)
+    P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
+#!/usr/bin/env python
+'''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
-
-
-
-    ds_context = Context(parametric_types=context).add_domains(X)
-    print("training normnal spm")
-
-    theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=20)
-    theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
-    	#tf.train.AdamOptimizer(1e-4))
-
-
-    ll_test_original = eval_tf(spn_classification, X_test)
-    #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
-
-
-
-
-
-    print('Building tree...')
-    original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.6,leaves_size=2,height=3,spill=0.3)
-
-    T= T.build_spn();
-    T.update_ids();
-    print("Building tree complete")
-    spn = T.spn_node;
-    ours_time = time.time()-original;
-    ours_time_list.append(ours_time)
-    #ll = log_likelihood(spn, X)
-    spn=optimize_tf(spn,X,epochs=60000,optimizer= tf.train.AdamOptimizer(0.001))
-    ll_test = eval_tf(spn,X_test)
-    print("--ll--")
-    print(numpy.mean(ll_test_original))
-    print(numpy.mean(ll_test))
-    theirs.append(numpy.mean(ll_test_original))
-    ours.append(numpy.mean(ll_test))
-    theirs_time_list.append(theirs_time)
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn_classification))
-    from spn.algorithms.Statistics import get_structure_stats
-    print(get_structure_stats(spn))
-
-#plot_spn(spn_classification, 'basicspn-original.png')
-#plot_spn(spn, 'basicspn.png')
-print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
-print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
-print(numpy.mean(ours))
-print(numpy.var(ours))
-os.makedirs("results/hayes")
-numpy.savetxt('results/hayes/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/hayes/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/hayes/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/hayes/ours.ll',ours, delimiter=',')
-
-
-
-
-
-
-
-
-
-
+Spatial tree demo for matrix data
+'''
 
 
