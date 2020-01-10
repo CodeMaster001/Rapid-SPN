@@ -9,10 +9,13 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
-import os
+os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
-from spatialtree import SPNRPBuilder
+from sklearn.datasets import load_svmlight_file
+from spatialtree import *;
+from sklearn.model_selection import train_test_split
+from libsvm.svmutil import *
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -23,11 +26,12 @@ from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from spn.algorithms.LearningWrappers import learn_parametric
-from spn.gpu.TensorFlow import optimize_tf
+from spn.gpu.TensorFlow import *
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from sklearn.metrics import accuracy_score
 from numpy.random.mtrand import RandomState
 from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
+from spn.algorithms.TransformStructure import Prune,Compress,SPN_Reshape
 import urllib
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
@@ -36,99 +40,101 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from spn.gpu.TensorFlow import eval_tf
+from spn.structure.Base import *
 import time;
+import numpy as np, numpy.random
 numpy.random.seed(42)
+import multiprocessing
+import logging
+import subprocess
+#tf.logging.set_verbosity(tf.logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
+def bfs(root, func):
+    seen, queue = set([root]), collections.deque([root])
+    while queue:
+        node = queue.popleft()
+        func(node)
+        if not isinstance(node, Leaf):
+            for c in node.children:
+                if c not in seen:
+                    seen.add(c)
+                    queue.append(c)
 
+def print_prob(node):
+    if isinstance(node,Sum):
+        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
-	if i == 'g':
-		return 0;
-	else:
-		return 1;
+    if i == 'g':
+        return 0;
+    else:
+        return 1;
 
 def one_hot(df,col):
-	df = pd.get_dummies([col])
-	df.drop()
+    df = pd.get_dummies([col])
+    df.drop()
 
 
+def clean_data(x):
+    try:
+        return str(x).split(':')[-1]
+    except:
+        print(str(x))
 
-credit,target = fetch_openml(name='balance-scale', version=2,return_X_y=True)
-credit = pd.DataFrame(data=credit)
-credit = credit.apply(LabelEncoder().fit_transform)
+ 
+
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
+train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
+train_dataset_df = pd.DataFrame(train_dataset)
+
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
-kf = KFold(n_splits=10,shuffle=True)
-print(credit.shape)
-ours_time_list = list();
+ours_time_list = list()
 theirs_time_list = list();
+train_set = list()
+test_set = list();
+counter = 0;
+context = list()
 
-for train_index, test_index in kf.split(credit):
-	X = credit.values[train_index,:]
-	X=numpy.nan_to_num(X)
-	#X = preprocessing.normalize(X, norm='l2')
-	X_test = credit.values[test_index]; 
-	X_test = numpy.nan_to_num(X_test)
-	#X_test = preprocessing.normalize(X_test, norm='l2')
-	X = X.astype(numpy.float32)
-	X_test =X_test.astype(numpy.float32)
-	context = list()
-	for i in range(0,X.shape[1]):
-		context.append(Categorical)
+#parameters
+output_file_name='balance.log'
+min_instances_slice=20
+epochs=1000
+height=3
+prob=0.6
+leaves_size=2
+threshold=0.3
 
+opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold)
 
+for i in range(0,train_dataset_df.shape[1]):
+    context.append(Gaussian)
+for train_index,test_index in kf.split(train_dataset_df):
+    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    X=numpy.nan_to_num(X_train)
+    X = X.astype(numpy.float32)
+    X = preprocessing.normalize(X, norm='l2') 
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.savetxt('train.csv', X, delimiter=',')
+    np.savetxt("test.csv",X_test,delimiter=',')
+    np.save("context",context)
+    P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
+#!/usr/bin/env python
+'''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
-
-
-	ds_context = Context(parametric_types=context).add_domains(X)
-	print("training normnal spm")
-	
-	theirs_time = time.time()
-	spn_classification =  learn_parametric(numpy.array(X),ds_context,threshold=0.3,min_instances_slice=2)
-	
-	
-	
-	theirs_time = time.time()-theirs_time
-	ll_test = log_likelihood(spn_classification,X_test)
-	ll_test_original=ll_test
-
-
-
-
-	print('Building tree...')
-	original = time.time();
-	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=2,height=2,spill=0.3)
-	
-	T= T.build_spn();
-	T.update_ids();
-	spn = T.spn_node;
-	print("Building tree complete")
-	ours_time = time.time()-original;
-	ours_time_list.append(ours_time)
-	ll_test = log_likelihood(spn,X_test)
-	print(numpy.mean(ll_test_original))
-	print(numpy.mean(ll_test))
-	theirs.extend(ll_test_original)
-	ours.extend(ll_test)
-	theirs_time_list.append(theirs_time)
-
-#plot_spn(spn, 'basicspn.png')
-print('---Time---')
-print(numpy.mean(theirs_time_list))
-print(numpy.var(theirs_time_list))
-print(numpy.mean(ours_time_list))
-print(numpy.var(ours_time_list))
-print('---ll---')
-print(numpy.mean(theirs))
-print(numpy.var(theirs))
-print(numpy.mean(ours))
-print(numpy.var(ours))
-os.makedirs("results/balance")
-numpy.savetxt('results/balance/ours.time', ours_time_list, delimiter=',')
-numpy.savetxt('results/balance/theirs.time',theirs_time_list, delimiter=',')
-numpy.savetxt('results/balance/theirs.ll',theirs, delimiter=',')
-numpy.savetxt('results/balance/ours.ll',ours, delimiter=',')
-
-
-
+Spatial tree demo for matrix data
+'''
 
 
