@@ -64,7 +64,7 @@ def bfs(root, func):
 
 def print_prob(node):
     if isinstance(node,Sum):
-        if node.weights[0]==node.weights[1]
+        if node.weights[0]==node.weights[1]:
             node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
 def  score(i):
     if i == 'g':
@@ -132,7 +132,7 @@ def learnspn_train(X,X_test):
 
     ds_context = Context(parametric_types=context).add_domains(X)
     theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=30)
     theirs_time = time.time()-theirs_time
     spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
         #tf.train.AdamOptimizer(1e-4))
@@ -162,13 +162,14 @@ context = list()
 
 #parameters
 output_file_name='iris.log'
-min_instances_slice=10
-epochs=1000
+min_instances_slice=20
+epochs=8000
 height=2
 prob=0.4
 leaves_size=15
+threshold =0.4
 
-opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)
+opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)

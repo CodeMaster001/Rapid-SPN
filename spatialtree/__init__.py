@@ -336,7 +336,8 @@ class FriendSPN(object):
         node= Product();
         rptree = list()
         child_count = -1;
-        for data_slice, scope_slice,_ in self.split_cols(self.data, self.ds_context, self.scope):
+
+        for data_slice, scope_slice,_ in self.split_cols(self.data[list(self.indices),:], self.ds_context, self.scope):
 
             if len(scope_slice) == 1 and len(data_slice) !=0:
                 node.scope.extend(scope_slice)

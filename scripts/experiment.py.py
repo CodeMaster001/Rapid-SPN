@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
 Spatial tree demo for matrix data
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 '''
 
 
@@ -43,15 +43,9 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
-import sys;
-
-from pathlib import Path
-FILE_NAME_DIR="results/"
-Path("results").mkdir(parents=True, exist_ok=True)
 numpy.random.seed(42)
 import multiprocessing
 import logging
-
 
 def optimize_tf(
     spn: Node,
@@ -103,7 +97,6 @@ def optimize_tf_graph(
     i = 0;
     # Collect loss
     loss_list = [0]
-    counter = 0;
     config =tf.ConfigProto(log_device_placement=True,);
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
@@ -112,7 +105,7 @@ def optimize_tf_graph(
         batches_per_epoch = data.shape[0] // batch_size
         old_loss = 0;
         # Iterate over epochs
-        while i<epochs:
+        while  i<epochs:
             i = i+1;
   
 
@@ -135,13 +128,8 @@ def optimize_tf_graph(
             print("Epoch: %s, Loss: %s", i, epoch_loss)
             loss_list.append(epoch_loss)
             old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
-        
-            if np.abs(old_loss) < 0.0005:
-                counter = counter + 1;
-                if counter>10:
-                    break;
-            else:
-                counter = 0;
+            loss_list.append(old_loss)
+
         tf_graph_to_spn(variable_dict)
 
     return loss_list
@@ -178,86 +166,140 @@ def one_hot(df,col):
 
 
 def clean_data(x):
-    try:
-        return str(x).split(':')[-1]
-    except:
-        print(str(x))
+	try:
+		return str(x).split(':')[-1]
+	except:
+		print(str(x))
 
+
+def libsvm_preprocess(file_name,row_size=62,colon_size=200):
+	dataset_label, dataset_feature = svm_read_problem('../dataset/colon.csv')
+	X=list()
+	Y=list()
+	for i in range(0,row_size):
+		temp = list();
+		for j in range(0,colon_size):
+			temp.append(dataset_feature[i][j+1])
+		X.append(temp)
+		Y.append(dataset_label[i])
+	return np.array(X),np.array(Y)
  
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
-    context = list()
-    for i in range(0,X.shape[1]):
-        context.append(Gaussian)
-
-
-    ds_context = Context(parametric_types=context).add_domains(X)
-    original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3)
-    print("Buiding tree complete")
-
-    T= T.build_spn();
-    T.update_ids();
-    ours_time = time.time()-original;
-    spn = T.spn_node;
-    spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
-    plot_spn(spn,'spn.png')
-    ll_test = eval_tf(spn,X_test)
-    tf.reset_default_graph();
-    del spn;
-    return np.mean(ll_test),ours_time
-
-def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
-    
+def spnrp_train(X,X_test):
+	context = list()
+	for i in range(0,X.shape[1]):
+	    context.append(Gaussian)
 
 
 
-    ds_context = Context(parametric_types=context).add_domains(X)
-    theirs_time = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
-    theirs_time = time.time()-theirs_time
-    spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
-        #tf.train.AdamOptimizer(1e-4))
+
+	ds_context = Context(parametric_types=context).add_domains(X)
+	original = time.time();
+	T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.5,leaves_size=3,height=3,spill=0.3)
+	print("Buiding tree complete")
+
+	T= T.build_spn();
+	T.update_ids();
+	ours_time = time.time()-original;
+	spn = T.spn_node;
+	spn=optimize_tf(spn,X,epochs=1000)
+	ll_test = eval_tf(spn,X_test)
+	tf.reset_default_graph()
+	del spn;
+	return np.mean(ll_test),ours_time
+
+def learnspn_train(X,X_test):
+	context = list()
+	for i in range(0,X.shape[1]):
+	    context.append(Gaussian)
 
 
-    ll_test = eval_tf(spn_classification,X_test)
-    #print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
-    plot_spn(spn_classification,'spn_class.png')
-   
 
-    ll_test_original=ll_test
-    tf.reset_default_graph()
-    del spn_classification
-    return  np.mean(ll_test),theirs_time
 
-# train.npy test.npy context.npy train_context_filename output_file_name test_file_name min_instance_slice epochs height prob leaves_size 
-train_file_name=sys.argv[1]
-test_file_name=sys.argv[2]
-context = np.load(sys.argv[3],allow_pickle=True)
-file_name=str(sys.argv[4])
-min_instances_slice = int(sys.argv[5])
-epochs=int(sys.argv[6])
-height=int(sys.argv[7])
-prob=float(sys.argv[8])
-leaves_size=float(sys.argv[9])
-threshold = float(sys.argv[10])
-X=pd.read_csv(train_file_name).values
-X_test=pd.read_csv(test_file_name).values
-X = X.astype(numpy.float32)
-X_test =X_test.astype(numpy.float32)
+	ds_context = Context(parametric_types=context).add_domains(X)
+	theirs_time = time.time()
+	spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=5)
+	theirs_time = time.time()-theirs_time
+	spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.0001)) 
+	    #tf.train.AdamOptimizer(1e-4))
 
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
-f=open(FILE_NAME_DIR+file_name,'a')
-f.write(str(sys.argv)+"\n")
-print(spnrp_mean)
-temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-f.write(temp)
-f.flush()
-f.close()
+
+	ll_test = eval_tf(spn_classification,X_test)
+	#print(ll_test)
+	#ll_test = log_likelihood(spn_classification,X_test)
+	ll_test_original=ll_test
+	tf.reset_default_graph()
+	del spn_classification
+	return  np.mean(ll_test),theirs_time
+
+
+
+dataset_feature,dataset_label = libsvm_preprocess('../dataset/colon.csv')
+print(dataset_feature)
+
+kf = KFold(n_splits=5,shuffle=True)
+theirs = list()
+ours = list()
+ours_time_list = list()
+theirs_time_list = list();
+for train_index,test_index in kf.split(dataset_feature):
+	X_train,X_test=dataset_feature[train_index],dataset_feature[test_index]
+	X=numpy.nan_to_num(X_train)
+	X = X.astype(numpy.float32)
+	X = preprocessing.normalize(X, norm='l2') 
+	X_test = numpy.nan_to_num(X_test)
+	X_test = preprocessing.normalize(X_test, norm='l2')
+	X = X.astype(numpy.float32)
+	X_test =X_test.astype(numpy.float32)
+	print(X.shape)
+
+
+	np.savetxt("train.bin",X,delimiter=",")
+	np.savetxt("test.bin",X_test,delimiter=",")
+
+	spn_mean,spn_time = learnspn_train(X,X_test)
+	spnrp_mean,spnrp_time = spnrp_train(X,X_test)
+
+
+	print('Building tree...')
+	theirs.append(spn_mean)
+	ours.append(spnrp_mean)
+	theirs_time_list.append(spn_time)
+	ours_time_list.append(spnrp_time)	
+	#plot_spn(spn, 'basicspn.png')
+	print("---tt---")
+	print(numpy.mean(theirs_time_list))
+	print(numpy.var(theirs_time_list))
+	print(numpy.mean(ours_time_list))
+	print(numpy.var(ours_time_list))
+	print('---ll---')
+	print(numpy.mean(theirs))
+	print(numpy.var(theirs))
+	print(numpy.mean(ours))
+	print(numpy.var(ours))
+
+
+
+#plot_spn(spn, 'basicspn.png')
+print("---tt---")
+print(numpy.mean(theirs_time_list))
+print(numpy.var(theirs_time_list))
+print(numpy.mean(ours_time_list))
+print(numpy.var(ours_time_list))
+print('---ll---')
+print(numpy.mean(theirs))
+print(numpy.var(theirs))
+
+print(numpy.mean(ours))
+print(numpy.var(ours))
+os.makedirs("results/iris")
+numpy.savetxt('results/iris/ours.time', ours_time_list, delimiter=',')
+numpy.savetxt('results/iris/theirs.time',theirs_time_list, delimiter=',')
+numpy.savetxt('results/iris/theirs.ll',theirs, delimiter=',')
+numpy.savetxt('results/iris/ours.ll',ours, delimiter=',')
+
 
 
 
