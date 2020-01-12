@@ -336,29 +336,41 @@ class FriendSPN(object):
         node= Product();
         rptree = list()
         child_count = -1;
+        temp = self.data[list(self.indices)]
+        print(self.scope)
+        print(temp.shape)
+        try:
 
-        for data_slice, scope_slice,_ in self.split_cols(self.data[list(self.indices),:], self.ds_context, self.scope):
+            for data_slice, scope_slice,_ in self.split_cols(self.data[list(self.indices)], self.ds_context, self.scope):
 
-            if len(scope_slice) == 1 and len(data_slice) !=0:
-                node.scope.extend(scope_slice)
-                child_count = child_count + 1;
-                node.children.append(None)
-                children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count)
-                SPNRPBuilder.tasks.append([children_friend,kwargs])
+                if len(scope_slice) == 1 and len(data_slice) !=0:
+                    node.scope.extend(scope_slice)
+                    child_count = child_count + 1;
+                    node.children.append(None)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count)
+                    SPNRPBuilder.tasks.append([children_friend,kwargs])
 
-            elif len(data_slice) >5 and len(scope_slice)>1:
-                node.scope.extend(scope_slice)
-                child_count = child_count + 1;
-                node.children.append(None)
-                children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
-                SPNRPBuilder.tasks.append([children_friend,kwargs])
-            elif len(data_slice) <20:
-                node.scope.extend(scope_slice)
-                child_count = child_count + 1;
-                node.children.append(None)
-                children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=child_count)
-                SPNRPBuilder.tasks.append([children_friend,kwargs])
+                elif len(data_slice) >5 and len(scope_slice)>1:
+                    node.scope.extend(scope_slice)
+                    child_count = child_count + 1;
+                    node.children.append(None)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+                    SPNRPBuilder.tasks.append([children_friend,kwargs])
+                elif len(data_slice) <20:
+                    node.scope.extend(scope_slice)
+                    child_count = child_count + 1;
+                    node.children.append(None)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=child_count)
+                    SPNRPBuilder.tasks.append([children_friend,kwargs])
+        except:
+            node.scope.extend(self.scope)
+            child_count = child_count + 1;
+            node.children.append(None)
+            children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=self.scope,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+            SPNRPBuilder.tasks.append([children_friend,kwargs])
+
         if self.spn_node == None:
+
             self.spn_node = node;
         else:
             self.spn_node.children[self.index]=node;
