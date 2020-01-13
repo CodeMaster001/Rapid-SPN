@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+'''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
+
+Spatial tree demo for matrix data
+'''
 
 
 import numpy
@@ -80,8 +85,11 @@ def clean_data(x):
  
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='machine_cpu', version=1,return_X_y=True)
-train_dataset_df = pd.DataFrame(train_dataset)
+
+train_dataset_df = fetch_openml(name='liver-disorders', version=1,return_X_y=True)[0]
+train_dataset_df = pd.DataFrame(data=train_dataset_df)
+train_dataset_df = train_dataset_df.fillna(0)
+
 
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -94,28 +102,33 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='cpu.log'
-min_instances_slice=40
+output_file_name='liver.log'
+min_instances_slice=30
 epochs=8000
-height=4
-prob=0.3
+height=2
+prob=0.6
 leaves_size=2
-threshold=0.2
+threshold=0.4
 
 opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold)
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-
 for train_index,test_index in kf.split(train_dataset_df):
-    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
-    X=numpy.nan_to_num(X_train)
+    X = train_dataset_df.values[train_index]
+    X=numpy.nan_to_num(X)
     X = X.astype(numpy.float32)
-    X = preprocessing.normalize(X, norm='l2') 
+    X = preprocessing.normalize(X, norm='l2')
+    X_test = train_dataset_df.values[test_index]; 
     X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
     X_test =X_test.astype(numpy.float32)
+    context = list()
+    for i in range(0,X.shape[1]):
+        context.append(Gaussian)
+
+    
     train_set.append(X)
     test_set.append(X_test)
     np.savetxt('train.csv', X, delimiter=',')
@@ -126,6 +139,11 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.wait();
     P.terminate()
 print("process completed")
+#!/usr/bin/env python
+'''
+CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
+Spatial tree demo for matrix data
+'''
 
 

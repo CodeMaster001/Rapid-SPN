@@ -42,45 +42,8 @@ numpy.random.seed(42)
 import multiprocessing
 import logging
 import subprocess
-#tf.logging.set_verbosity(tf.logging.INFO)
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-def bfs(root, func):
-    seen, queue = set([root]), collections.deque([root])
-    while queue:
-        node = queue.popleft()
-        func(node)
-        if not isinstance(node, Leaf):
-            for c in node.children:
-                if c not in seen:
-                    seen.add(c)
-                    queue.append(c)
-
-def print_prob(node):
-    if isinstance(node,Sum):
-        node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
-def  score(i):
-    if i == 'g':
-        return 0;
-    else:
-        return 1;
-
-def one_hot(df,col):
-    df = pd.get_dummies([col])
-    df.drop()
-
-
-def clean_data(x):
-    try:
-        return str(x).split(':')[-1]
-    except:
-        print(str(x))
-
- 
-
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='machine_cpu', version=1,return_X_y=True)
+train_dataset,labels= fetch_openml(name='cars', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -94,19 +57,18 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='cpu.log'
-min_instances_slice=40
+output_file_name='cars.log'
+min_instances_slice=100
 epochs=8000
-height=4
-prob=0.3
-leaves_size=2
-threshold=0.2
-
+height=3
+prob=0.4
+leaves_size=15
+threshold=0.4
 opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold)
+
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
     X=numpy.nan_to_num(X_train)
@@ -126,6 +88,5 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.wait();
     P.terminate()
 print("process completed")
-
 
 
