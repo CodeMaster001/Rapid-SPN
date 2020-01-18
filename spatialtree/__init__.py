@@ -48,7 +48,6 @@ from spn.structure.Base import *
 from spn.structure.leaves.cltree import *
 import time;
 import numpy as np, numpy.random
-numpy.random.seed(42)
 import sys;
 import logging
 
