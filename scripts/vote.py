@@ -209,14 +209,14 @@ def one_hot(df,col):
 
 credit = fetch_openml(name='vote', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
-file_name='vote.log'
+file_name='vote_40.log'
 min_instances_slice=20
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
@@ -240,14 +240,14 @@ for train_index, test_index in kf.split(credit):
     spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2,threshold=0.7)
 
     theirs_time = time.time()-original
-    spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
     #tf.train.AdamOptimizer(1e-4))
 
 
 
-    spn_mean =numpy.mean(eval_tf(spn_classification, X_test))
+    #spn_mean =numpy.mean(eval_tf(spn_classification, X_test))
    # print(ll_test)
-    #ll_test = log_likelihood(spn_classification,X_test)
+    spn_mean = np.mean(log_likelihood(spn_classification,X_test))
     spn_time = time.time() -original
 
 
@@ -264,10 +264,9 @@ for train_index, test_index in kf.split(credit):
     spnrp_time = time.time()-original
     #fs(spn,print_prob)
     
-    ll_test = log_likelihood(spn, X_test)
-    logging.info(np.mean(ll_test))
-    spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    spnrp_mean = numpy.mean(eval_tf(spn,X_test))
+    spnrp_mean = np.mean(log_likelihood(spn, X_test))
+    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    #spnrp_mean = numpy.mean(eval_tf(spn,X_test))
     f=open('results/'+file_name,'a')
     f.write(str(sys.argv)+"\n")
     #print(spnrp_mean)

@@ -199,14 +199,14 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
         original = time.time();
         T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3)
         print("Buiding tree complete")
-
         T= T.build_spn();
         T.update_ids();
         ours_time = time.time()-original;
         spn = T.spn_node;
-        spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
+        ll_test=log_likelihood(spn,X_test)
+        #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
         plot_spn(spn,'spn.png')
-        ll_test = eval_tf(spn,X_test)
+        #ll_test = eval_tf(spn,X_test)
         tf.reset_default_graph();
         del spn;
         return np.mean(ll_test),ours_time
@@ -227,18 +227,19 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
         theirs_time = time.time()
         spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
         theirs_time = time.time()-theirs_time
-        spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
+        #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
 
 
-        ll_test = eval_tf(spn_classification,X_test)
+        #ll_test = eval_tf(spn_classification,X_test)
         #print(ll_test)
-        #ll_test = log_likelihood(spn_classification,X_test)
+        ll_test = log_likelihood(spn_classification,X_test)
         plot_spn(spn_classification,'spn_class.png')
        
 
         ll_test_original=ll_test
         tf.reset_default_graph()
+        ll_test=log_likelihood(spn_classification,X_test)
         del spn_classification
         return  np.mean(ll_test),theirs_time
     except:
@@ -250,6 +251,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
         sys.exit(-1)
 
 # train.npy test.npy context.npy train_context_filename output_file_name test_file_name min_instance_slice epochs height prob leaves_size 
+print(sys.argv)
 train_file_name=sys.argv[1]
 test_file_name=sys.argv[2]
 context = np.load(sys.argv[3],allow_pickle=True)
@@ -270,6 +272,7 @@ spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epo
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
+print(FILE_NAME_DIR+file_name)
 temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
 f.write(temp)
 f.flush()
