@@ -162,7 +162,7 @@ context = list()
 
 #parameters
 output_file_name='iris.log'
-min_instances_slice=20
+min_instances_slice=25
 epochs=8000
 height=4
 prob=0.4
