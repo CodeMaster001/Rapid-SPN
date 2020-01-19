@@ -50,6 +50,7 @@ import time;
 import numpy as np, numpy.random
 import sys;
 import logging
+np.random.seed(42)
 
 
 class NODE_TYPE:
@@ -103,7 +104,7 @@ class FriendSPN(object):
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 
-        self.split_cols = get_split_cols_RDC_py(ohe=False, threshold=0.2,n_jobs=10)
+        #self.split_cols = get_split_cols_RDC_py(ohe=False, threshold=0.2,n_jobs=10)
 
         if self.indices is None:
             self.indices   = range(len(data))
@@ -139,16 +140,16 @@ class FriendSPN(object):
         p = multiprocessing.pool.ThreadPool(30)
         for i in range(0,temp.shape[1]):
             process = list()
+            print(temp)
             for j in range(0,temp.shape[1]):
-                gini_values[i,j] = p.apply(gini, (temp,[i,j]))
-        p.close()
+                gini_values[i,j] =scipy.spatial.distance.cosine(temp[:,i],temp[:,j])
         p.join()
         if np.array(gini_values).shape[0]<k:
             first_index = [0 for i in range(0,gini_values.shape[0])]
             split_cols.append(first_index)
             return split_cols;
 
-        kmeans = KMeans(n_clusters=k, random_state=0,n_init=40).fit(gini_values)
+        kmeans = KMeans(n_clusters=k, rand_gen=np.random.seed(42),n_init=40).fit(gini_values)
         for i in range(0,k):
             first_index = np.where(kmeans.labels_==i)[0]
             split_cols.append(first_index)
@@ -240,14 +241,14 @@ class FriendSPN(object):
 
     def split_cols(self, data,scope,n=2):
 
-        return self.split_cols(data, self.ds_context, self.scope)
-        '''
+        #return self.split_cols(data, self.ds_context, self.scope)
+    
         cols_split = self.__calculate_gini(data,scope,k=2) #split cols apply scope and gin
 
         """Yield successive n-sized chunks from l"""
         for i in range(0, len(cols_split)):
             yield data[:,cols_split[i]], [scope[i] for i in cols_split[i]]
-        '''
+        
     #node production based on SPN
 
     def build_leaf_node(self,data,scope,ds_context):
