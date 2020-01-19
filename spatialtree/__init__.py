@@ -142,7 +142,7 @@ class FriendSPN(object):
             process = list()
             print(temp)
             for j in range(0,temp.shape[1]):
-                gini_values[i,j] =scipy.spatial.distance.cosine(temp[:,i],temp[:,j])
+                gini_values[i,j] =scipy.spatial.distance.dice(temp[:,i],temp[:,j])
         p.join()
         if np.array(gini_values).shape[0]<k:
             first_index = [0 for i in range(0,gini_values.shape[0])]
