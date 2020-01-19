@@ -85,7 +85,7 @@ def clean_data(x):
  
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='ecoli', version=1,return_X_y=True)
+train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
