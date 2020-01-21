@@ -90,7 +90,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,full_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -102,7 +102,7 @@ class FriendSPN(object):
         self.indices= indices
         self.TYPE=TYPE
         self.index = index;
-        self.default_scope=default_scope
+        self.full_scope=full_scope
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 

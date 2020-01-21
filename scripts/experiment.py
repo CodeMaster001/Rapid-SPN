@@ -48,7 +48,6 @@ import sys;
 from pathlib import Path
 FILE_NAME_DIR="results/"
 Path("results").mkdir(parents=True, exist_ok=True)
-numpy.random.seed(42)
 import multiprocessing
 import logging
 import traceback
@@ -190,10 +189,6 @@ def clean_data(x):
 
 def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
     try:
-        context = list()
-        for i in range(0,X.shape[1]):
-            context.append(Gaussian)
-
 
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
@@ -205,7 +200,7 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
         spn = T.spn_node;
         ll_test=log_likelihood(spn,X_test)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
-        plot_spn(spn,'spn.png')
+        #plot_spn(spn,'spn.png')
         #ll_test = eval_tf(spn,X_test)
         tf.reset_default_graph();
         del spn;
@@ -213,9 +208,10 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
     except:
         f=open(FILE_NAME_DIR+'error.log','a')
         f.write(traceback.format_exc()+"\n")
+        traceback.print_exc()
         f.flush()
         f.close()
-        sys.exit(-1)
+
 
 def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
     
@@ -225,7 +221,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=20)
         theirs_time = time.time()-theirs_time
         #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
@@ -235,11 +231,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
         #print(ll_test)
         ll_test = log_likelihood(spn_classification,X_test)
         plot_spn(spn_classification,'spn_class.png')
-       
-
-        ll_test_original=ll_test
-        tf.reset_default_graph()
-        ll_test=log_likelihood(spn_classification,X_test)
+    
         del spn_classification
         return  np.mean(ll_test),theirs_time
     except:
@@ -262,11 +254,10 @@ height=int(sys.argv[7])
 prob=float(sys.argv[8])
 leaves_size=float(sys.argv[9])
 threshold = float(sys.argv[10])
-X=pd.read_csv(train_file_name).values
-X_test=pd.read_csv(test_file_name).values
-X = X.astype(numpy.float32)
-X_test =X_test.astype(numpy.float32)
 
+
+X=np.load(train_file_name)
+X_test=np.load(test_file_name)
 spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
 f=open(FILE_NAME_DIR+file_name,'a')
@@ -277,7 +268,6 @@ temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","
 f.write(temp)
 f.flush()
 f.close()
-
 
 
 
