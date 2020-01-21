@@ -90,7 +90,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -102,6 +102,7 @@ class FriendSPN(object):
         self.indices= indices
         self.TYPE=TYPE
         self.index = index;
+        self.default_scope=default_scope
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 
@@ -264,8 +265,8 @@ class FriendSPN(object):
         temp = np.array(features_set)
         mean_array= np.mean(temp,axis=1)
         mean_index = int(len(mean_array)/2.0)
-        if n>=len(arg_list):
-            n=len(arg_list)
+        if n>=len(mean_array):
+            n=len(mean_array)
 
         for j in range(0,n):
             selected_feature = temp[j,:]
@@ -291,9 +292,14 @@ class FriendSPN(object):
         return np.mean(value)
 
     def optimize_scope(self,data,ds_context,candidates):
+
         max_list=list();
-        best_cand =-1000000#self.default_scope(data,ds_context)
-        cand_select=None#[self.scope];
+        if self.default_scope:  
+            best_cand=self.default_scope(data,ds_context)
+            cand_select=[self.scope]
+        else:
+            best_cand=np.NINF
+            cand_select=None
         for cand in candidates:
             try:
                 s=Sum();
