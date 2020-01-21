@@ -90,7 +90,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,full_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -102,7 +102,6 @@ class FriendSPN(object):
         self.indices= indices
         self.TYPE=TYPE
         self.index = index;
-        self.full_scope=full_scope
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 
@@ -134,6 +133,7 @@ class FriendSPN(object):
         #self.spn_node = Prune(self.spn_node)
 
     def __calculate_gini(self,data,ds_context,scope,threshold=1.0):
+        self.scope = np.sort(self.scope)
         temp = np.array(data[:,scope]) #apply existing scope
         temp = np.array(temp)
         print('called')
@@ -260,24 +260,25 @@ class FriendSPN(object):
 
     def build_candidates(self,features_set,n):
         candidates = list();
-        print('building candidates')
 
         temp = np.array(features_set)
         mean_array= np.mean(temp,axis=1)
         mean_index = int(len(mean_array)/2.0)
+ 
         if n>=len(mean_array):
             n=len(mean_array)
 
         for j in range(0,n):
             selected_feature = temp[j,:]
-            print('selected_feature------------------------------------------------------------------------------>')
-            print(selected_feature)
+            candidates.append([[self.scope[j]],np.delete(self.scope,self.scope[j])])
             sorted_feature_index = np.argsort(selected_feature)
             left = sorted_feature_index[:mean_index]
             right=sorted_feature_index[mean_index:]
             left = [self.scope[i] for i in left]
             right = [self.scope[i] for i in right]
             candidates.append([left,right])
+        print('----List of candidates-----')
+        print(candidates)
         return candidates
 
     def default_scope(self,data,ds_context):
@@ -294,16 +295,12 @@ class FriendSPN(object):
     def optimize_scope(self,data,ds_context,candidates):
 
         max_list=list();
-        if self.default_scope:  
-            best_cand=self.default_scope(data,ds_context)
-            cand_select=[self.scope]
-        else:
-            best_cand=np.NINF
-            cand_select=None
+        best_cand=self.default_scope(data,ds_context)
+        cand_select=[self.scope]
+        
         for cand in candidates:
             try:
                 s=Sum();
-                print(cand)
                 s.children.append(self.naive_factorization_naive(data=data,scope=cand[0]))
                 s.children.append(self.naive_factorization_naive(data=data,scope=cand[1]))
                 s.weights.append(0.5)
@@ -311,15 +308,18 @@ class FriendSPN(object):
                 s=assign_ids(s)
                 s=rebuild_scopes_bottom_up(s)
                 value=np.mean(log_likelihood(s,data))
+                print(cand)
+                print('------------------------')
+                print(value)
+                print(best_cand)
+                print('--------------------------')
                 if best_cand<value:
                     best_cand = value
                     cand_select=cand
-                else:
-                    best_cand=value;
-                    cand_select=cand
+                    print('updated')
             except:
                 traceback.print_exc();
-            print(cand_select)
+            print('completed iteration')
         return cand_select
 
 
@@ -496,7 +496,6 @@ class FriendSPN(object):
 
     def naive_factorization_naive(self, data,scope,is_indices=True):
         print('At leaves:'+str(data.shape))
-        scope = list(range(0,len(scope)))
         spn_node = Product()
         spn_node.scope.extend(scope)
         scope = list(set(scope))
