@@ -308,18 +308,17 @@ class FriendSPN(object):
                 s=assign_ids(s)
                 s=rebuild_scopes_bottom_up(s)
                 value=np.mean(log_likelihood(s,data))
-                print(cand)
-                print('------------------------')
-                print(value)
-                print(best_cand)
-                print('--------------------------')
                 if best_cand<value:
                     best_cand = value
                     cand_select=cand
                     print('updated')
+                print('------------------------')
+                print(value)
+                print(best_cand)
+                print('--------------------------')
             except:
                 traceback.print_exc();
-            print('completed iteration')
+        print('completed iteration')
         return cand_select
 
 

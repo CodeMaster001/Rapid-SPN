@@ -258,8 +258,8 @@ threshold = float(sys.argv[10])
 
 X=np.load(train_file_name)
 X_test=np.load(test_file_name)
-print(X.shape)
 print(X_test.shape)
+assert X.shape[1]==X_test.shape[1]
 spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
 f=open(FILE_NAME_DIR+file_name,'a')
