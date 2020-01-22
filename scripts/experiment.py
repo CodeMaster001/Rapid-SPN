@@ -200,7 +200,7 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
         spn = T.spn_node;
         ll_test=log_likelihood(spn,X_test)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
-        #plot_spn(spn,'spn.png')
+        #plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
         tf.reset_default_graph();
         del spn;
@@ -230,7 +230,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
         #ll_test = eval_tf(spn_classification,X_test)
         #print(ll_test)
         ll_test = log_likelihood(spn_classification,X_test)
-        plot_spn(spn_classification,'spn_class.png')
+        #plot_spn(spn_classification,'learnspn.png')
     
         del spn_classification
         return  np.mean(ll_test),theirs_time
@@ -254,7 +254,8 @@ height=int(sys.argv[7])
 prob=float(sys.argv[8])
 leaves_size=float(sys.argv[9])
 threshold = float(sys.argv[10])
-
+spn_mean=0
+spn_time=0
 
 X=np.load(train_file_name)
 X_test=np.load(test_file_name)
