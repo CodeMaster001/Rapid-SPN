@@ -150,7 +150,7 @@ def learnspn_train(X,X_test):
 train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=int(sys.argv[1]),shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -170,7 +170,7 @@ threshold =0.4
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-for j in [15]:
+for j in [5,10,15,20,25,30,35,40]:
     output_file_name='balance_'+str(j)+'.log'
     min_instances_slice=j
     opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
