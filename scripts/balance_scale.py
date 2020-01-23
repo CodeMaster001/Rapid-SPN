@@ -185,10 +185,10 @@ for j in [5,10,15,20,25,30,35,40]:
         X_test =X_test.astype(numpy.float32)
         train_set.append(X)
         test_set.append(X_test)
-        np.savetxt('train.csv', X, delimiter=',')
-        np.savetxt("test.csv",X_test,delimiter=',')
+        np.save('train', X)
+        np.save("test",X_test)
         np.save("context",context)
-        P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+        P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
         P.communicate()
         P.wait();
         P.terminate()
