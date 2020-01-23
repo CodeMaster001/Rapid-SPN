@@ -98,7 +98,7 @@ context = list()
 output_file_name='ecoli.log'
 min_instances_slice=20
 epochs=8000
-height=4
+height=7
 prob=0.5
 leaves_size=15
 threshold=0.4
@@ -118,10 +118,10 @@ for train_index,test_index in kf.split(train_dataset_df):
     X_test =X_test.astype(numpy.float32)
     train_set.append(X)
     test_set.append(X_test)
-    np.savetxt('train.csv', X, delimiter=',')
-    np.savetxt("test.csv",X_test,delimiter=',')
+    np.save('train', X)
+    np.save("test",X_test)
     np.save("context",context)
-    P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
     P.terminate()
