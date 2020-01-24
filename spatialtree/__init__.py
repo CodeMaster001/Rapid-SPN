@@ -274,15 +274,17 @@ class FriendSPN(object):
         if n>=len(mean_array):
             n=len(mean_array)
 
-        for j in range(0,len(features_set)):
+        for j in range(0,features_set.shape[1]):
             selected_feature = temp[j,:]
             sorted_feature_index = np.argsort(selected_feature)
             sorted_feature_index = [self.scope[i] for i in sorted_feature_index]
-            for chunk_index in [2,3,4,5,6]:
+            for chunk_index in [1]:
                 if chunk_index<=len(sorted_feature_index):
                     sorted_feature_index_temp = list(self.chunks(sorted_feature_index,chunk_index))
                     sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
                     candidates.append(sorted_feature_index_temp)
+                print(self.scope)
+                print(candidates)
         return candidates
 
     def default_scope(self,data,ds_context):
@@ -318,7 +320,8 @@ class FriendSPN(object):
 
                 s=assign_ids(s)
                 s=rebuild_scopes_bottom_up(s)
-                value=np.mean(log_likelihood(s,self.data))
+                print(self.data.shape)
+                value=np.mean(log_likelihood(s,self.data[:,self.scope]))
 
                 if best_cand<value:
                     best_cand = value
