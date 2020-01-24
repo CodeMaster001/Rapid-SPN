@@ -151,7 +151,7 @@ class FriendSPN(object):
                 else:
                     gini_values[i,j] =scipy.spatial.distance.dice(temp[:,i],temp[:,j])
 
-        cands = self.build_candidates(gini_values,5)
+        cands = self.build_candidates(gini_values,4)
         print(cands)
         print('------')
         scopes=self.optimize_scope(temp,self.ds_context,cands)
@@ -278,7 +278,7 @@ class FriendSPN(object):
             selected_feature = temp[j,:]
             sorted_feature_index = np.argsort(selected_feature)
             sorted_feature_index = [self.scope[i] for i in sorted_feature_index]
-            for chunk_index in [2,3,4,5]:
+            for chunk_index in [2,3,4,5,6]:
                 if chunk_index<=len(sorted_feature_index):
                     sorted_feature_index_temp = list(self.chunks(sorted_feature_index,chunk_index))
                     sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
@@ -302,12 +302,15 @@ class FriendSPN(object):
         max_list=list();
         best_cand=-1000000000
         cand_select=[self.scope]
+        print('length of candidates:'+str(len(candidates)))
         print(candidates)
         print(data.shape)
         for cand in candidates:
             try:
                 s=Sum();
                 for child in cand:
+                    print(len(cand))
+                    print('------')
                     print(self.scope)
                     print(child)
                     s.children.append(self.naive_factorization_naive(data=self.data,scope=child))
