@@ -150,7 +150,7 @@ class FriendSPN(object):
                     continue;
                 else:
                     gini_values[i,j] =scipy.spatial.distance.dice(temp[:,i],temp[:,j])
-
+        '''
         cands = self.build_candidates(gini_values,4)
         print(cands)
         print('------')
@@ -160,6 +160,17 @@ class FriendSPN(object):
 
         return scopes;
      
+        '''
+        if np.array(gini_values).shape[0]<2:
+            first_index = [0 for i in range(0,gini_values.shape[0])]
+            split_cols.append(first_index)
+            return split_cols;
+
+        kmeans = KMeans(n_clusters=2, random_state=0,n_init=40).fit(gini_values)
+        for i in range(0,2):
+            first_index = np.where(kmeans.labels_==i)[0]
+            split_cols.append(first_index)
+        return split_cols
         '''
         print('passed')
         average_value=np.mean(gini_values,axis=0)
@@ -278,7 +289,7 @@ class FriendSPN(object):
             selected_feature = temp[j,:]
             sorted_feature_index = np.argsort(selected_feature)
             sorted_feature_index = [self.scope[i] for i in sorted_feature_index]
-            for chunk_index in [1]:
+            for chunk_index in [2,4,6,8,10]:
                 if chunk_index<=len(sorted_feature_index):
                     sorted_feature_index_temp = list(self.chunks(sorted_feature_index,chunk_index))
                     sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
