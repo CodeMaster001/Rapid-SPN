@@ -2,7 +2,6 @@
 import sys
 import os
 sys.setrecursionlimit(1000000000)
-import numpy
 import scipy.stats
 from itertools import islice
 import random
@@ -14,10 +13,8 @@ from spn.structure.leaves.parametric.Parametric import create_parametric_leaf
 from spn.algorithms.splitting.RDC import get_split_cols_RDC_py, get_split_cols_RDC_py
 from collections import deque
 from multiprocessing import Process
-import numpy as np
 from sklearn.cluster import KMeans
 import multiprocessing
-
 from spn.structure.Base import Context
 from spn.io.Graphics import plot_spn
 from spn.algorithms.Sampling import sample_instances
@@ -50,7 +47,6 @@ import time;
 import numpy as np, numpy.random
 import sys;
 import logging
-np.random.seed(42)
 import traceback
 
 
@@ -91,7 +87,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,selector_array=[2,3,4],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -103,6 +99,7 @@ class FriendSPN(object):
         self.indices= indices
         self.TYPE=TYPE
         self.index = index;
+        self.selector_array=selector_array
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 
@@ -135,7 +132,7 @@ class FriendSPN(object):
         rebuild_scopes_bottom_up(self.spn_node)
         #self.spn_node = Prune(self.spn_node)
 
-    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=False):
+    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True):
         self.scope = np.sort(self.scope)
         temp = np.array(data[:,scope]) #apply existing scope
         temp = np.array(temp)
@@ -276,21 +273,20 @@ class FriendSPN(object):
         return self.indices;
 
 
-    def build_candidates(self,features_set,n):
+    def build_candidates(self,features_set):
         candidates = list();
 
         temp = np.array(features_set)
         mean_array= np.mean(temp,axis=1)
         mean_index = int(len(mean_array)/2.0)
  
-        if n>=len(mean_array):
-            n=len(mean_array)
+
 
         for j in range(0,features_set.shape[1]):
             selected_feature = temp[j,:]
             sorted_feature_index = np.argsort(selected_feature)
             sorted_feature_index = [self.scope[i] for i in sorted_feature_index]
-            for chunk_index in [2,4,6,8,10]:
+            for chunk_index in self.selector_array:
                 if chunk_index<=len(sorted_feature_index):
                     sorted_feature_index_temp = list(self.chunks(sorted_feature_index,chunk_index))
                     sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
@@ -546,9 +542,9 @@ class SPNRPBuilder(object):
     
     tasks =list()
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,indices=None,height=None,sample_rp=10,**kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],**kwargs):
         print('Intialzied for height' + str(height))
-        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,TYPE=NODE_TYPE.SUM_NODE)
+        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE)
         SPNRPBuilder.tasks.append([self.root,kwargs])
         self.data=data;
  
