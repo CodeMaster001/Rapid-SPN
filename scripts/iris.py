@@ -72,10 +72,11 @@ for instance in [25]:
     output_file_name='iris.'+str(instance)+'.'+str(sys.argv[1])+'.log'
     min_instances_slice=instance
     epochs=8000
-    height=8
+    height=6
     prob=0.4
     leaves_size=15
     threshold =0.4
+
 
     opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
 

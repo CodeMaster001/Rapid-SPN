@@ -50,6 +50,7 @@ import logging
 import traceback
 
 
+
 class NODE_TYPE:
     SUM_NODE= 0;
     PRODUCT_NODE = 1;
@@ -87,7 +88,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,selector_array=[2,3,4],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,selector_array=[2,3,4,5,6],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -100,6 +101,7 @@ class FriendSPN(object):
         self.TYPE=TYPE
         self.index = index;
         self.selector_array=selector_array
+
         if self.scope is None:
             self.scope = list(set(list(range(0,data.shape[1]))))
 
@@ -542,13 +544,12 @@ class SPNRPBuilder(object):
     
     tasks =list()
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],**kwargs):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,seed=42,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],**kwargs):
         print('Intialzied for height' + str(height))
         self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE)
         SPNRPBuilder.tasks.append([self.root,kwargs])
         self.data=data;
- 
-
+        np.random.seed(seed)
     def build_spn(self):
         while SPNRPBuilder.tasks:
             sp,kwargs =  SPNRPBuilder.tasks.pop();
