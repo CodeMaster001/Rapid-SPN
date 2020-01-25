@@ -54,7 +54,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [10,15,20,25,30,35,40,45,50]:
+for instance in [25]:
     train_dataset,labels= fetch_openml(name='iris', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
