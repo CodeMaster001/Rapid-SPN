@@ -65,7 +65,7 @@ for instance in [25]:
     output_file_name='bodyfat.'+str(instance)+'.'+str(sys.argv[1])+'.log'
     min_instances_slice=instance
     epochs=8000
-    height=4
+    height=1
     prob=0.4
     leaves_size=15
     threshold =0.4

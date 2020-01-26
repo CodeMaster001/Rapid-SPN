@@ -41,6 +41,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
+import pickle
 import time;
 import numpy as np, numpy.random
 import sys;
@@ -192,13 +193,15 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
-        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3)
+        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3,selector_array=[2,3,4,5,6])
         print("Buiding tree complete")
         T= T.build_spn();
         T.update_ids();
         ours_time = time.time()-original;
         spn = T.spn_node;
         ll_test=log_likelihood(spn,X_test)
+        file_pi = open('spnrp.obj', 'wb') 
+        pickle.dump(spn, file_pi)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
         #plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
@@ -260,7 +263,11 @@ spn_time=0
 X=np.load(train_file_name)
 X_test=np.load(test_file_name)
 print(X_test.shape)
+spn_mean=0
+spn_time=0
 assert X.shape[1]==X_test.shape[1]
+spnrp_mean=0
+spnrp_time=0
 spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
 spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
 f=open(FILE_NAME_DIR+file_name,'a')
