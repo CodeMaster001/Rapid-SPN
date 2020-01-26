@@ -88,7 +88,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,selector_array=[2,3,4,5,6],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,indices=None, height=None,selector_array=[2,3,4,5,6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -151,7 +151,7 @@ class FriendSPN(object):
                     gini_values[i,j] =scipy.spatial.distance.dice(temp[:,i],temp[:,j])
         if use_optimizer:
         
-            cands = self.build_candidates(gini_values,4)
+            cands = self.build_candidates(gini_values)
             print(cands)
             print('------')
             scopes=self.optimize_scope(temp,self.ds_context,cands)
@@ -317,6 +317,7 @@ class FriendSPN(object):
         print('length of candidates:'+str(len(candidates)))
         print(candidates)
         print(data.shape)
+        counter =0;
         for cand in candidates:
             try:
                 s=Sum();
@@ -336,11 +337,15 @@ class FriendSPN(object):
                 if best_cand<value:
                     best_cand = value
                     cand_select=cand
+                counter = counter + 1;
             except:  
-                traceback.print_exc();
-                sys.exit(-1)
-        print('completed iteration')
-        return cand_select
+                print('error')
+                pass;
+        if counter >=1:
+            return cand_select;
+        else:
+            return self.scope;
+
 
 
         
