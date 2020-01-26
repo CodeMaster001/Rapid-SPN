@@ -188,12 +188,12 @@ def clean_data(x):
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000):
+def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,selector_array=[2,3,4]):
     try:
 
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
-        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3,selector_array=[2,3,4,5,6])
+        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array)
         print("Buiding tree complete")
         T= T.build_spn();
         T.update_ids();
@@ -268,8 +268,9 @@ spn_time=0
 assert X.shape[1]==X_test.shape[1]
 spnrp_mean=0
 spnrp_time=0
+selector_array = np.load('selector.npy')
 spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs)
+spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs,selector_array=selector_array)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
