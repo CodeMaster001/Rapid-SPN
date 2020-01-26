@@ -47,7 +47,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [10,15,20,25,30,35,40,45,50]:
+for instance in [20]:
     train_dataset,labels= fetch_openml(name='cars', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
@@ -65,7 +65,7 @@ for instance in [10,15,20,25,30,35,40,45,50]:
     output_file_name='cars.'+str(instance)+'.'+str(sys.argv[1])+'.log'
     min_instances_slice=instance
     epochs=8000
-    height=1
+    height=14
     prob=0.4
     leaves_size=15
     threshold =0.4
