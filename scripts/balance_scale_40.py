@@ -43,7 +43,6 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
-numpy.random.seed(42)
 import multiprocessing
 import logging
 import subprocess
@@ -167,16 +166,14 @@ prob=0.4
 leaves_size=20
 threshold =0.4
 
-counter =0;
+
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-for j in [15]:
-    output_file_name='balance_40_.log'
+for j in [5,10,15,20,25,30,35,40,45,50]:
+    output_file_name='balance.'+str(j)+'.40.log'
     min_instances_slice=j
-    print(kf)
     opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
     for train_index,test_index in kf.split(train_dataset_df):
-        counter = counter + 1;
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
         X=numpy.nan_to_num(X_train)
         X = X.astype(numpy.float32)
@@ -187,15 +184,14 @@ for j in [15]:
         X_test =X_test.astype(numpy.float32)
         train_set.append(X)
         test_set.append(X_test)
-        np.savetxt('train.csv', X, delimiter=',')
-        np.savetxt("test.csv",X_test,delimiter=',')
+        np.save('train', X)
+        np.save("test",X_test)
         np.save("context",context)
-        P=subprocess.Popen(['./experiment.py train.csv test.csv context.npy '+opt_args.strip()],shell=True)
+        P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
         P.communicate()
         P.wait();
         P.terminate()
     print("process completed")
-    print(counter)
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>

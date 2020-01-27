@@ -47,11 +47,11 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [20]:
+for instance in [25]:
     train_dataset,labels= fetch_openml(name='hayes-roth', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
-    kf = KFold(n_splits=10,shuffle=True)
+    kf = KFold(n_splits=40,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,10 +62,10 @@ for instance in [20]:
     context = list()
 
     #parameters
-    output_file_name='hayes.'+str(instance)+'.10.log'
+    output_file_name='hayes.'+str(instance)+'.40.log'
     min_instances_slice=instance
     epochs=8000
-    height=6
+    height=7
     prob=0.4
     leaves_size=15
     threshold =0.4
