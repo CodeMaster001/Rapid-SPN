@@ -51,7 +51,7 @@ for instance in [1000]:
     train_dataset,labels= fetch_openml(name='soybean', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
-    kf = KFold(n_splits=10,shuffle=True)
+    kf = KFold(n_splits=40,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,7 +62,7 @@ for instance in [1000]:
     context = list()
 
     #parameters
-    output_file_name='soyobean.'+str(instance)+'.10.log'
+    output_file_name='soyobean.'+str(instance)+'.40.log'
     min_instances_slice=instance
     epochs=8000
     height=1

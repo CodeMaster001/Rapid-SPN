@@ -47,11 +47,11 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [25]:
+for instance in [10]:
     train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
-    kf = KFold(n_splits=int(sys.argv[1]),shuffle=True)
+    kf = KFold(n_splits=10,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,7 +62,7 @@ for instance in [25]:
     context = list()
 
     #parameters
-    output_file_name='irish.'+str(instance)+'.'+str(sys.argv[1])+'.log'
+    output_file_name='irish.'+str(instance)+'.10.log'
     min_instances_slice=instance
     epochs=8000
     height=7

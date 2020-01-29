@@ -47,11 +47,11 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [1000]:
-    train_dataset,labels= fetch_openml(name='soybean', version=1,return_X_y=True)
-    train_dataset_df = pd.DataFrame(train_dataset)
+for instance in [30]:
+    train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
+    train_dataset_df = pd.read_csv('../dataset/sponge.data')
 
-    kf = KFold(n_splits=10,shuffle=True)
+    kf = KFold(n_splits=40,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,10 +62,10 @@ for instance in [1000]:
     context = list()
 
     #parameters
-    output_file_name='soyobean.'+str(instance)+'.10.log'
+    output_file_name='irish.'+str(instance)+'.40.log'
     min_instances_slice=instance
     epochs=8000
-    height=1
+    height=20
     prob=0.4
     leaves_size=15
     threshold =0.4
@@ -73,20 +73,18 @@ for instance in [1000]:
     opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
 
     for i in range(0,train_dataset_df.shape[1]):
-        context.append(Categorical)
+        context.append(Gaussian)
     for train_index,test_index in kf.split(train_dataset_df):
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
         X=numpy.nan_to_num(X_train)
         X = X.astype(numpy.float32)
-        print(X.shape)
-        #X = preprocessing.normalize(X, norm='l2') 
+        X = preprocessing.normalize(X, norm='l2') 
         X_test = numpy.nan_to_num(X_test)
-        #X_test = preprocessing.normalize(X_test, norm='l2')
+        X_test = preprocessing.normalize(X_test, norm='l2')
         X = X.astype(numpy.float32)
         X_test =X_test.astype(numpy.float32)
         train_set.append(X)
         test_set.append(X_test)
-        print
         np.save('train', X)
         np.save("test",X_test)
         np.save("context",context)

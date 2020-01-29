@@ -169,7 +169,7 @@ threshold =0.4
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-for j in [5,10,15,20,25,30,35,40,45,50]:
+for j in [15]:
     output_file_name='balance.'+str(j)+'.40.log'
     min_instances_slice=j
     opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
