@@ -184,7 +184,8 @@ print(credit.shape)
 print(credit.head())
 credit = credit.astype(float)
 credit = numpy.nan_to_num(credit)
-
+selector_array=[2,3,4]
+np.save('selector',np.array(selector_array))
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -224,7 +225,7 @@ for min_instances_slice in [10]:
 
         print('Building tree...')
         original = time.time();
-        T =  SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.3,leaves_size=20,height=1,spill=0.75)
+        T =  SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,threshold=0.01,leaves_size=20,height=3,spill=0.75,selector_array=selector_array)
 
 
         T= T.build_spn();
