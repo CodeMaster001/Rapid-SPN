@@ -188,12 +188,13 @@ def clean_data(x):
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,selector_array=[2,3,4]):
+def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,selector_array=[2,3,4],threshold=1,use_optimizer=True):
     try:
+        print(selector_array)
 
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
-        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array)
+        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,threshold=threshold,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array,use_optimizer=use_optimizer)
         print("Buiding tree complete")
         T= T.build_spn();
         T.update_ids();
@@ -202,8 +203,8 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,se
         ll_test=log_likelihood(spn,X_test)
         file_pi = open('spnrp.obj', 'wb') 
         pickle.dump(spn, file_pi)
-        #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001))
-        #plot_spn(spn,'spnrp.png')
+        #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
+        plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
         tf.reset_default_graph();
         del spn;
@@ -262,20 +263,23 @@ spn_time=0
 
 X=np.load(train_file_name)
 X_test=np.load(test_file_name)
+print('Test')
 print(X_test.shape)
+print('Train')
+print(X.shape)
 spn_mean=0
 spn_time=0
 assert X.shape[1]==X_test.shape[1]
 spnrp_mean=0
 spnrp_time=0
-selector_array = np.load('selector.npy')
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs,selector_array=selector_array)
+#spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
+spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs,selector_array,threshold=threshold)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
 print(FILE_NAME_DIR+file_name)
 temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+print(temp)
 f.write(temp)
 f.flush()
 f.close()
