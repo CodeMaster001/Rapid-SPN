@@ -217,7 +217,7 @@ theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
 file_name='vote_40.log'
-min_instances_slice=20
+min_instances_slice=1000
 for train_index, test_index in kf.split(credit):
     X = credit.values[train_index,:]
     print(X.shape)
@@ -237,7 +237,7 @@ for train_index, test_index in kf.split(credit):
     logging.info("training normnal spm")
 
     original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2,threshold=0.7)
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.7)
 
     theirs_time = time.time()-original
     #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 

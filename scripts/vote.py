@@ -209,6 +209,7 @@ def one_hot(df,col):
 
 credit = fetch_openml(name='vote', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(credit)
+credit = credit.fillna(-2)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -216,65 +217,67 @@ ours_time_list = list()
 theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
-file_name='vote_40.log'
-min_instances_slice=20
-for train_index, test_index in kf.split(credit):
-    X = credit.values[train_index,:]
-    print(X.shape)
-    X=numpy.nan_to_num(X)
-    #X = preprocessing.normalize(X, norm='l2')
-    X_test = credit.values[test_index]; 
-    X_test = numpy.nan_to_num(X_test)
-    #X_test = preprocessing.normalize(X_test, norm='l2')
-    X = X.astype(numpy.float32)
-    X_test =X_test.astype(numpy.float32)
-    context = list()
-    for i in range(0,X.shape[1]):
-       context.append(Categorical)
+for instance in [1000]:
+    file_name='vote.'+str(instance)+'.log'
+    min_instances_slice=instance
+    for train_index, test_index in kf.split(credit):
+        X = credit.values[train_index,:]
+        print(X.shape)
+        X=numpy.nan_to_num(X)
+        #X = preprocessing.normalize(X, norm='l2')
+        X_test = credit.values[test_index]; 
+        X_test = numpy.nan_to_num(X_test)
+        #X_test = preprocessing.normalize(X_test, norm='l2')
+        X = X.astype(numpy.float32)
+        X_test =X_test.astype(numpy.float32)
+        context = list()
+        for i in range(0,X.shape[1]):
+           context.append(Categorical)
 
 
-    ds_context = Context(parametric_types=context).add_domains(X)
-    logging.info("training normnal spm")
+        ds_context = Context(parametric_types=context).add_domains(X)
+        logging.info("training normnal spm")
 
-    original = time.time()
-    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=2,threshold=0.7)
+        original = time.time()
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=1000,threshold=0.7)
 
-    theirs_time = time.time()-original
-    #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
-    #tf.train.AdamOptimizer(1e-4))
-
-
-
-    #spn_mean =numpy.mean(eval_tf(spn_classification, X_test))
-   # print(ll_test)
-    spn_mean = np.mean(log_likelihood(spn_classification,X_test))
-    spn_time = time.time() -original
+        theirs_time = time.time()-original
+        #spn_classification = optimize_tf(spn_classification,X,epochs=1000,optimizer= tf.train.AdamOptimizer(0.001)) 
+        #tf.train.AdamOptimizer(1e-4))
 
 
 
-    logging.info('Building tree...')
-    original = time.time();
-    T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.2,leaves_size=2,height=1,spill=0.3)
-    logging.info("Building tree complete")
+        #spn_mean =numpy.mean(eval_tf(spn_classification, X_test))
+       # print(ll_test)
+        spn_mean = np.mean(log_likelihood(spn_classification,X_test))
+        spn_time = time.time() -original
 
-    T= T.build_spn();
-    T.update_ids();
-    from spn.io.Text import spn_to_str_equation
-    spn = T.spn_node;
-    spnrp_time = time.time()-original
-    #fs(spn,print_prob)
-    
-    spnrp_mean = np.mean(log_likelihood(spn, X_test))
-    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-    #spnrp_mean = numpy.mean(eval_tf(spn,X_test))
-    f=open('results/'+file_name,'a')
-    f.write(str(sys.argv)+"\n")
-    #print(spnrp_mean)
-    temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-    #temp=str(spnrp_mean)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-    f.write(temp)
-    f.flush()
-    f.close()
+
+
+        logging.info('Building tree...')
+        original = time.time();
+        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=0.2,leaves_size=2,height=1,spill=0.3,selector_array=[2,3,4])
+        logging.info("Building tree complete")
+
+        T= T.build_spn();
+        T.update_ids();
+        from spn.io.Text import spn_to_str_equation
+        spn = T.spn_node;
+        spnrp_time = time.time()-original
+        #fs(spn,print_prob)
+        
+        spnrp_mean = np.mean(log_likelihood(spn, X_test))
+        plot_spn(spn,'spn.png')
+        #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+        #spnrp_mean = numpy.mean(eval_tf(spn,X_test))
+        f=open('results/'+file_name,'a')
+        f.write(str(sys.argv)+"\n")
+        #print(spnrp_mean)
+        temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+        #temp=str(spnrp_mean)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+        f.write(temp)
+        f.flush()
+        f.close()
 
 
 
