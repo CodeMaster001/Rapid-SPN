@@ -59,30 +59,18 @@ class NODE_TYPE:
     ROOT=4
     NAIVE=5
 #gini index implementation
-
-def gini(data,index):
+def gini(array):
     """Calculate the Gini coefficient of a numpy array."""
-    # based on bottom eq:
-    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
-    # from:
-    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
-    # All values are treated equally, arrays must be 1d:
-    data = data[:,index]
-    data = data.flatten()
-    if np.amin(data) < 0:
-        # Values cannot be negative:
-        data -= np.amin(data)
-    # Values cannot be 0:
-    data += 0.0000001
-    # Values must be sorted:
-    data = np.sort(data)
-    # Index per array element:
-    index_shape = np.arange(1,data.shape[0]+1)
-    # Number of array elements:
-    n = data.shape[0]
-    # Gini coefficient:
-    return ((np.sum((2 * index_shape - n  - 1) * data)) / (n * np.sum(data)))
-
+    # based on bottom eq: http://www.statsdirect.com/help/content/image/stat0206_wmf.gif
+    # from: http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    array = array.flatten() #all values are treated equally, arrays must be 1d
+    if np.amin(array) < 0:
+        array -= np.amin(array) #values cannot be negative
+    array += 0.0000001 #values cannot be 0
+    array = np.sort(array) #values must be sorted
+    index = np.arange(1,array.shape[0]+1) #index per array element
+    n = array.shape[0]#number of array elements
+    return ((np.sum((2 * index - n  - 1) * array)) / (n * np.sum(array))) #Gini coefficient
 
 
 
@@ -137,6 +125,7 @@ class FriendSPN(object):
         #self.spn_node = Prune(self.spn_node)
 
     def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True):
+        print('gini called')
         self.scope = np.sort(self.scope)
         temp = np.array(data[:,scope]) #apply existing scope
         temp = np.array(temp)
@@ -144,6 +133,7 @@ class FriendSPN(object):
         split_cols = list()
         print('Current scope:'+str(self.scope))
         gini_values = np.zeros(shape=(temp.shape[1],temp.shape[1]))
+        '''
         for i in range(0,temp.shape[1]):
             process = list()
             for j in range(0,temp.shape[1]):
@@ -154,7 +144,6 @@ class FriendSPN(object):
         gini_values = np.nan_to_num(gini_values)
         gini_values = preprocessing.normalize(gini_values, norm='l2')
 
-       
         cands = self.build_candidates(gini_values)
         scopes=self.optimize_scope(temp,self.ds_context,cands)
         print('---x-')
@@ -166,7 +155,7 @@ class FriendSPN(object):
             first_index = [0 for i in range(0,gini_values.shape[0])]
             split_cols.append(first_index)
             return split_cols;
-
+    
         kmeans = KMeans(n_clusters=2, random_state=0,n_init=40).fit(gini_values)
         for i in range(0,2):
             first_index = np.where(kmeans.labels_==i)[0]
@@ -177,7 +166,42 @@ class FriendSPN(object):
         print(split_cols)
         return np.array(split_cols)
         '''
-        print('passed')
+        print('passed...')
+        temp=data[:,self.scope]
+        data_t = np.transpose(temp)
+        print(data_t.shape)
+        gini_list=list()
+        for i in range(0,data_t.shape[0]):
+            gini_value = gini(data_t[i].flatten())
+            gini_list.append(gini_value)
+        print(gini_list)
+        try:
+            from sklearn.cluster import MeanShift
+            clustering = MeanShift(bandwidth=1.0).fit(np.array(gini_list).reshape(-1,1))
+            print('labels_')
+            for i in range(0,np.max(clustering.labels_)):
+                first_index = np.where(clustering.labels_==i)[0]
+                split_cols.append(first_index)
+            if len(split_cols)==0:
+                print('made')
+                return self.scope;
+            print('....')
+            print(split_cols)
+            print(clustering.labels_)
+        except:
+            traceback.print_exc();
+
+   
+        '''
+        print(np.max(gini_list))
+
+        print(np.min(gini_list))
+        print(gini_list)
+        print('...')
+        print(gini_value)
+        print('..exited..')
+        sys.exit(-1)
+        print('passed...')
         average_value=np.mean(gini_values,axis=0)
  
         index  = numpy.argmax(average_value)
@@ -199,8 +223,9 @@ class FriendSPN(object):
             split_cols.append(right)
         print('total slices:'+str(split_cols))
         print("gini complete")
-        return split_cols
         '''
+        return split_cols
+        
 
     #perform random projection on scope
 
@@ -247,8 +272,9 @@ class FriendSPN(object):
         from the d-dimensional unit sphere, and picks the w which
         maximizes the diameter of projected data from the current node:
         w <- argmax_(w_1, w_2, ..., w_m) max_(x1, x2 in node) |w' (x1 - x2)|
-
         '''
+
+        
         print(scope)
         start = 0;
         final_w = list();
@@ -569,7 +595,7 @@ class SPNRPBuilder(object):
         assign_ids(spn_node)
         rebuild_scopes_bottom_up(spn_node)
         import sys
-        spn_node = Prune(spn_node)
+        #spn_node = Prune(spn_node)
         print("exited")
         print(spn_node)
         self.root.spn_node=spn_node #apply prune
