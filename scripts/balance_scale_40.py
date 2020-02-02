@@ -161,10 +161,11 @@ context = list()
 
 #parameters
 epochs=8000
-height=5
+height=6
 prob=0.4
 leaves_size=20
 threshold =0.4
+bandwidth=0.7
 
 
 for i in range(0,train_dataset_df.shape[1]):
@@ -172,7 +173,7 @@ for i in range(0,train_dataset_df.shape[1]):
 for j in [15]:
     output_file_name='balance.'+str(j)+'.40.log'
     min_instances_slice=j
-    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
+    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)+' '+str(bandwidth)+' 0'
     for train_index,test_index in kf.split(train_dataset_df):
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
         X=numpy.nan_to_num(X_train)
