@@ -188,13 +188,13 @@ def clean_data(x):
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,selector_array=[2,3,4],threshold=1,use_optimizer=True):
+def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,epochs=1000,selector_array=[2,3,4],threshold=1,use_optimizer=True,predict_bandwidth=0.4):
     try:
         print(selector_array)
 
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
-        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,prob=prob,threshold=threshold,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array,use_optimizer=use_optimizer)
+        T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,bandwidth=bandwidth,target=X,prob=prob,threshold=threshold,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array,use_optimizer=use_optimizer,predict_bandwidth=predict_bandwidth)
         print("Buiding tree complete")
         T= T.build_spn();
         T.update_ids();
@@ -203,8 +203,9 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,epochs=1000,se
         ll_test=log_likelihood(spn,X_test)
         file_pi = open('spnrp.obj', 'wb') 
         pickle.dump(spn, file_pi)
+        #plot_spn(spn,'spn.png')
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
-        plot_spn(spn,'spnrp.png')
+        #plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
         tf.reset_default_graph();
         del spn;
@@ -225,7 +226,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=20)
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=8)
         theirs_time = time.time()-theirs_time
         #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
@@ -258,6 +259,8 @@ height=int(sys.argv[7])
 prob=float(sys.argv[8])
 leaves_size=float(sys.argv[9])
 threshold = float(sys.argv[10])
+bandwidth=float(sys.argv[11])
+predict_bandwidth=float(sys.argv[12])
 spn_mean=0
 spn_time=0
 
@@ -272,8 +275,8 @@ spn_time=0
 assert X.shape[1]==X_test.shape[1]
 spnrp_mean=0
 spnrp_time=0
-#spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X,X_test,context,height,prob,leaves_size,epochs,selector_array,threshold=threshold)
+spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
+spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,prob=prob,leaves_size=leaves_size,epochs=epochs,threshold=threshold,bandwidth=bandwidth,predict_bandwidth=predict_bandwidth)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)

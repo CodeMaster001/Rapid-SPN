@@ -47,11 +47,12 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [15,20,25,30,35,40,45,50]:
+for instance in [5,10,15,20,25,30,35,40,45,50]:
     train_dataset,labels= fetch_openml(name='audiology', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
+    train_dataset_df =train_dataset_df.fillna(10000)
 
-    kf = KFold(n_splits=10,shuffle=True)
+    kf = KFold(n_splits=40,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,10 +63,10 @@ for instance in [15,20,25,30,35,40,45,50]:
     context = list()
 
     #parameters
-    output_file_name='audio.'+str(instance)+'.10.log'
+    output_file_name='audio.'+str(instance)+'.40.log'
     min_instances_slice=instance
     epochs=8000
-    height=2
+    height=1
     prob=0.4
     leaves_size=15
     threshold =0.4
@@ -76,12 +77,9 @@ for instance in [15,20,25,30,35,40,45,50]:
         context.append(Categorical)
     for train_index,test_index in kf.split(train_dataset_df):
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
-        X=numpy.nan_to_num(X_train)
-        X = X.astype(numpy.float32)
+        X = X_train.astype(numpy.float32)
         #X = preprocessing.normalize(X, norm='l2') 
-        X_test = numpy.nan_to_num(X_test)
         #X_test = preprocessing.normalize(X_test, norm='l2')
-        X = X.astype(numpy.float32)
         X_test =X_test.astype(numpy.float32)
         train_set.append(X)
         test_set.append(X_test)
