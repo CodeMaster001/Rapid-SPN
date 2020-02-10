@@ -86,14 +86,14 @@ def clean_data(x):
 
  # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 train_dataset,labels= fetch_openml(name='CIFAR_10', version=1,return_X_y=True)
-train_dataset = pd.DataFrame(train_dataset).head(5000).values
+train_dataset = pd.DataFrame(train_dataset)
 
-X_train=train_dataset[:4000,:]
-X_test=train_dataset[4000:,:]
+train_dataset=train_dataset.sample(n=int(sys.argv[1])).values
+train_dataset=train_dataset[:,:int(sys.argv[2])]
+X_train,X_test=train_test_split(train_dataset,test_size=0.3)
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizev
 
-print(train_dataset.shape)
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -104,44 +104,46 @@ test_set = list();
 counter = 0;
 context = list()
 
-#parameters
-output_file_name='mnist.log'
-min_instances_slice=30
+
+output_file_name='mnist_160.log'
 epochs=8000
-height=4
+height=15
 prob=0.5
 leaves_size=15
 threshold=0.4
 bandwidth=0.2
 predict_bandwidth=1
+selector_array=[2,3,4]
+np.save('selector',np.array(selector_array))
 
 for i in range(0,train_dataset.shape[1]):
     context.append(Gaussian)
-for j in [500,600,700,800,900,1000,1000,2000,3000,4000,5000,6000,70000]:
-        min_instances_slice=j
-        output_file_name='mnist_'+str(j)+'.log'  
-        opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
-        X=numpy.nan_to_num(X_train)
-        X = X.astype(numpy.float32)
-        X = preprocessing.normalize(X, norm='l2') 
-        X_test = numpy.nan_to_num(X_test)
-        X_test = preprocessing.normalize(X_test, norm='l2')
-        X = X.astype(numpy.float32)
-        X_test =X_test.astype(numpy.float32)
-        train_set.append(X)
 
-        test_set.append(X_test)
-        print("--")
-        print(X.shape)
-        print(X_test.shape)
-        np.save('train', X)
-        np.save("test",X_test)
-        np.save("context",context)
-        P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
-        P.communicate()
-        P.wait();
-        P.terminate()
-print("process completed")
+X=numpy.nan_to_num(X_train)
+X = X.astype(numpy.float32)
+X = preprocessing.normalize(X, norm='l2') 
+X_test = numpy.nan_to_num(X_test)
+X_test = preprocessing.normalize(X_test, norm='l2')
+X = X.astype(numpy.float32)
+X_test =X_test.astype(numpy.float32)
+train_set.append(X)
+
+test_set.append(X_test)
+print("--")
+print(X.shape)
+print(X_test.shape)
+np.save('train', X)
+np.save("test",X_test)
+np.save("context",context)
+for instance_slice in [10,20,40,50,100,150,200,300,350,400,450,500,600,650,7000]:
+    opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
+    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+    print("process completed")
+    break;
+
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
