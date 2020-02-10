@@ -105,7 +105,7 @@ counter = 0;
 context = list()
 
 
-output_file_name='mnist_160.log'
+output_file_name='mnist_'+str(sys.argv[2])+'.log'
 epochs=8000
 height=15
 prob=0.5
@@ -142,7 +142,6 @@ for instance_slice in [10,20,40,50,100,150,200,300,350,400,450,500,600,650,7000]
     P.wait();
     P.terminate()
     print("process completed")
-    break;
 
 #!/usr/bin/env python
 '''
