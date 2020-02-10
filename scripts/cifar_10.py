@@ -107,7 +107,7 @@ context = list()
 
 output_file_name='mnist_'+str(sys.argv[2])+'.log'
 epochs=8000
-height=15
+height=2
 prob=0.5
 leaves_size=15
 threshold=0.4
