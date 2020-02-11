@@ -138,7 +138,7 @@ class FriendSPN(object):
         rebuild_scopes_bottom_up(self.spn_node)
         #self.spn_node = Prune(self.spn_node)
 
-    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.4):
+    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.0000000000000000004):
         temp = np.array(data[:,scope]) #apply existing scope
         selector = VarianceThreshold(threshold=var_threshold)
         try:
@@ -279,23 +279,28 @@ class FriendSPN(object):
             temp = np.array(features_set)
 
 
+            if self.current_robin<=len(self.scope):
+                self.current_robin=0;
+
             chunk_index = self.selector_array[self.current_robin]
+
             if chunk_index<=len(self.scope):
                 self.current_robin=0;
             column_pos = list();
             for i in range(0,features_set.shape[1]):
                 column_pos.append(scipy.spatial.distance.cosine(temp[:,index], temp[:,i]))
 
-            #column_pos=np.argsort(column_pos).reshape(1,-1).tolist()[0];
+            column_pos=np.argsort(column_pos).reshape(1,-1).tolist()[0];
             print(column_pos)
-            #sorted_feature_index_temp =[self.scope[i] for i in column_pos]
+            sorted_feature_index_temp =[self.scope[i] for i in column_pos]
             print(self.scope)
-            #print(sorted_feature_index_temp)
+            print(sorted_feature_index_temp)
 
             sorted_feature_index_temp = list(self.chunks(self.scope,chunk_index))
             sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
             candidates.append(sorted_feature_index_temp)
             self.current_robin=self.current_robin+1;
+            print(candidates)
             return candidates
         except:
             traceback.print_exc()
@@ -312,10 +317,11 @@ class FriendSPN(object):
         return np.mean(value)
 
     def optimize_scope(self,data,ds_context,candidates):
+        print('scope updated')
         sorted_scope = np.sort(self.scope)
         max_list=list();
         cand_select=[self.scope]
-        best_cand=self.default_scope(self.data,ds_context)
+        best_cand=-100000000000000000000000000#self.default_scope(self.data,ds_context)
      
         counter =0;
         for cand in candidates:
@@ -335,7 +341,9 @@ class FriendSPN(object):
             except:  
                 traceback.print_exc()
                 pass;
+        print(cand_select)
         if counter >=1:
+
             return cand_select;
         else:
             print('default scope')
@@ -350,7 +358,7 @@ class FriendSPN(object):
 
 
         #return self.split_cols(data, self.ds_context, self.scope)
-
+        print('called')
     
         cols_split = self.__calculate_gini(data,ds_context=self.ds_context,scope=scope) #split cols apply scope and gi
       
@@ -400,20 +408,13 @@ class FriendSPN(object):
         sum_node.weights.append(left_weight)
         sum_node.children.append(None)
         
-        if len(left_set)<10:
-            node_left = FriendSPN(data=self.data,current_robin=self.current_robin,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
-            pass;
-        else:
-            node_left = FriendSPN(data=self.data,indices=left_set,current_robin=self.current_robin,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
+      
+        node_left = FriendSPN(data=self.data,indices=left_set,current_robin=self.current_robin,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
         
         sum_node.weights.append(right_weight)
         sum_node.children.append(None)
 
-        if len(right_set)<10:
-            node_right = FriendSPN(data=self.data,indices=right_set,current_robin=self.current_robin,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
-            pass;
-        else:
-            node_right = FriendSPN(data=self.data,indices=right_set,current_robin=self.current_robin,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
+        node_right = FriendSPN(data=self.data,indices=right_set,current_robin=self.current_robin,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
 
 
         self.children =[node_left,node_right]
