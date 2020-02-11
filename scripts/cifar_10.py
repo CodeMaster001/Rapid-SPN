@@ -135,7 +135,7 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for instance_slice in [10,20,40,60]:
+for instance_slice in [10,20,40,50,100,150,200,300,350,400,450,500,600,650,7000]:
     opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
     P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
