@@ -53,7 +53,7 @@ import multiprocessing
 import logging
 import traceback
 
-
+"""
 def optimize_tf(
     spn: Node,
     data: np.ndarray,
@@ -62,7 +62,7 @@ def optimize_tf(
     optimizer: tf.train.Optimizer = None,
     return_loss=False,
 ) -> Union[Tuple[Node, List[float]], Node]:
-    """
+    
     Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
     function.
     :param spn: SPN which is to be optimized
@@ -73,7 +73,7 @@ def optimize_tf(
     :param return_loss: Whether to also return the list of losses for each epoch or not
     :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
     returned, else only a copy of the optimized SPN is returned
-    """
+    
     # Make sure, that the passed SPN is not modified
     tf.reset_default_graph() 
     spn_copy = Copy(spn)
@@ -147,7 +147,7 @@ def optimize_tf_graph(
 
     return loss_list
 
-
+"""
 
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
@@ -195,14 +195,13 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         ds_context = Context(parametric_types=context).add_domains(X)
         original = time.time();
         T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,bandwidth=bandwidth,target=X,prob=prob,threshold=threshold,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array,use_optimizer=use_optimizer,predict_bandwidth=predict_bandwidth)
-        print("Buiding tree complete")
         T= T.build_spn();
         T.update_ids();
         ours_time = time.time()-original;
         spn = T.spn_node;
+        print("Buiding tree complete")
         ll_test=log_likelihood(spn,X_test)
-        file_pi = open('spnrp.obj', 'wb') 
-        pickle.dump(spn, file_pi)
+        print(ll_test)
         #plot_spn(spn,'spn.png')
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
         #plot_spn(spn,'spnrp.png')
@@ -216,9 +215,10 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         traceback.print_exc()
         f.flush()
         f.close()
+        return 0,0
 
 
-def learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold=0.4):
+def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
     
     try:
 
@@ -254,13 +254,9 @@ test_file_name=sys.argv[2]
 context = np.load(sys.argv[3],allow_pickle=True)
 file_name=str(sys.argv[4])
 min_instances_slice = int(sys.argv[5])
-epochs=int(sys.argv[6])
-height=int(sys.argv[7])
-prob=float(sys.argv[8])
-leaves_size=float(sys.argv[9])
-threshold = float(sys.argv[10])
-bandwidth=float(sys.argv[11])
-predict_bandwidth=float(sys.argv[12])
+height=int(sys.argv[6])
+leaves_size=float(sys.argv[7])
+threshold = float(sys.argv[8])
 spn_mean=0
 spn_time=0
 
@@ -275,8 +271,8 @@ spn_time=0
 assert X.shape[1]==X_test.shape[1]
 spnrp_mean=0
 spnrp_time=0
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,epochs,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,prob=prob,leaves_size=leaves_size,epochs=epochs,threshold=threshold,bandwidth=bandwidth,predict_bandwidth=predict_bandwidth)
+spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,threshold)
+spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,leaves_size=leaves_size,threshold=threshold)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
