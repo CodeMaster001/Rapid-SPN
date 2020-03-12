@@ -103,7 +103,6 @@ train_set = list()
 test_set = list();
 counter = 0;
 context = list()
-e
 
 output_file_name='mnist_spnrp_'+str(sys.argv[2])+'.log'
 epochs=8000
@@ -135,7 +134,7 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for height in [2,4,6,8,10,12,14,16,18,20]:
+for height in [2,4,6,8,10,12,14,16,18,20,22,24,26,30]:
 	instance_slice=500000
 	opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
 	P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
