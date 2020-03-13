@@ -202,7 +202,6 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         print("Buiding tree complete")
         ll_test=log_likelihood(spn,X_test)
         print(ll_test)
-        #plot_spn(spn,'spn.png')
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
         #plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
@@ -226,7 +225,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=8)
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
         theirs_time = time.time()-theirs_time
         #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
