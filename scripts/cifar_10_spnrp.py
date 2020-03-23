@@ -106,9 +106,9 @@ context = list()
 
 output_file_name='mnist_spnrp_'+str(sys.argv[2])+'.log'
 epochs=8000
-height=10
+height=1
 prob=0.5
-leaves_size=15
+leaves_size=30
 threshold=0.4
 bandwidth=0.2
 predict_bandwidth=1
@@ -134,9 +134,9 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for height in [2,4,6,8,10,12,14,16,18,20,22,24,26,30]:
+for height in [5,7,8,10,12,14,16,18,20,22,24,26,30]:
 	instance_slice=500000
-	opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
+    opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
 	P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
 	P.communicate()
 	P.wait();
