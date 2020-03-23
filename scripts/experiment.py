@@ -9,8 +9,8 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
-os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ['NUMEXPR_MAX_THREADS'] = '16'
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
 from spatialtree import *;
@@ -49,6 +49,8 @@ import sys;
 from pathlib import Path
 FILE_NAME_DIR="results/"
 Path("results").mkdir(parents=True, exist_ok=True)
+MODEL_DIR="models/"
+Path("models").mkdir(parents=True, exist_ok=True)
 import multiprocessing
 import logging
 import traceback
@@ -196,16 +198,19 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         original = time.time();
         T = SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,bandwidth=bandwidth,target=X,prob=prob,threshold=threshold,leaves_size=leaves_size,height=height,spill=0.3,selector_array=selector_array,use_optimizer=use_optimizer,predict_bandwidth=predict_bandwidth)
         T= T.build_spn();
+        print('updating ids')
         T.update_ids();
         ours_time = time.time()-original;
         spn = T.spn_node;
+        del T;
         print("Buiding tree complete")
         ll_test=log_likelihood(spn,X_test)
         print(ll_test)
+        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height), 'wb') 
+        pickle.dump(spn, file_pi)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
         #plot_spn(spn,'spnrp.png')
         #ll_test = eval_tf(spn,X_test)
-        tf.reset_default_graph();
         del spn;
         return np.mean(ll_test),ours_time
     except:
@@ -225,7 +230,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=8)
         theirs_time = time.time()-theirs_time
         #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
@@ -234,6 +239,8 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
         #ll_test = eval_tf(spn_classification,X_test)
         #print(ll_test)
         ll_test = log_likelihood(spn_classification,X_test)
+        file_pi = open(MODEL_DIR+'spn_'+str(X.shape[1])+'_'+str(height), 'wb') 
+        pickle.dump(spn_classification, file_pi)
         #plot_spn(spn_classification,'learnspn.png')
     
         del spn_classification
