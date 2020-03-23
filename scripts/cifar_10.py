@@ -98,11 +98,11 @@ counter = 0;
 context = list()
 
 
-output_file_name='mnist_'+str(sys.argv[2])+'.log'
+output_file_name='cifar_'+str(sys.argv[2])+'.log'
 epochs=8000
-height=2
+height=1
 prob=0.5
-leaves_size=15
+leaves_size=30
 threshold=0.4
 bandwidth=0.2
 predict_bandwidth=1
@@ -128,8 +128,8 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for instance_slice in [10,20,40,50,100,150,200,300,350,400,450,500,600,650,7000]:
-    opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' '+str(threshold) +' '+str(bandwidth)+' '+str(predict_bandwidth)
+for instance_slice in [10 ,20,40,60,100,200,300,400,500,1000,1500,2000]:
+    opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
     P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
