@@ -3,7 +3,6 @@
 import numpy
 import sys
 import os
-os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
@@ -136,6 +135,7 @@ for instance_slice in [10,20,40,50,100,150,200,300,350,400,450,500,600,650,7000]
     P.wait();
     P.terminate()
     print("process completed")
+    break;
 
 #!/usr/bin/env python
 '''
