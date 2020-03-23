@@ -230,7 +230,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
 
         ds_context = Context(parametric_types=context).add_domains(X)
         theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold,cpus=8)
+        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice,threshold=threshold)
         theirs_time = time.time()-theirs_time
         #spn_classification = optimize_tf(spn_classification,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.0001)) 
             #tf.train.AdamOptimizer(1e-4))
