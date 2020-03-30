@@ -8,7 +8,7 @@ Spatial tree demo for matrix data
 
 import numpy
 import sys
-import os
+import os1
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
@@ -91,7 +91,7 @@ for i in range(0,repeat):
     print(X_test.shape)
     # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizev
 
-    output_file_name='mnist_spnrp_'+str(columns_size)+'.log'
+    output_file_name='mnist_'+str(columns_size)+'.log'
     epochs=8000
     selector_array=[2,3,4]
     np.save('selector',np.array(selector_array))
