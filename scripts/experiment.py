@@ -10,7 +10,6 @@ import numpy
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ['NUMEXPR_MAX_THREADS'] = '16'
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
 from spatialtree import *;
@@ -206,7 +205,7 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         print("Buiding tree complete")
         ll_test=log_likelihood(spn,X_test)
         print(ll_test)
-        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height), 'wb') 
+        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height)+'_'+str(leaves_size)+'.obj', 'wb') 
         pickle.dump(spn, file_pi)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
         #plot_spn(spn,'spnrp.png')
@@ -239,7 +238,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
         #ll_test = eval_tf(spn_classification,X_test)
         #print(ll_test)
         ll_test = log_likelihood(spn_classification,X_test)
-        file_pi = open(MODEL_DIR+'spn_'+str(X.shape[1])+'_'+str(height), 'wb') 
+        file_pi = open(MODEL_DIR+'spn_'+str(X.shape[1])+'_'+str(height)+'.obj', 'wb') 
         pickle.dump(spn_classification, file_pi)
         #plot_spn(spn_classification,'learnspn.png')
     
