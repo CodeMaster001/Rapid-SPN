@@ -104,7 +104,7 @@ test_set = list();
 counter = 0;
 context = list()
 
-output_file_name='mnist_spnrp_'+str(sys.argv[1])+'.log'
+output_file_name='cifar_spnrp_'+str(sys.argv[1])+'.log'
 epochs=8000
 height=1
 prob=0.5
@@ -136,7 +136,7 @@ np.save("test",X_test)
 np.save("context",context)
 for height in [8,12,14,16,18,20,22,24,26,30]:
     for leaves_size in [-1,5,10,15,20,25,30]:
-        instance_slice=2500000
+        instance_slice=250000
         opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
         P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
         P.communicate()

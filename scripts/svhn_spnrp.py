@@ -9,7 +9,6 @@ Spatial tree demo for matrix data
 import numpy
 import sys
 import os
-os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
@@ -104,7 +103,7 @@ test_set = list();
 counter = 0;
 context = list()
 
-output_file_name='mnist_spnrp_'+str(sys.argv[1])+'.log'
+output_file_name='svhn_spnrp_'+str(sys.argv[1])+'.log'
 epochs=8000
 height=1
 prob=0.5
