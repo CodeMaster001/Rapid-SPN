@@ -87,7 +87,7 @@ def clean_data(x):
 train_dataset,labels= fetch_openml(name='SVHN', version=1,return_X_y=True)
 train_dataset = pd.DataFrame(train_dataset)
 
-train_dataset=np.array(train_dataset.sample(n=int(sys.argv[1])).values)
+train_dataset=np.array(train_dataset.sample(n=int(sys.argv[2])).values)
 train_dataset=train_dataset[:,:int(sys.argv[2])]
 X_train,X_test=train_test_split(train_dataset,test_size=0.3)
 
