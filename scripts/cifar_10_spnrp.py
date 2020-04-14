@@ -89,7 +89,7 @@ train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=np.array(train_dataset.sample(n=int(sys.argv[1])).values)
 train_dataset=train_dataset[:,:int(sys.argv[2])]
-X_train,X_test=train_test_split(train_dataset,test_size=0.3)
+X_train,X_test=train_test_split(train_dataset,test_size=0.60)
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizev
 
@@ -103,7 +103,7 @@ test_set = list();
 counter = 0;
 context = list()
 
-output_file_name='cifar_spnrp_'+str(sys.argv[1])+'.log'
+output_file_name='cifar_spnrp_'+str(sys.argv[2])+'.log'
 epochs=8000
 height=1
 prob=0.5
@@ -133,8 +133,8 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for height in [8,12,14,16,18,20,22,24,26,30]:
-    for leaves_size in [-1,5,10,15,20,25,30]:
+for height in [2,4,6,8,12,14,16,18,20,22,24,26,30]:
+    for leaves_size in [2,4,6,8,10,12,14,16,20,40,60,80,100]:
         instance_slice=250000
         opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
         P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
@@ -142,7 +142,7 @@ for height in [8,12,14,16,18,20,22,24,26,30]:
         P.wait();
         P.terminate()
         print("process completed")
-        
+        break;
 
 #!/usr/bin/env python
 '''
