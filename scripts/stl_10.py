@@ -115,9 +115,11 @@ for i in range(0,train_dataset.shape[1]):
 
 X=numpy.nan_to_num(X_train)
 X = X.astype(numpy.float32)
-X_test = numpy.nan_to_num(X_test)/255.0
+X_test = numpy.nan_to_num(X_test)
+X = preprocessing.normalize(X, norm='l2') 
 X = X.astype(numpy.float32)
-X_test =X_test.astype(numpy.float32)/255.0
+X_test =X_test.astype(numpy.float32)
+X_test = preprocessing.normalize(X_test, norm='l2') 
 train_set.append(X)
 
 test_set.append(X_test)
