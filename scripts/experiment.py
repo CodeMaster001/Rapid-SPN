@@ -201,15 +201,13 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         T.update_ids();
         ours_time = time.time()-original;
         spn = T.spn_node;
-        del T;
         print("Buiding tree complete")
+        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height)+'_'+str(leaves_size)+'.obj', 'wb') 
+        pickle.dump(spn,file_pi)
         ll_test=log_likelihood(spn,X_test)
         print(ll_test)
-        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height)+'_'+str(leaves_size)+'.obj', 'wb') 
-        pickle.dump(spn, file_pi)
         #spn=optimize_tf(spn,X,epochs=epochs,optimizer= tf.train.AdamOptimizer(0.00001))
         #plot_spn(spn,'spnrp.png')
-        #ll_test = eval_tf(spn,X_test)
         del spn;
         return np.mean(ll_test),ours_time
     except:
