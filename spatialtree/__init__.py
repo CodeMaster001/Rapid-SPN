@@ -377,8 +377,9 @@ class FriendSPN(object):
     # Store bookkeeping information
         #base cases
     
-
-        if self.height<=0 or len(self.indices)< self.leaves_size:
+        print(len(self.indices))
+        if len(self.indices)< self.leaves_size or self.height==0:
+            print("called-1")
             node =self.naive_factorization(self.data,self.scope)
             self.spn_node.children[self.index]=node
             return;
@@ -405,9 +406,7 @@ class FriendSPN(object):
         self.children     = list()
 
         sum_node = Sum();
-        sum_node.scope.extend(self.scope)
-        sum_node.weights.append(left_weight)
-        sum_node.children.append(None)
+     
         
         if len(left_set)<self.leaves_size:
             node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0)
@@ -415,8 +414,7 @@ class FriendSPN(object):
         else:
             node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
         
-        sum_node.weights.append(right_weight)
-        sum_node.children.append(None)
+       
 
         if len(right_set)<self.leaves_size:
             node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1)
@@ -424,11 +422,27 @@ class FriendSPN(object):
         else:
             node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
 
-
-        self.children =[node_left,node_right]
-        
-        SPNRPBuilder.tasks.append([node_left,kwargs])
-        SPNRPBuilder.tasks.append([node_right,kwargs])
+        if len(left_set)>0 and len(right_set)>0:
+            sum_node.scope.extend(self.scope)
+            sum_node.weights.append(left_weight)
+            sum_node.children.append(None)
+            sum_node.weights.append(right_weight)
+            sum_node.children.append(None)
+            self.children =[node_left,node_right]
+            SPNRPBuilder.tasks.append([node_left,kwargs])
+            SPNRPBuilder.tasks.append([node_right,kwargs])
+        elif len(left_set)==0:
+            sum_node.weights.append(right_weight)
+            node_right.index=0; #change index to 0
+            sum_node.children.append(None)
+            self.children =[node_right]
+            SPNRPBuilder.tasks.append([node_right,kwargs])
+        elif len(right_set)==0:
+            sum_node.scope.extend(self.scope)
+            node_right.index=0; #change index
+            sum_node.weights.append(left_weight)
+            sum_node.children.append(None)
+            SPNRPBuilder.tasks.append([node_left,kwargs])
 
         if self.spn_node == None:
             self.spn_node = sum_node;
@@ -514,18 +528,26 @@ class FriendSPN(object):
 
 
     def naive_factorization(self, data,scope,is_indices=True):
+        print(self.indices)
 
         spn_node = Product()
-        spn_node.scope.extend(scope)
         scope = list(set(scope))
-        indices = self.getIndices()
+        indices = self.indices
+    
+
         if is_indices==True:
             node_info = data[list(indices),:]
         else:
             node_info=data
+        refreshed_scope = list();
         for i in range(0,len(scope)):
+            if np.sum(node_info[:,scope[i]])==0:
+                print(node_info[:,scope[i]])
+                node_info[:,scope[i]][0]=0.0001
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
             spn_node.children.append(node)
+
+        spn_node.scope=scope
         return spn_node
 
     def naive_factorization_naive(self, data,scope,is_indices=True):
