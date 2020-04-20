@@ -579,6 +579,8 @@ class FriendSPN(object):
         else:
             node_info=data
         for i in range(0,len(scope)):
+            if np.sum(node_info[:,scope[i]])==0:
+                node_info[:,scope[i]]=self.lag;
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
             spn_node.children.append(node)
         return spn_node
