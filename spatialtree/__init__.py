@@ -104,6 +104,7 @@ class FriendSPN(object):
         self.index = index;
         self.current_robin=current_robin;
         self.selector_array=selector_array
+        self.lag = 0.000000000000000000000000000001
 
     
 
@@ -373,13 +374,9 @@ class FriendSPN(object):
     # Store bookkeeping information
         #base cases
     
-        if len(self.indices)< self.leaves_size or self.height==0:
-            print("called-1")
-            node =self.naive_factorization(self.data,self.scope)
-            self.spn_node.children[self.index]=node
-            return;
+  
 
-        elif len(self.scope)==1 or self.TYPE==NODE_TYPE.LEAF_NODE:
+        if len(self.scope)==1 or self.TYPE==NODE_TYPE.LEAF_NODE:
             self.spn_node.children[self.index]=self.build_leaf_node(self.data,self.scope,self.ds_context)
             return;
 
@@ -392,6 +389,12 @@ class FriendSPN(object):
 
         elif self.TYPE==NODE_TYPE.NAIVE:
             self.spn_node.children[self.index]=self. naive_factorization(self.data,self.scope)
+
+        elif len(self.indices)< self.leaves_size or self.height==0:
+            print("called-1")
+            node =self.naive_factorization(self.data,self.scope)
+            self.spn_node.children[self.index]=node
+            return;
 
     def build_sum_node(self,**kwargs):
         print('Sum Node  called')
@@ -535,12 +538,13 @@ class FriendSPN(object):
         refreshed_scope = list();
         for i in range(0,len(scope)):
             if np.sum(node_info[:,scope[i]])==0:
-                node_info[:,scope[i]][0]=0.0001 
+                node_info[:,scope[i]]=np.array([self.lag]*node_info.shape[0])
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
+            refreshed_scope.append(scope[i])
             spn_node.children.append(node)
-            spn_node.scope=scope
 
-        spn_node.scope=scope
+
+        spn_node.scope=refreshed_scope
         return spn_node
 
     def naive_factorization_naive(self, data,scope,is_indices=True):
