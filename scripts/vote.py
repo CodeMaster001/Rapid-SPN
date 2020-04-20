@@ -217,7 +217,7 @@ ours_time_list = list()
 theirs_time_list = list();
 ours_time_tf = list()
 theirs_time_tf = list();
-for instance in [1000]:
+for instance in [10,20,40,60]:
     file_name='vote.'+str(instance)+'.log'
     min_instances_slice=instance
     for train_index, test_index in kf.split(credit):
@@ -267,7 +267,6 @@ for instance in [1000]:
         #fs(spn,print_prob)
         
         spnrp_mean = np.mean(log_likelihood(spn, X_test))
-        plot_spn(spn,'spn.png')
         #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
         #spnrp_mean = numpy.mean(eval_tf(spn,X_test))
         f=open('results/'+file_name,'a')
