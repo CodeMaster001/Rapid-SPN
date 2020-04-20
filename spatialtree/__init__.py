@@ -90,7 +90,7 @@ def gini(data,index):
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True,lag=0.0001):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -104,6 +104,7 @@ class FriendSPN(object):
         self.index = index;
         self.current_robin=current_robin;
         self.selector_array=selector_array
+        self.lag=lag
 
     
 
@@ -408,18 +409,18 @@ class FriendSPN(object):
 
 
         if len(left_set)<self.leaves_size:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
             pass;
         else:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
 
 
 
         if len(right_set)<self.leaves_size:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
             pass;
         else:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
 
         if len(left_set)>0 and len(right_set)>0:
             sum_node.scope.extend(self.scope)
@@ -464,19 +465,19 @@ class FriendSPN(object):
         sum_node.children.append(None)
         
         if len(left_set)<self.leaves_size:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
             pass;
         else:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
         
         sum_node.weights.append(right_weight)
         sum_node.children.append(None)
 
         if len(right_set)<self.leaves_size:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
             pass;
         else:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
 
 
         self.children =[node_left,node_right]
@@ -522,7 +523,7 @@ class FriendSPN(object):
                     node.scope.extend(scope_slice)
                     child_count = child_count + 1;
                     node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count,lag=self.lag)
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
                 
 
@@ -530,14 +531,14 @@ class FriendSPN(object):
                     node.scope.extend(scope_slice)
                     child_count = child_count + 1;
                     node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count,lag=self.lag)
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
 
                 elif len(scope_slice)==len(self.scope):
                     node.scope.exten(scope_slice)
                     child_count = child_count + 1;
                     node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=self.index)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=self.index,lag=self.lag)
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
         
         
@@ -556,7 +557,7 @@ class FriendSPN(object):
             node.scope.extend(self.scope)
             child_count = child_count + 1;
             node.children.append(None)
-            children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=self.scope,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+            children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=self.scope,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count,lag=self.lag)
             SPNRPBuilder.tasks.append([children_friend,kwargs])
                 
     
@@ -611,8 +612,8 @@ class SPNRPBuilder(object):
     
     tasks =list()
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,seed=42,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],**kwargs):
-        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,current_robin=0,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE)
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,seed=42,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],lag=0.0001,**kwargs):
+        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,current_robin=0,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE,lag=lag)
         SPNRPBuilder.tasks.append([self.root,kwargs])
         self.data=data;
         np.random.seed(seed)
