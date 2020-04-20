@@ -452,46 +452,6 @@ class FriendSPN(object):
             print('complete')
 
 
-    def build_sum_nodes(self,**kwargs):
-        print('Sum Node  called')
-
-        left_set,left_weight,right_set,right_weight,threshold = self.project(self.data,self.scope,self.sample_rp,**kwargs)
-
-        self.children     = list()
-
-        sum_node = Sum();
-        sum_node.scope.extend(self.scope)
-        sum_node.weights.append(left_weight)
-        sum_node.children.append(None)
-        
-        if len(left_set)<self.leaves_size:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
-            pass;
-        else:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
-        
-        sum_node.weights.append(right_weight)
-        sum_node.children.append(None)
-
-        if len(right_set)<self.leaves_size:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
-            pass;
-        else:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
-
-
-        self.children =[node_left,node_right]
-        
-        SPNRPBuilder.tasks.append([node_left,kwargs])
-        SPNRPBuilder.tasks.append([node_right,kwargs])
-
-        if self.spn_node == None:
-            self.spn_node = sum_node;
-        else:
-            self.spn_node.children[self.index]=sum_node;
-        print('complete')
-
-
     def build_product_node(self,**kwargs):
         scope_list = list()
         '''
