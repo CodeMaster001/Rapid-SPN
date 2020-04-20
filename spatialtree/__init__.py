@@ -61,36 +61,13 @@ class NODE_TYPE:
     NAIVE=5
 #gini index implementation
 
-def gini(data,index):
-    """Calculate the Gini coefficient of a numpy array."""
-    # based on bottom eq:
-    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
-    # from:
-    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
-    # All values are treated equally, arrays must be 1d:
-    data = data[:,index]
-    data = data.flatten()
-    if np.amin(data) < 0:
-        # Values cannot be negative:
-        data -= np.amin(data)
-    # Values cannot be 0:
-    data += 0.0000001
-    # Values must be sorted:
-    data = np.sort(data)
-    # Index per array element:
-    index_shape = np.arange(1,data.shape[0]+1)
-    # Number of array elements:
-    n = data.shape[0]
-    # Gini coefficient:
-    return ((np.sum((2 * index_shape - n  - 1) * data)) / (n * np.sum(data)))
-
 
 
 
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True,lag=0.0000000000001):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -104,7 +81,7 @@ class FriendSPN(object):
         self.index = index;
         self.current_robin=current_robin;
         self.selector_array=selector_array
-        self.lag = 0.000000000000000000000000000001
+        self.lag =lag
 
     
 
@@ -139,7 +116,7 @@ class FriendSPN(object):
         rebuild_scopes_bottom_up(self.spn_node)
         #self.spn_node = Prune(self.spn_node)
 
-    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.0000000000000000004):
+    def __get_best_scope(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.0000000000000000004,lab=0.0000001):
         temp = np.array(data[:,scope]) #apply existing scope
         selector = VarianceThreshold(threshold=var_threshold)
         try:
@@ -152,24 +129,11 @@ class FriendSPN(object):
 
         temp = np.array(temp)
         split_cols = list()
-        gini_values = list();
-        if use_optimizer:
-        
-            cands = self.build_candidates(temp,index)
-            scopes=self.optimize_scope(temp,self.ds_context,cands)
+    
+        cands = self.build_candidates(temp,index)
+        scopes=self.optimize_scope(temp,self.ds_context,cands)
 
             return scopes;
-        else:
-            if np.array(gini_values).shape[0]<2:
-                first_index = [0 for i in range(0,gini_values.shape[0])]
-                split_cols.append(first_index)
-                return split_cols;
-
-            kmeans = KMeans(n_clusters=2, random_state=0,n_init=40).fit(gini_values)
-            for i in range(0,2):
-                first_index = np.where(kmeans.labels_==i)[0]
-                split_cols.append(first_index)
-            return split_cols
         '''
         print('passed')
         average_value=np.mean(gini_values,axis=0)
@@ -499,15 +463,6 @@ class FriendSPN(object):
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
         
         
-
-                '''
-                elif len(temp) <20:
-                    node.scope.extend(scope_slice)
-                    child_count = child_count + 1;
-                    node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=child_count)
-                  SPNRPBuilder.tasks.append([children_friend,kwargs])
-                '''
             print(child_count)
         except:
             traceback.print_exc()
