@@ -161,18 +161,19 @@ context = list()
 
 #parameters
 epochs=8000
-height=5
+height=8
 prob=0.4
 leaves_size=20
 threshold =0.4
-
+instance_slice=1500000
+selector_array=[2,3,4]
+np.save('selector',np.array(selector_array))
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
 for j in [15]:
-    output_file_name='balance.15.10.log'
-    min_instances_slice=j
-    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
+    output_file_name='balance_scale.15.10.log'
+    opt_args=str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
     for train_index,test_index in kf.split(train_dataset_df):
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
         X=numpy.nan_to_num(X_train)
