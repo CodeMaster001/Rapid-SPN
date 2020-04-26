@@ -68,10 +68,11 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='iris.'+str(instance)+'..40.log'
+
 min_instances_slice=24
 epochs=8000
-height=18
+height=16
+output_file_name='iris.'+str(height)+'..40.log'
 prob=0.4
 leaves_size=15
 threshold =0.4
