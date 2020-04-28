@@ -161,7 +161,7 @@ context = list()
 
 #parameters
 epochs=8000
-height=12
+height=22
 prob=0.4
 leaves_size=20
 threshold =0.4
