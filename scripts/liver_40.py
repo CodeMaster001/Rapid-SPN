@@ -52,7 +52,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 train_dataset,labels= fetch_openml(name='liver-disorders', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=40,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -77,7 +77,7 @@ np.save('selector',np.array(selector_array))
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-output_file_name='liver.'+str(min_instance_slice)+'.10.log'
+output_file_name='liver.'+str(min_instance_slice)+'.40.log'
 opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
