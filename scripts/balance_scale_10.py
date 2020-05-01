@@ -148,7 +148,6 @@ def learnspn_train(X,X_test):
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
-
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
@@ -161,37 +160,37 @@ context = list()
 
 #parameters
 epochs=8000
-height=5
+height=22
 prob=0.4
 leaves_size=20
 threshold =0.4
-
+instance_slice=22
+selector_array=[2,3,4]
+np.save('selector',np.array(selector_array))
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
-for j in [15]:
-    output_file_name='balance.15.10.log'
-    min_instances_slice=j
-    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
-    for train_index,test_index in kf.split(train_dataset_df):
-        X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
-        X=numpy.nan_to_num(X_train)
-        X = X.astype(numpy.float32)
-        X = preprocessing.normalize(X, norm='l2') 
-        X_test = numpy.nan_to_num(X_test)
-        X_test = preprocessing.normalize(X_test, norm='l2')
-        X = X.astype(numpy.float32)
-        X_test =X_test.astype(numpy.float32)
-        train_set.append(X)
-        test_set.append(X_test)
-        np.save('train', X)
-        np.save("test",X_test)
-        np.save("context",context)
-        P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
-        P.communicate()
-        P.wait();
-        P.terminate()
-    print("process completed")
+output_file_name='balance_scale.'+str(instance_slice)+'.10.log'
+opt_args=str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
+for train_index,test_index in kf.split(train_dataset_df):
+    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    X=numpy.nan_to_num(X_train)
+    X = X.astype(numpy.float32)
+    X = preprocessing.normalize(X, norm='l2') 
+    X_test = numpy.nan_to_num(X_test)
+    X_test = preprocessing.normalize(X_test, norm='l2')
+    X = X.astype(numpy.float32)
+    X_test =X_test.astype(numpy.float32)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.save('train', X)
+    np.save("test",X_test)
+    np.save("context",context)
+    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>

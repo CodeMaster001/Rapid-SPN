@@ -54,7 +54,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for height in [2,4,6,8,10,12,14,16,18]:
+for instance_slice in [22]:
     train_dataset,labels= fetch_openml(name='iris', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
@@ -69,14 +69,15 @@ for height in [2,4,6,8,10,12,14,16,18]:
     context = list()
 
     #parameters
-    output_file_name='iris.'+str(height)+'.10.log'
-    min_instance_slice=25
+    
+    min_instance_slice=instance_slice
     epochs=8000
-    #height=6
+    height=6
     prob=0.4
     leaves_size=15
     threshold =0.4
     selector_array=[2,3,4]
+    output_file_name='iris.'+str(instance_slice)+'.10.log'
     np.save('selector',np.array(selector_array))
 
     opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 

@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-'''
-CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
-
-Spatial tree demo for matrix data
-'''
-
 
 import numpy
 import sys
@@ -54,10 +47,11 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='iris', version=1,return_X_y=True)
+
+train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -68,21 +62,21 @@ counter = 0;
 context = list()
 
 #parameters
-
-min_instances_slice=24
 epochs=8000
-height=16
-output_file_name='iris.'+str(height)+'..40.log'
 prob=0.4
-leaves_size=15
+leaves_size=5
+height=22
 threshold =0.4
 selector_array=[2,3,4]
-np.save('selector',np.array(selector_array))
-
-opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
+min_instances_slice=10
+np.save("selector",selector_array)
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
+
+output_file_name='irish.'+'.'+str(leaves_size)+'.'+str(height)+'.10.log'
+opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
+
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
     X=numpy.nan_to_num(X_train)
@@ -101,7 +95,7 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.communicate()
     P.wait();
     P.terminate()
-    print("process completed")
+print("process completed")
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>

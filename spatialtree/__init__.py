@@ -61,36 +61,13 @@ class NODE_TYPE:
     NAIVE=5
 #gini index implementation
 
-def gini(data,index):
-    """Calculate the Gini coefficient of a numpy array."""
-    # based on bottom eq:
-    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
-    # from:
-    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
-    # All values are treated equally, arrays must be 1d:
-    data = data[:,index]
-    data = data.flatten()
-    if np.amin(data) < 0:
-        # Values cannot be negative:
-        data -= np.amin(data)
-    # Values cannot be 0:
-    data += 0.0000001
-    # Values must be sorted:
-    data = np.sort(data)
-    # Index per array element:
-    index_shape = np.arange(1,data.shape[0]+1)
-    # Number of array elements:
-    n = data.shape[0]
-    # Gini coefficient:
-    return ((np.sum((2 * index_shape - n  - 1) * data)) / (n * np.sum(data)))
-
 
 
 
 class FriendSPN(object):
 #FrienhSPN optimizer and Random Projection
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True):
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,prob=0.7,current_robin=0,indices=None, height=None,selector_array=[6,7,8,9,10],sample_rp=10,TYPE=NODE_TYPE.SUM_NODE,index=-1,default_scope=True,lag=0.0000000000001):
         self.prob = prob
         self.leaves_size = leaves_size
         self.spn_node = spn_object
@@ -104,7 +81,7 @@ class FriendSPN(object):
         self.index = index;
         self.current_robin=current_robin;
         self.selector_array=selector_array
-        self.lag = 0.000000000000000000000000000001
+        self.lag =lag
 
     
 
@@ -139,7 +116,7 @@ class FriendSPN(object):
         rebuild_scopes_bottom_up(self.spn_node)
         #self.spn_node = Prune(self.spn_node)
 
-    def __calculate_gini(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.0000000000000000004):
+    def __indepence_testing(self,data,ds_context,scope,threshold=1.0,use_optimizer=True,var_threshold=0.0000000000000000004):
         temp = np.array(data[:,scope]) #apply existing scope
         selector = VarianceThreshold(threshold=var_threshold)
         try:
@@ -152,24 +129,11 @@ class FriendSPN(object):
 
         temp = np.array(temp)
         split_cols = list()
-        gini_values = list();
-        if use_optimizer:
+    
+        cands = self.build_candidates(temp)
+        scopes=self.optimize_scope(temp,self.ds_context,cands)
         
-            cands = self.build_candidates(temp,index)
-            scopes=self.optimize_scope(temp,self.ds_context,cands)
-
-            return scopes;
-        else:
-            if np.array(gini_values).shape[0]<2:
-                first_index = [0 for i in range(0,gini_values.shape[0])]
-                split_cols.append(first_index)
-                return split_cols;
-
-            kmeans = KMeans(n_clusters=2, random_state=0,n_init=40).fit(gini_values)
-            for i in range(0,2):
-                first_index = np.where(kmeans.labels_==i)[0]
-                split_cols.append(first_index)
-            return split_cols
+        return scopes;
         '''
         print('passed')
         average_value=np.mean(gini_values,axis=0)
@@ -273,7 +237,7 @@ class FriendSPN(object):
         return self.indices;
 
 
-    def build_candidates(self,features_set,index):
+    def build_candidates(self,features_set):
         try:
             candidates = list();
 
@@ -357,7 +321,7 @@ class FriendSPN(object):
 
         #return self.split_cols(data, self.ds_context, self.scope)
     
-        cols_split = self.__calculate_gini(data,ds_context=self.ds_context,scope=scope) #split cols apply scope and gi
+        cols_split = self.__indepence_testing(data,ds_context=self.ds_context,scope=scope) #split cols apply scope and gi
       
         """Yield successive n-sized chunks from l"""
         for i in range(0, len(cols_split)):
@@ -376,6 +340,12 @@ class FriendSPN(object):
     
   
 
+        if len(self.indices)< self.leaves_size or self.height==0:
+            print("called-1")
+            node =self.naive_factorization(self.data,self.scope)
+            self.spn_node.children[self.index]=node
+            return;
+
         if len(self.scope)==1 or self.TYPE==NODE_TYPE.LEAF_NODE:
             self.spn_node.children[self.index]=self.build_leaf_node(self.data,self.scope,self.ds_context)
             return;
@@ -390,12 +360,7 @@ class FriendSPN(object):
         elif self.TYPE==NODE_TYPE.NAIVE:
             self.spn_node.children[self.index]=self. naive_factorization(self.data,self.scope)
 
-        elif len(self.indices)< self.leaves_size or self.height==0:
-            print("called-1")
-            node =self.naive_factorization(self.data,self.scope)
-            self.spn_node.children[self.index]=node
-            return;
-
+      
     def build_sum_node(self,**kwargs):
         print('Sum Node  called')
 
@@ -407,18 +372,18 @@ class FriendSPN(object):
      
         
         if len(left_set)<self.leaves_size:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
             pass;
         else:
-            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0)
+            node_left = FriendSPN(data=self.data,indices=left_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=0,lag=self.lag)
         
        
 
         if len(right_set)<self.leaves_size:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
             pass;
         else:
-            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1)
+            node_right = FriendSPN(data=self.data,indices=right_set,spn_object=sum_node,scope=self.scope,ds_context=self.ds_context,height=self.height-1,prob=self.prob,sample_rp=self.sample_rp,TYPE=NODE_TYPE.PRODUCT_NODE,leaves_size=self.leaves_size,index=1,lag=self.lag)
 
         if len(left_set)>0 and len(right_set)>0:
             sum_node.scope.extend(self.scope)
@@ -430,6 +395,7 @@ class FriendSPN(object):
             SPNRPBuilder.tasks.append([node_left,kwargs])
             SPNRPBuilder.tasks.append([node_right,kwargs])
         elif len(left_set)==0:
+            sum_node.scope.extend(self.scope)
             sum_node.weights.append(right_weight)
             node_right.index=0; #change index to 0
             sum_node.children.append(None)
@@ -480,7 +446,7 @@ class FriendSPN(object):
                     node.scope.extend(scope_slice)
                     child_count = child_count + 1;
                     node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.LEAF_NODE,index=child_count,lag=self.lag)
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
                 
 
@@ -488,33 +454,18 @@ class FriendSPN(object):
                     node.scope.extend(scope_slice)
                     child_count = child_count + 1;
                     node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count,lag=self.lag)
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
 
-                elif len(scope_slice)==len(self.scope):
-                    node.scope.exten(scope_slice)
-                    child_count = child_count + 1;
-                    node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=self.index)
-                    SPNRPBuilder.tasks.append([children_friend,kwargs])
         
         
-
-                '''
-                elif len(temp) <20:
-                    node.scope.extend(scope_slice)
-                    child_count = child_count + 1;
-                    node.children.append(None)
-                    children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,leaves_size=self.leaves_size,scope=scope_slice,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.NAIVE,index=child_count)
-                  SPNRPBuilder.tasks.append([children_friend,kwargs])
-                '''
             print(child_count)
         except:
             traceback.print_exc()
             node.scope.extend(self.scope)
             child_count = child_count + 1;
             node.children.append(None)
-            children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=self.scope,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count)
+            children_friend =FriendSPN(data=self.data,spn_object=node,ds_context=self.ds_context,current_robin=self.current_robin,leaves_size=self.leaves_size,scope=self.scope,prob=self.prob,indices=self.indices,height=self.height,sample_rp=self.sample_rp,TYPE=NODE_TYPE.SUM_NODE,index=child_count,lag=self.lag)
             SPNRPBuilder.tasks.append([children_friend,kwargs])
                 
     
@@ -527,9 +478,9 @@ class FriendSPN(object):
 
     def naive_factorization(self, data,scope,is_indices=True):
         spn_node = Product()
+        spn_node.scope.extend(scope) 
         scope = list(set(scope))
         indices = self.indices
-    
 
         if is_indices==True:
             node_info = data[list(indices),:]
@@ -538,13 +489,10 @@ class FriendSPN(object):
         refreshed_scope = list();
         for i in range(0,len(scope)):
             if np.sum(node_info[:,scope[i]])==0:
-                node_info[:,scope[i]]=np.array([self.lag]*node_info.shape[0])
+                node_info[:,scope[i]]=self.lag;
             node = create_parametric_leaf(node_info[:,i].reshape(-1,1), self.ds_context, [scope[i]])
-            refreshed_scope.append(scope[i])
             spn_node.children.append(node)
 
-
-        spn_node.scope=refreshed_scope
         return spn_node
 
     def naive_factorization_naive(self, data,scope,is_indices=True):
@@ -576,8 +524,8 @@ class SPNRPBuilder(object):
     
     tasks =list()
 
-    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,seed=42,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],**kwargs):
-        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,current_robin=0,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE)
+    def __init__(self, data,spn_object=None,ds_context=None,leaves_size=8000,scope=None,threshold=0.4,prob=0.7,seed=42,indices=None,height=None,sample_rp=10,selector_array=[2,3,4],lag=0.00000001,**kwargs):
+        self.root= FriendSPN(data=data,spn_object=spn_object,ds_context=ds_context,current_robin=0,leaves_size=leaves_size,scope=scope,prob=prob,indices=indices,height=height,sample_rp=sample_rp,selector_array=selector_array,TYPE=NODE_TYPE.SUM_NODE,lag=lag)
         SPNRPBuilder.tasks.append([self.root,kwargs])
         self.data=data;
         np.random.seed(seed)
