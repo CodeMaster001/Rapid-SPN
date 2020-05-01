@@ -63,7 +63,7 @@ context = list()
 
 #parameters
 output_file_name='bodyfat.'+str(instance)+'.40.log'
-min_instances_slice=instance
+min_instances_slice=16
 epochs=8000
 height=1
 prob=0.4

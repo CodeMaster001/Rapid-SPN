@@ -130,7 +130,7 @@ class FriendSPN(object):
         temp = np.array(temp)
         split_cols = list()
     
-        cands = self.build_candidates(temp)
+        cands = self.build_candidates(temp,index)
         scopes=self.optimize_scope(temp,self.ds_context,cands)
         
         return scopes;
@@ -237,12 +237,11 @@ class FriendSPN(object):
         return self.indices;
 
 
-    def build_candidates(self,features_set):
+    def build_candidates(self,features_set,index):
         try:
             candidates = list();
 
             temp = np.array(features_set)
-
 
             if self.current_robin<=len(self.scope):
                 self.current_robin=0;

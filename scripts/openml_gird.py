@@ -59,13 +59,15 @@ version = sys.argv[2]
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 dataframe_path='dataset/'+dataset_name+'_'+version+'.csv'
 if path.exists(dataframe_path):
-    train_dataset_df=train_dataset_df.read_csv(dataframe_path)
+    print("Dataset already exist")
+    train_dataset_df=pd.read_csv(dataframe_path)
 else:
+    print("Downloading dataset")
     train_dataset,labels= fetch_openml(name=dataset_name, version=version,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
     train_dataset_df.to_csv(dataframe_path)
 
-for height in [2,4,6,8,10,12,14,16,18]:
+for height in [1,2,4,6,8,10,12,14,16,18]:
     for leaves_size in [-1,2,4,6,8,10,12,14,16,18,20,24,28,30]:
 
 
@@ -81,7 +83,7 @@ for height in [2,4,6,8,10,12,14,16,18]:
 
         #parameters
         output_file_name=dataset_name+'.'+str(height)+'.'+str(leaves_size)+'.10.log'
-        min_instance_slice=25
+        min_instance_slice=int(sys.argv[3])
         epochs=8000
         #height=6
         prob=0.4
