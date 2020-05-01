@@ -51,7 +51,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
-kf = KFold(n_splits=40,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -64,7 +64,7 @@ context = list()
 #parameters
 epochs=8000
 prob=0.4
-leaves_size=10
+leaves_size=5
 height=22
 threshold =0.4
 selector_array=[2,3,4]
@@ -74,8 +74,7 @@ np.save("selector",selector_array)
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
 
-
-output_file_name='irish.'+'.40.log'
+output_file_name='irish.'+'.'+str(leaves_size)+'.'+str(height)+'.10.log'
 opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
 
 for train_index,test_index in kf.split(train_dataset_df):
@@ -96,7 +95,7 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.communicate()
     P.wait();
     P.terminate()
-    print("process completed")
+print("process completed")
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
