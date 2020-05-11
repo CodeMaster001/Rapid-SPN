@@ -128,7 +128,8 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for instance_slice in [10,20,40,60]:
+length = len(sys.argv[3])
+for instance_slice in sys.argv[3][1:length-1]:
     opt_args= str(output_file_name) + ' ' + str(instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 
     P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
