@@ -191,61 +191,63 @@ theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
-file_name='tic_tac_toe_10.log'
-min_instances_slice=2
-for min_instances_slice in [10]:
-    for train_index, test_index in kf.split(credit):
-        X = credit[train_index,:]
-        X=numpy.nan_to_num(X)
-        #X = preprocessing.normalize(X, norm='l2')
-        X_test = credit[test_index];	
-        X_test=numpy.nan_to_num(X_test)
-        #X_test = preprocessing.normalize(X_test, norm='l2')
-        #X = X.astype(numpy.float32)
-        #X_test =X_test.astype(numpy.float32)
-        context = list()
-        for i in range(0,X.shape[1]):
-            context.append(Categorical)
+min_instances_slice=20
+height=2
+leaves_size=2
 
-		
+file_name='tic_tac_toe_'+str(height)+'.'+str(leaves_size)+'.10.log'
+for train_index, test_index in kf.split(credit):
+    X = credit[train_index,:]
+    X=numpy.nan_to_num(X)
+    #X = preprocessing.normalize(X, norm='l2')
+    X_test = credit[test_index];	
+    X_test=numpy.nan_to_num(X_test)
+    #X_test = preprocessing.normalize(X_test, norm='l2')
+    #X = X.astype(numpy.float32)
+    #X_test =X_test.astype(numpy.float32)
+    context = list()
+    for i in range(0,X.shape[1]):
+        context.append(Categorical)
 
-
-
-        ds_context = Context(parametric_types=context).add_domains(X)
-        print("training normnal spm")
-        theirs_time = time.time()
-        spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice)
-        spn_time = time.time()-theirs_time
-
-
-        #print(ll_test)
-        spn_mean = numpy.mean(log_likelihood(spn_classification,X_test))
+	
 
 
 
-        print('Building tree...')
-        original = time.time();
-        T =  SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,threshold=0.01,leaves_size=20,height=3,spill=0.75,selector_array=selector_array)
+    ds_context = Context(parametric_types=context).add_domains(X)
+    print("training normnal spm")
+    theirs_time = time.time()
+    spn_classification =  learn_parametric(numpy.array(X),ds_context,min_instances_slice=min_instances_slice)
+    spn_time = time.time()-theirs_time
 
 
-        T= T.build_spn();
-        T.update_ids();
-        from spn.io.Text import spn_to_str_equation
-        spn = T.spn_node;
-        print("Building tree complete")
-        spnrp_time = time.time()-original;
-        plot_spn(spn,'spn_orig.png')
-        #ll = log_likelihood(spn, X)
-        #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
-        spnrp_mean = numpy.mean(log_likelihood(spn,X_test))
-        f=open('results/'+file_name,'a')
-        f.write(str(sys.argv)+"\n")
-        #print(spnrp_mean)
-        temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-        #temp=str(spnrp_mean)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-        f.write(temp)
-        f.flush()
-        f.close()
+    #print(ll_test)
+    spn_mean = numpy.mean(log_likelihood(spn_classification,X_test))
+
+
+
+    print('Building tree...')
+    original = time.time();
+    T =  SPNRPBuilder(data=numpy.array(X),ds_context=ds_context,target=X,threshold=0.01,leaves_size=leaves_size,height=height,spill=0.75,selector_array=selector_array)
+
+
+    T= T.build_spn();
+    T.update_ids();
+    from spn.io.Text import spn_to_str_equation
+    spn = T.spn_node;
+    print("Building tree complete")
+    spnrp_time = time.time()-original;
+    #plot_spn(spn,'spn_orig.png')
+    #ll = log_likelihood(spn, X)
+    #spn=optimize_tf(spn,X,epochs=10000,optimizer= tf.train.AdamOptimizer(0.001))
+    spnrp_mean = numpy.mean(log_likelihood(spn,X_test))
+    f=open('results/'+file_name,'a')
+    f.write(str(sys.argv)+"\n")
+    #print(spnrp_mean)
+    temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+    #temp=str(spnrp_mean)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
+    f.write(temp)
+    f.flush()
+    f.close()
 
 
 
