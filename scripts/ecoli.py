@@ -47,11 +47,11 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-for instance in [25]:
+for simulation in [1,2,3,4,5,6]:
     train_dataset,labels= fetch_openml(name='ecoli', version=1,return_X_y=True)
     train_dataset_df = pd.DataFrame(train_dataset)
 
-    kf = KFold(n_splits=int(sys.argv[1]),shuffle=True)
+    kf = KFold(n_splits=10,shuffle=True)
     theirs = list()
     ours = list()
     ours_time_list = list()
@@ -62,15 +62,14 @@ for instance in [25]:
     context = list()
 
     #parameters
-    output_file_name='ecoli.'+str(instance)+'.'+str(sys.argv[1])+'.log'
-    min_instances_slice=instance
+    min_instances_slice=60
     epochs=8000
-    height=6
+    height=20
     prob=0.4
-    leaves_size=15
+    leaves_size=14
     threshold =0.4
-
-    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
+    output_file_name='ecoli.'+str(min_instances_slice)+'.10.'+str(simulation)+'.log'
+    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
 
     for i in range(0,train_dataset_df.shape[1]):
         context.append(Gaussian)
@@ -94,7 +93,7 @@ for instance in [25]:
         P.communicate()
         P.wait();
         P.terminate()
-    print("process completed")
+        print("process completed")
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
