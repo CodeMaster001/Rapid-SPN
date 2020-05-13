@@ -104,8 +104,6 @@ height=1
 prob=0.5
 leaves_size=15
 threshold=0.4
-bandwidth=0.2
-predict_bandwidth=1
 selector_array=[2,3,4]
 np.save('selector',np.array(selector_array))
 
