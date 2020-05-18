@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-'''
 
-Spatial tree demo for matrix data
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-'''
 
 
 import numpy
@@ -189,7 +185,7 @@ def clean_data(x):
 
 #print(credit.head())
 
-def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,epochs=1000,selector_array=[2,3,4],threshold=1,use_optimizer=True,predict_bandwidth=0.4):
+def spnrp_train(X,X_test,context,file_name,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,epochs=1000,selector_array=[2,3,4],threshold=1,use_optimizer=True,predict_bandwidth=0.4):
     try:
         print(selector_array)
 
@@ -202,7 +198,7 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         ours_time = time.time()-original;
         spn = T.spn_node;
         print("Buiding tree complete")
-        file_pi = open(MODEL_DIR+'spnrp_'+str(X.shape[1])+'_'+str(height)+'_'+str(leaves_size)+'.obj', 'wb') 
+        file_pi = open(MODEL_DIR+'spnrp_'+file_name+'.'+str(X.shape[1])+'_'+str(height)+'_'+str(leaves_size)+'.obj', 'wb') 
         pickle.dump(spn,file_pi)
         ll_test=log_likelihood(spn,X_test)
         print(ll_test)
@@ -219,7 +215,7 @@ def spnrp_train(X,X_test,context,height=2,prob=0.5,leaves_size=20,bandwidth=0.2,
         return 0,0
 
 
-def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
+def learnspn_train(X,X_test,context,min_instances_slice,file_name,threshold=0.4):
     
     try:
 
@@ -236,7 +232,7 @@ def learnspn_train(X,X_test,context,min_instances_slice,threshold=0.4):
         #ll_test = eval_tf(spn_classification,X_test)
         #print(ll_test)
         ll_test = log_likelihood(spn_classification,X_test)
-        file_pi = open(MODEL_DIR+'spn_'+str(X.shape[1])+'_'+str(height)+'.obj', 'wb') 
+        file_pi = open(MODEL_DIR+'spn_'+file_name+'.'+str(X.shape[1])+'_'+str(height)+'.obj', 'wb') 
         pickle.dump(spn_classification, file_pi)
         #plot_spn(spn_classification,'learnspn.png')
     
@@ -274,8 +270,8 @@ spn_time=0
 assert X.shape[1]==X_test.shape[1]
 spnrp_mean=0
 spnrp_time=0
-spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,threshold)
-spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,leaves_size=leaves_size,threshold=threshold)
+spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,threshold,file_name=file_name)
+spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,leaves_size=leaves_size,threshold=threshold,file_name=file_name)
 f=open(FILE_NAME_DIR+file_name,'a')
 f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
