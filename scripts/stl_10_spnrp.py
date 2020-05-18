@@ -40,6 +40,7 @@ import time;
 import numpy as np, numpy.random
 import multiprocessing
 import logging
+np.random.seed(42)
 from sklearn.datasets import load_digits
 import subprocess
 from sklearn.datasets import fetch_20newsgroups

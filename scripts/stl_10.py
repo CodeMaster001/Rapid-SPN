@@ -39,6 +39,7 @@ import time;
 import numpy as np, numpy.random
 import multiprocessing
 import logging
+import numpy as np
 from sklearn.datasets import load_digits
 import subprocess
 from sklearn.datasets import fetch_20newsgroups
