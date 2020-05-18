@@ -137,7 +137,6 @@ for height in [2,4,6,8,12,14,16,18,20,22,24,26,30]:
         P.wait();
         P.terminate()
         print("process completed")
-        break;
 
 #!/usr/bin/env python
 '''
