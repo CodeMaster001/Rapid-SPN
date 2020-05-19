@@ -41,6 +41,7 @@ import multiprocessing
 import logging
 from sklearn.datasets import load_digits
 import subprocess
+import json
 from sklearn.datasets import fetch_20newsgroups
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
@@ -126,8 +127,14 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
+print(sys.argv[3])
 length = len(sys.argv[3])
-for instance_slice in sys.argv[3][1:length-1]:
+
+
+instances=[int(i) for i in sys.argv[3][1:length-1].split(',')]
+
+for instance_slice in instances:
+    print(instance_slice)
     opt_args= str(output_file_name) + ' ' + str(instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 
     P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
