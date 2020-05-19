@@ -255,9 +255,7 @@ class FriendSPN(object):
                 column_pos.append(scipy.spatial.distance.cosine(temp[:,index], temp[:,i]))
 
             column_pos=np.argsort(column_pos).reshape(1,-1).tolist()[0];
-            print(column_pos)
             sorted_feature_index_temp =[self.scope[i] for i in column_pos]
-            print(sorted_feature_index_temp)
 
             sorted_feature_index_temp = list(self.chunks(self.scope,chunk_index))
             sorted_feature_index_temp = [i for i in sorted_feature_index_temp if len(i)>=1]
@@ -279,7 +277,6 @@ class FriendSPN(object):
         return np.mean(value)
 
     def optimize_scope(self,data,ds_context,candidates):
-        print('scope updated')
         sorted_scope = np.sort(self.scope)
         max_list=list();
         cand_select=[self.scope]
@@ -340,7 +337,6 @@ class FriendSPN(object):
   
 
         if len(self.indices)< self.leaves_size or self.height==0:
-            print("called-1")
             node =self.naive_factorization(self.data,self.scope)
             self.spn_node.children[self.index]=node
             return;
@@ -361,7 +357,6 @@ class FriendSPN(object):
 
       
     def build_sum_node(self,**kwargs):
-        print('Sum Node  called')
 
         left_set,left_weight,right_set,right_weight,threshold = self.project(self.data,self.scope,self.sample_rp,**kwargs)
 
@@ -411,7 +406,6 @@ class FriendSPN(object):
             self.spn_node = sum_node;
         else:
             self.spn_node.children[self.index]=sum_node;
-        print('complete')
 
 
     def build_product_node(self,**kwargs):
@@ -439,7 +433,6 @@ class FriendSPN(object):
             self.spn_node.children[self.index]=node;
 
         try:
-            print('-------')
             for _,scope_slice in self.split_cols(data=self.data[list(self.indices)], ds_context=self.ds_context, scope=self.scope):
                 if len(scope_slice) == 1 and len(temp) !=0:
                     node.scope.extend(scope_slice)
@@ -457,8 +450,6 @@ class FriendSPN(object):
                     SPNRPBuilder.tasks.append([children_friend,kwargs])
 
         
-        
-            print(child_count)
         except:
             traceback.print_exc()
             node.scope.extend(self.scope)
