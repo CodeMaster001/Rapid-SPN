@@ -128,7 +128,7 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for height in [2,4,6,8,12,14,16,18,20,22,24,26,30]:
+for height in [4,6,8,12,14,16,18,20,22,24,26,30]:
     for leaves_size in [2,4,6,8,10,12,14,16,20,40,60,80,100]:
         instance_slice=250000
         opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
@@ -137,7 +137,7 @@ for height in [2,4,6,8,12,14,16,18,20,22,24,26,30]:
         P.wait();
         P.terminate()
         print("process completed")
-        break;
+       
 
 #!/usr/bin/env python
 '''
