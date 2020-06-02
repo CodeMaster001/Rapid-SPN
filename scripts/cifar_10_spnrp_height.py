@@ -84,21 +84,17 @@ train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=np.array(train_dataset.sample(n=int(sys.argv[1])).values)
 train_dataset=train_dataset[:,:int(sys.argv[2])]
-X_train,X_test=train_test_split(train_dataset,test_size=0.001)
+X_train=train_dataset
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizev
 
-kf = KFold(n_splits=10,shuffle=True)
-theirs = list()
-ours = list()
-ours_time_list = list()
-theirs_time_list = list();
+
 train_set = list()
 test_set = list();
 counter = 0;
 context = list()
 
-output_file_name='cifar_spnrp_'+str(sys.argv[2])+'.log'
+output_file_name='cifar_spnrp_height_'+str(sys.argv[3])+'.log'
 epochs=8000
 height=1
 prob=0.5
@@ -115,29 +111,23 @@ for i in range(0,train_dataset.shape[1]):
 X=numpy.nan_to_num(X_train)
 X = X.astype(numpy.float32)
 X = preprocessing.normalize(X, norm='l2') 
-X_test = numpy.nan_to_num(X_test)
-X_test = preprocessing.normalize(X_test, norm='l2')
 X = X.astype(numpy.float32)
-X_test =X_test.astype(numpy.float32)
 train_set.append(X)
 print(X.shape)
-test_set.append(X_test)
 print("--")
 print(X.shape)
-print(X_test.shape)
 np.save('train', X)
-np.save("test",X_test)
 np.save("context",context)
-for height in [2,6,8,12,14,16,18,20,22,24,26,30]:
-    for leaves_size in [2,4,6,8,10,12]:
+for height in [sys.argv[3]]:
+    for leaves_size in [12]:
         instance_slice=250000
         opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
-        P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+        P=subprocess.Popen(['./experiment.py train.npy train.npy context.npy '+opt_args.strip()],shell=True)
         P.communicate()
         P.wait();
         P.terminate()
         print("process completed")
-        break;
+   
 
 #!/usr/bin/env python
 '''
