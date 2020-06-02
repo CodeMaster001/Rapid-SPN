@@ -1,0 +1,12 @@
+python cifar_10_spnrp_height.py 5000 10 14;
+python cifar_10_spnrp_height.py 5000 20 14;
+python cifar_10_spnrp_height.py 5000 40 14;
+python cifar_10_spnrp_height.py 5000 60 14;
+python cifar_10_spnrp_height.py 5000 80 14;
+python cifar_10_spnrp_height.py 5000 100 14;
+python cifar_10_spnrp_height.py 5000 200 14;
+python cifar_10_spnrp_height.py 5000 300 14;
+python cifar_10_spnrp_height.py 5000 400 14;
+python cifar_10_spnrp_height.py 5000 500 14;
+python cifar_10_spnrp_height.py 5000 800 14;
+python cifar_10_spnrp_height.py 5000 1000 14
