@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-'''
-CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
-
-Spatial tree demo for matrix data
-'''
-
-
 import numpy
 import sys
 import os
@@ -104,7 +97,7 @@ def optimize_tf_graph(
         counter = 0;
         # Iterate over epochs
         while (True):
-  
+
 
             # Collect loss over batches for one epoch
             epoch_loss = 0.0
@@ -112,12 +105,12 @@ def optimize_tf_graph(
             # Iterate over batches
             for j in range(batches_per_epoch):
                 data_batch = data[j * batch_size : (j + 1) * batch_size, :]
-         
+
                 _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
-           
+
                 epoch_loss += batch_loss
-              
-           
+
+
             # Build mean
             epoch_loss /= data.shape[0]
 
@@ -195,12 +188,12 @@ min_instances_slice=20
 height=2
 leaves_size=2
 
-file_name='tic_tac_toe_'+str(height)+'.'+str(leaves_size)+'.10.log'
+file_name='tic_tac_toe.10.log'
 for train_index, test_index in kf.split(credit):
     X = credit[train_index,:]
     X=numpy.nan_to_num(X)
     #X = preprocessing.normalize(X, norm='l2')
-    X_test = credit[test_index];	
+    X_test = credit[test_index];
     X_test=numpy.nan_to_num(X_test)
     #X_test = preprocessing.normalize(X_test, norm='l2')
     #X = X.astype(numpy.float32)
@@ -209,7 +202,7 @@ for train_index, test_index in kf.split(credit):
     for i in range(0,X.shape[1]):
         context.append(Categorical)
 
-	
+
 
 
 
@@ -251,9 +244,3 @@ for train_index, test_index in kf.split(credit):
     f.write(temp)
     f.flush()
     f.close()
-
-
-
-
-
-
