@@ -276,12 +276,14 @@ spnrp_mean=0
 spnrp_time=0
 spn_mean,spn_time = learnspn_train(X,X_test,context,min_instances_slice,threshold)
 spnrp_mean,spnrp_time = spnrp_train(X=X,X_test=X_test,context=context,height=height,leaves_size=leaves_size,threshold=threshold)
+cmd=open(FILE_NAME_DIR+file_name+'.cmd','a')
+cmd.write(str(sys.argv)+"\n")
+cmd.flush()
+cmd.close()
 f=open(FILE_NAME_DIR+file_name,'a')
-f.write(str(sys.argv)+"\n")
 print(spnrp_mean)
 print(FILE_NAME_DIR+file_name)
 temp=str(spn_mean)+","+str(spnrp_mean)+","+str(spn_time)+","+str(spnrp_time)+","+str(min_instances_slice)+"\n"
-print(temp)
 f.write(temp)
 f.flush()
 f.close()

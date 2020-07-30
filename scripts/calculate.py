@@ -9,9 +9,7 @@ f = open(file_name,'r')
 table = list()
 counter = 0;
 for i in f:
-	if counter%2!=0:
-		table.append(i.strip().split(','))
-	counter = counter + 1;
+	table.append(i.strip().split(','))
 table = np.array(table).astype(float)
 
 mean_result = np.mean(table,axis=0)

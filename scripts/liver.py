@@ -1,4 +1,6 @@
 
+
+
 import numpy
 import sys
 import os
@@ -35,7 +37,7 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
-numpy.random.seed(42)
+np.random.seed(42)
 import multiprocessing
 import logging
 import subprocess
@@ -46,7 +48,8 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='hayes-roth', version=1,return_X_y=True)
+
+train_dataset,labels= fetch_openml(name='liver-disorders', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -60,18 +63,22 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='hayes.10.log'
-min_instances_slice=20
+
+min_instance_slice=50
 epochs=8000
-height=14
+height=12
 prob=0.4
 leaves_size=15
 threshold =0.4
+selector_array=[2,3,4]
+np.save('selector',np.array(selector_array))
 
-opt_args=str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
+
 
 for i in range(0,train_dataset_df.shape[1]):
     context.append(Gaussian)
+output_file_name='liver.10.log'
+opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
     X=numpy.nan_to_num(X_train)
@@ -89,8 +96,8 @@ for train_index,test_index in kf.split(train_dataset_df):
     P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
-    P.terminate()
-print("process completed")
+P.terminate()
+
 #!/usr/bin/env python
 '''
 CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
