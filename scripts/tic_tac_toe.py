@@ -161,15 +161,6 @@ def one_hot(df,col):
 	df = pd.get_dummies([col])
 	df.drop()
 
-
-
-
-
-
-
-
-
-
 credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)
 credit = credit.apply(LabelEncoder().fit_transform)

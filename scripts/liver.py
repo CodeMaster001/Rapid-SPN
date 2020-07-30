@@ -1,6 +1,5 @@
 
 
-
 import numpy
 import sys
 import os
@@ -98,9 +97,3 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.wait();
 P.terminate()
 
-#!/usr/bin/env python
-'''
-CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
-
-Spatial tree demo for matrix data
-'''

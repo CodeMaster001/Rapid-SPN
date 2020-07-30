@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-'''
-
-Spatial tree demo for matrix data
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-'''
-
-
 import numpy
 import sys
 import os
