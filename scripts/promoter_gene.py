@@ -87,7 +87,7 @@ for train_index,test_index in kf.split(train_dataset_df):
     np.save('train', X)
     np.save("test",X_test)
     np.save("context",context)
-    P=subprocess.Popen(['python experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
     P.terminate()
