@@ -63,14 +63,14 @@ for instance in [5,10,15,20,25,30,35,40,45,50]:
 
     #parameters
     output_file_name='promoter.'+str(instance)+'.'+str(sys.argv[1])+'.log'
-    min_instances_slice=instance
+    min_instance_slice=instance
     epochs=8000
     height=2
     prob=0.4
     leaves_size=15
     threshold =0.4
 
-    opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
+    opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
 
     for i in range(0,train_dataset_df.shape[1]):
         context.append(Categorical)
@@ -78,7 +78,7 @@ for instance in [5,10,15,20,25,30,35,40,45,50]:
         X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
         X=numpy.nan_to_num(X_train)
         X = X.astype(numpy.float32)
-        #X = preprocessing.normalize(X, norm='l2') 
+        #X = preprocessing.normalize(X, norm='l2')
         X_test = numpy.nan_to_num(X_test)
         #X_test = preprocessing.normalize(X_test, norm='l2')
         X = X.astype(numpy.float32)
@@ -99,5 +99,3 @@ CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
 
 Spatial tree demo for matrix data
 '''
-
-
