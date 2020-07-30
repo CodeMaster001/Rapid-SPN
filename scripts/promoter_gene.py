@@ -1,8 +1,7 @@
-
+#!/usr/bin/env python
 import numpy
 import sys
 import os
-os.environ['NUMEXPR_MAX_THREADS'] = '16'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sklearn import preprocessing
 from sklearn.datasets import load_svmlight_file
@@ -88,14 +87,8 @@ for train_index,test_index in kf.split(train_dataset_df):
     np.save('train', X)
     np.save("test",X_test)
     np.save("context",context)
-    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    P=subprocess.Popen(['python experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
     P.terminate()
 print("process completed")
-#!/usr/bin/env python
-'''
-CREATED:2011-11-12 08:23:33 by Brian McFee <bmcfee@cs.ucsd.edu>
-
-Spatial tree demo for matrix data
-'''
