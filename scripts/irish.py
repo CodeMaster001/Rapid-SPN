@@ -63,7 +63,7 @@ context = list()
 output_file_name='irish.10.log'
 min_instances_slice=10
 epochs=8000
-height=7
+height=8
 prob=0.4
 leaves_size=15
 threshold =0.4
@@ -76,7 +76,7 @@ for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
     X=numpy.nan_to_num(X_train)
     X = X.astype(numpy.float32)
-    X = preprocessing.normalize(X, norm='l2') 
+    X = preprocessing.normalize(X, norm='l2')
     X_test = numpy.nan_to_num(X_test)
     X_test = preprocessing.normalize(X_test, norm='l2')
     X = X.astype(numpy.float32)
@@ -91,4 +91,3 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.wait();
     P.terminate()
 print("process completed")
-

@@ -65,7 +65,7 @@ min_instances_slice=40
 epochs=8000
 height=18
 prob=0.4
-leaves_size=8
+leaves_size=5
 threshold =0.4
 
 opt_args=str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
