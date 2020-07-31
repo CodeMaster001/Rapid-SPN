@@ -1,16 +1,13 @@
 import os;
 import sys
+import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 sns.set()
 file_name = sys.argv[1]
-f = open(file_name,'r')
-table = list()
-counter = 0;
-for i in f:
-	table.append(i.strip().split(','))
-table = np.array(table).astype(float)
+table=pd.read_csv(file_name,delimiter=',',names=['a','b','c','d','e'])
+table = np.array(table.values).astype(float)
 
 mean_result = np.mean(table,axis=0)
 
