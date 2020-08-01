@@ -62,7 +62,7 @@ context = list()
 
 #parameters
 output_file_name='ecoli.10.log'
-min_instances_slice=25
+min_instances_slice=20
 epochs=8000
 height=6
 prob=0.4
