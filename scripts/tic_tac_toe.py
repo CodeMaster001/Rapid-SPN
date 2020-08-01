@@ -131,7 +131,8 @@ def optimize_tf_graph(
 
     return loss_list
 
-
+for instance_slice in [10,20,40,50]:
+    np.random.seed(42)
 
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
@@ -175,7 +176,7 @@ theirs = list()
 ours = list()
 ours_time_list = list()
 theirs_time_list = list();
-min_instances_slice=20
+min_instances_slice=10
 height=2
 leaves_size=2
 

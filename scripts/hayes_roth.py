@@ -61,7 +61,7 @@ context = list()
 
 #parameters
 output_file_name='hayes.10.log'
-min_instances_slice=40
+min_instances_slice=10
 epochs=8000
 height=18
 prob=0.4
