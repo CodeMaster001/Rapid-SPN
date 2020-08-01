@@ -138,7 +138,6 @@ def learnspn_train(X,X_test):
     tf.reet_default_graph()
     del spn_classification
     return  np.mean(ll_test),theirs_time
-
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
@@ -158,7 +157,7 @@ height=22
 prob=0.4
 leaves_size=20
 threshold =0.4
-instance_slice=22
+instance_slice=20
 selector_array=[2,3,4]
 np.save('selector',np.array(selector_array))
 
