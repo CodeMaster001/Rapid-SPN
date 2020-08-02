@@ -35,9 +35,131 @@ import numpy as np, numpy.random
 numpy.random.seed(42)
 import logging
 
+
+def optimize_tf(
+    spn: Node,
+    data: np.ndarray,
+    epochs=1000,
+    batch_size: int = None,
+    optimizer: tf.train.Optimizer = None,
+    return_loss=False,
+) -> Union[Tuple[Node, List[float]], Node]:
+    """
+    Optimize weights of an SPN with a tensorflow stochastic gradient descent optimizer, maximizing the likelihood
+    function.
+    :param spn: SPN which is to be optimized
+    :param data: Input data
+    :param epochs: Number of epochs
+    :param batch_size: Size of each minibatch for SGD
+    :param optimizer: Optimizer procedure
+    :param return_loss: Whether to also return the list of losses for each epoch or not
+    :return: If `return_loss` is true, a copy of the optimized SPN and the list of the losses for each epoch is
+    returned, else only a copy of the optimized SPN is returned
+    """
+    # Make sure, that the passed SPN is not modified
+    spn_copy = Copy(spn)
+
+    # Compile the SPN to a static tensorflow graph
+    tf_graph, data_placeholder, variable_dict = spn_to_tf_graph(spn_copy, data, batch_size)
+
+    # Optimize the tensorflow graph
+    loss_list = optimize_tf_graph(
+        tf_graph, variable_dict, data_placeholder, data, epochs=epochs, batch_size=batch_size, optimizer=optimizer
+    )
+
+    # Return loss as well if flag is set
+    if return_loss:
+        return spn_copy, loss_list
+
+    return spn_copy
+
+
+def optimize_tf_graph(
+    tf_graph, variable_dict, data_placeholder, data, epochs=1000, batch_size=None, optimizer=None
+) -> List[float]:
+    if optimizer is None:
+        optimizer = tf.train.GradientDescentOptimizer(0.001)
+    loss = -tf.reduce_sum(tf_graph)
+    original_optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(original_optimizer, clip_norm=5.0)
+    opt_op = optimizer.minimize(loss)
+
+    # Collect loss
+    loss_list = [0]
+    config = tf.ConfigProto(
+        device_count = {'GPU': 0})
+    with tf.Session(config=config) as sess:
+        sess.run(tf.global_variables_initializer())
+        if not batch_size:
+            batch_size = data.shape[0]
+        batches_per_epoch = data.shape[0] // batch_size
+        old_loss = 0;
+        counter = 0;
+        # Iterate over epochs
+        while (True):
+
+
+            # Collect loss over batches for one epoch
+            epoch_loss = 0.0
+
+            # Iterate over batches
+            for j in range(batches_per_epoch):
+                data_batch = data[j * batch_size : (j + 1) * batch_size, :]
+
+                _, batch_loss = sess.run([opt_op, loss], feed_dict={data_placeholder: data_batch})
+
+                epoch_loss += batch_loss
+
+
+            # Build mean
+            epoch_loss /= data.shape[0]
+
+
+            print("Epoch: %s, Loss: %s", i, epoch_loss)
+            loss_list.append(epoch_loss)
+            old_loss = np.abs(loss_list[-1]) - np.abs(loss_list[-2])
+            if old_loss<0.0002:
+                counter = counter + 1
+            if old_loss>0.0002:
+                counter = 0;
+            if counter>10:
+                break;
+
+            print(old_loss)
+
+        tf_graph_to_spn(variable_dict)
+
+    return loss_list
+
+
+
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+def bfs(root, func):
+    seen, queue = set([root]), collections.deque([root])
+    while queue:
+        node = queue.popleft()
+        func(node)
+        if not isinstance(node, Leaf):
+            for c in node.children:
+                if c not in seen:
+                    seen.add(c)
+                    queue.append(c)
+
+def print_prob(node):
+	if isinstance(node,Sum):
+		node.weights= np.random.dirichlet(np.ones(len(node.weights)),size=1)[0]
+def  score(i):
+	if i == 'g':
+		return 0;
+	else:
+		return 1;
+
+def one_hot(df,col):
+	df = pd.get_dummies([col])
+	df.drop()
 
 credit= fetch_openml(name='tic-tac-toe', version=1,return_X_y=True)[0]
 credit = pd.DataFrame(data=credit)

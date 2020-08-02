@@ -64,7 +64,7 @@ context = list()
 
 #parameters
 
-min_instance_slice=50
+min_instance_slice=40
 epochs=8000
 height=8
 prob=0.4
