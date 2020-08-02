@@ -61,7 +61,7 @@ counter = 0;
 context = list()
 
 #parameters
-min_instances_slice=40
+min_instances_slice=20
 output_file_name='bodyfat.10.log'
 epochs=8000
 height=1

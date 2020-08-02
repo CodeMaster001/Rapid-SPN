@@ -156,9 +156,9 @@ context = list()
 epochs=8000
 height=22
 prob=0.4
-leaves_size=20
+leaves_size=15
 threshold =0.4
-instance_slice=22
+instance_slice=20
 selector_array=[2,3,4]
 np.save('selector',np.array(selector_array))
 

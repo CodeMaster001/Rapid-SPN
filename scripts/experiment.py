@@ -36,6 +36,7 @@ from spn.structure.Base import *
 import pickle
 import time;
 import numpy as np, numpy.random
+np.random.seed(42)
 import sys;
 
 from pathlib import Path
