@@ -45,9 +45,6 @@ import subprocess
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-
-
-
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizefor instance_slice in [10,20,40,60]:
 train_dataset,labels= fetch_openml(name='iris', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
@@ -68,7 +65,7 @@ min_instance_slice=50
 epochs=8000
 height=8
 prob=0.4
-leaves_size=15
+leaves_size=18
 threshold =0.4
 selector_array=[2,3,4]
 output_file_name='iris.10.log'
