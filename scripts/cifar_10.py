@@ -77,8 +77,7 @@ def clean_data(x):
         print(str(x))
 
  # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-#train_dataset, y = fetch_openml('CIFAR_10', version=1, return_X_y=True)
-train_dataset = pd.read_csv('dataset/cifar-10.csv',delimiter=',')
+train_dataset, y = fetch_openml('CIFAR_10', version=1, return_X_y=True)
 train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=train_dataset.sample(n=int(sys.argv[1])).values
