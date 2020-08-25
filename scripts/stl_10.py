@@ -80,7 +80,6 @@ def clean_data(x):
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 train_dataset, y = fetch_openml('STL-10', version=1, return_X_y=True)
-#train_dataset = pd.read_csv('dataset/cifar-10.csv',delimiter=',')
 train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=train_dataset.sample(n=int(sys.argv[1])).values
@@ -141,7 +140,6 @@ for instance_slice in instances:
     print(executable_args)
     print("-----------------------------------------------################--------------------------------------------")
     P=subprocess.Popen([executable_args],shell=True)
-    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
     P.communicate()
     P.wait();
     P.terminate()

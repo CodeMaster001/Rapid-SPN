@@ -79,7 +79,8 @@ def clean_data(x):
         print(str(x))
 
  # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset, y = fetch_openml('CIFAR_10', version=1, return_X_y=True)
+#train_dataset, y = fetch_openml('CIFAR_10', version=1, return_X_y=True)
+train_dataset = pd.read_csv('dataset/cifar-10.csv',delimiter=',')
 train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=train_dataset.sample(n=int(sys.argv[1])).values
@@ -136,7 +137,12 @@ instances=[int(i) for i in sys.argv[3][1:length-1].split(',')]
 for instance_slice in instances:
     print(instance_slice)
     opt_args= str(output_file_name) + ' ' + str(instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 
-    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    executable_args='experiment.py train.npy test.npy context.npy '+opt_args.strip()
+    print("-----------------------------------------------################--------------------------------------------")
+    executable_args= os.environ['PYTHON_PATH'] + ' '+ executable_args
+    print(executable_args)
+    print("-----------------------------------------------################--------------------------------------------")
+    P=subprocess.Popen([executable_args],shell=True)
     P.communicate()
     P.wait();
     P.terminate()
