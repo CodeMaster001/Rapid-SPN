@@ -46,7 +46,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='irish', version=1,return_X_y=True)
+train_dataset,labels= fetch_openml(name='blood-transfusion-service-center', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -60,8 +60,8 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='irish.10.log'
-min_instance_slice=10
+output_file_name='blood.50.log'
+min_instance_slice=50
 height=8
 prob=0.4
 leaves_size=15
@@ -69,7 +69,8 @@ threshold =0.4
 
 opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
 
-for i in range(0,train_dataset_df.shape[1]):
+context=list();
+for i in range(0,train_dataset_df.values.shape[1]):
     context.append(Gaussian)
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
@@ -84,8 +85,14 @@ for train_index,test_index in kf.split(train_dataset_df):
     test_set.append(X_test)
     np.save('train', X)
     np.save("test",X_test)
-    np.save("context",context)
-    P=subprocess.Popen(['./experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    np.save("context",context)  
+    opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold) 
+    executable_args='experiment.py train.npy test.npy context.npy '+opt_args.strip()
+    print("-----------------------------------------------################--------------------------------------------")
+    executable_args= os.environ['PYTHON_PATH'] + ' '+ executable_args
+    print(executable_args)
+    print("-----------------------------------------------################--------------------------------------------")
+    P=subprocess.Popen([executable_args],shell=True)
     P.communicate()
     P.wait();
     P.terminate()
