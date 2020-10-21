@@ -40,6 +40,8 @@ import logging
 from sklearn.datasets import load_digits
 import subprocess
 from sklearn.datasets import fetch_20newsgroups
+
+np.random.seed(42)
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
