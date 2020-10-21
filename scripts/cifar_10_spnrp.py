@@ -40,6 +40,7 @@ import logging
 from sklearn.datasets import load_digits
 import subprocess
 from sklearn.datasets import fetch_20newsgroups
+np.random.seed(42)
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -76,13 +77,13 @@ def clean_data(x):
         print(str(x))
 
  # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
-train_dataset,labels= fetch_openml(name='CIFAR_10', version=1,return_X_y=True)
+train_dataset=pd.read_csv('dataset/cifar10.csv',delimiter=',')
 train_dataset = pd.DataFrame(train_dataset)
 
 train_dataset=np.array(train_dataset.sample(n=int(sys.argv[1])).values)
 train_dataset=train_dataset[:,:int(sys.argv[2])]
 X_train,X_test=train_test_split(train_dataset,test_size=0.60)
-
+del train_dataset
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizev
 
 kf = KFold(n_splits=10,shuffle=True)
@@ -106,7 +107,7 @@ predict_bandwidth=1
 selector_array=[2,3,4]
 np.save('selector',np.array(selector_array))
 
-for i in range(0,train_dataset.shape[1]):
+for i in range(0,X_train.shape[1]):
     context.append(Gaussian)
 
 X=numpy.nan_to_num(X_train)
@@ -125,8 +126,8 @@ print(X_test.shape)
 np.save('train', X)
 np.save("test",X_test)
 np.save("context",context)
-for height in [4,6,8,12,14,16,18,20,22,24,26,30]:
-    for leaves_size in [2,4,6,8,10,12,14,16,20,40,60,80,100]:
+for height in [2,4,6,8,10,12,14,16,18,20,22,24]:
+    for leaves_size in [2,4,6,8,10,12,14,16,18,20,22,24]:
         instance_slice=250000
         opt_args= str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold) 
         executable_args='experiment.py train.npy test.npy context.npy '+opt_args.strip()
