@@ -99,7 +99,7 @@ counter = 0;
 context = list()
 
 
-output_file_name='stl_10_'+str(sys.argv[2])+'.log'
+output_file_name='stl_10_seed_'+str(sys.argv[2])+'.log'
 epochs=8000
 height=1
 prob=0.5
