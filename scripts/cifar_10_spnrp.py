@@ -42,6 +42,7 @@ from sklearn.datasets import fetch_20newsgroups
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+import numpy as np
 numpy.random.seed(42)
 def bfs(root, func):
     seen, queue = set([root]), collections.deque([root])
