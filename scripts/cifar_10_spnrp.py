@@ -43,6 +43,8 @@ from sklearn.datasets import fetch_20newsgroups
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+import numpy as np
+np.random.seed(42)
 def bfs(root, func):
     seen, queue = set([root]), collections.deque([root])
     while queue:
@@ -94,7 +96,7 @@ test_set = list();
 counter = 0;
 context = list()
 
-output_file_name='cifar_spnrp_'+str(sys.argv[2])+'.log'
+output_file_name='cifar_spnrp_seed_'+str(sys.argv[2])+'.log'
 epochs=8000
 height=1
 prob=0.5
