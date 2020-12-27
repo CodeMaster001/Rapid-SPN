@@ -34,7 +34,6 @@ from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 import time;
-import numpy as np, numpy.random
 import multiprocessing
 import logging
 from sklearn.datasets import load_digits
