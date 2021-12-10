@@ -81,7 +81,6 @@ train_dataset, y = fetch_openml('STL-10', version=1, return_X_y=True)
 #train_dataset = pd.read_csv('dataset/newstl10.csv')
 train_dataset = pd.DataFrame(train_dataset)
 print(train_dataset.values.shape)
-sys.exit(-1)
 train_dataset=train_dataset.sample(n=int(sys.argv[1])).values
 train_dataset=train_dataset[:,:int(sys.argv[2])]
 X_train,X_test=train_test_split(train_dataset,test_size=0.6)
