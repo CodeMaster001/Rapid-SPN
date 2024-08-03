@@ -8,4 +8,4 @@ University of Georgia </br>
 Department of Computer Science </br>
 
 Special Thanks to European Community for helping in the research.
-For RP-Tree codebase which we have taken from their website, we have cited them in the paper for the same.
+Special Thanks for RP-Tree code, please refer to citation in the paper.
