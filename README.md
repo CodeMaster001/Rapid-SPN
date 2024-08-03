@@ -2,7 +2,7 @@
 SumProduct Network under Random Projection
 
 Sorry for multiple repository I just didnt had enough time to bring these two to one repository 
-https://github.com/CodeMaster001/Rapid-SPN
+https://github.com/CodeMaster001/Rapid-SPN </br>
 Prajay Shetty </br>
 University of Georgia </br>
 Department of Computer Science </br>
