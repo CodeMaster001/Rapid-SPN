@@ -8,7 +8,9 @@ University of Georgia </br>
 Department of Computer Science </br>
 
 Contributions:
-Dr.Doshi provided the teaching for SPN.
-Dr.Kristian provided the idea for using RP-Tree
-Prajay Shetty had the novelty for the approach of combining RP-Tree and SPN and also wrote down theory behind it and performed analysis
-Fabrzio Ventola, supported by running experiments in the European Cluster.
+Dr.Doshi provided the teaching for SPN. </br>
+Dr.Kristian provided the idea for using SPN with RP-Tree </br>
+Prajay Shetty had the novelty for the approach of combining RP-Tree and SPN and also wrote down theory behind it and performed analysis and cordinated with all the researchers. </br>
+Fabrzio Ventola, supported by running experiments in the European Cluster based on the input provided by Prajay Shetty. </br>
+
+To be added in the final paper.</br>
