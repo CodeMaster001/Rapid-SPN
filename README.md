@@ -7,7 +7,7 @@ Prajay Shetty </br>
 University of Georgia </br>
 Department of Computer Science </br>
 
-Contributions:
+Contributions:</br>
 Dr.Doshi provided the teaching for SPN. </br>
 Dr.Kristian provided the idea for using SPN with RP-Tree </br>
 Prajay Shetty had the novelty for the approach of combining RP-Tree and SPN and also wrote down theory behind it and performed analysis and cordinated with all the researchers. </br>
