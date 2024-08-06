@@ -7,5 +7,8 @@ Prajay Shetty </br>
 University of Georgia </br>
 Department of Computer Science </br>
 
-Special Thanks to European Community for helping in the research.
-Special Thanks for RP-Tree code, please refer to citation in the paper.
+Contributions:
+Dr.Doshi provided the teaching for SPN.
+Dr.Kristian provided the idea for using RP-Tree
+Prajay Shetty had the novelty for the approach of combining RP-Tree and SPN and also wrote down theory behind it and performed analysis
+Fabrzio Ventola, supported by running experiments in the European Cluster.
