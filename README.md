@@ -19,3 +19,5 @@ For proper usage:
 Install networkx==2.5 and scipy=1.11.4
 Please refer ecoliy.py file in scripts directory for changes needed to be done. Remember we dont use tensorflow, we only use cpu and unfortunately its been left behind by mistake. Sorry and I apologize for it.
 For further details plese refer this PR https://github.com/CodeMaster001/spnrp/pull/9
+
+Zenodo link https://zenodo.org/records/13726892
