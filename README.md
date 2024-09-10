@@ -35,3 +35,5 @@ cd scripts
 python3 cifar_pca.py no_of_rows no_of_columns no_of_components
 
 Preprint Zenodo link https://zenodo.org/records/13726892
+
+https://doi.org/10.5281/zenodo.13731764
