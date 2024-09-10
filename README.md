@@ -21,11 +21,17 @@ Please refer ecoliy.py file in scripts directory for changes needed to be done. 
 For further details plese refer this PR https://github.com/CodeMaster001/spnrp/pull/9
 
 To Execute:
+
 1.For normal scripts
+
 cd scripts
+
 python3 cifar_10_spnrp.py no_of_rows no_of_columns
+
 2. For PCA scripts
+   
 cd scripts
+
 python3 cifar_pca.py no_of_rows no_of_columns no_of_components
 
-Zenodo link https://zenodo.org/records/13726892
+Preprint Zenodo link https://zenodo.org/records/13726892
