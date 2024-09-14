@@ -20,20 +20,17 @@ from sklearn.datasets import load_iris,load_digits,fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from spn.algorithms.LearningWrappers import learn_parametric
-from spn.gpu.TensorFlow import *
 from spn.structure.Base import Product, Sum, assign_ids, rebuild_scopes_bottom_up
 from sklearn.metrics import accuracy_score
 from numpy.random.mtrand import RandomState
 from spn.algorithms.LearningWrappers import learn_parametric, learn_classifier
 from spn.algorithms.TransformStructure import Prune,Compress,SPN_Reshape
 import urllib
-import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 from sklearn.datasets import fetch_openml
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
-from spn.gpu.TensorFlow import eval_tf
 from spn.structure.Base import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 import time;
