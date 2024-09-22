@@ -30,7 +30,6 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from spn.structure.Base import *
-import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
 import multiprocessing
@@ -46,7 +45,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 train_dataset,labels= fetch_openml(name='blood-transfusion-service-center', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
 
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True,random_state=42)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -57,20 +56,20 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='blood.50.log'
-min_instance_slice=50
-height=8
+output_file_name='blood.50.csv'
+min_instance_slice=10
+height=12
 prob=0.4
-leaves_size=15
+leaves_size=6
 threshold =0.4
 
-opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
-
-context=list();
-for i in range(0,train_dataset_df.values.shape[1]):
-    context.append(Gaussian)
 for train_index,test_index in kf.split(train_dataset_df):
     X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
+    context=list()
+    for i in range(0,train_dataset_df.values.shape[1]):
+        context.append(Gaussian)
+    X_train,X_test = train_test_split(train_dataset_df)
     X=numpy.nan_to_num(X_train)
     X = X.astype(numpy.float32)
     X = preprocessing.normalize(X, norm='l2')
