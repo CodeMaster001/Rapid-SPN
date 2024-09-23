@@ -43,7 +43,7 @@ numpy.random.seed(42)
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 train_dataset_df = pd.DataFrame(train_dataset)
-kf = KFold(n_splits=10,shuffle=True)
+kf = KFold(n_splits=10,shuffle=True,random_state=42)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -55,20 +55,21 @@ context = list()
 
 #parameters
 epochs=8000
-height=22
+height=6
 prob=0.4
 leaves_size=14
 threshold =0.4
 instance_slice=20
 selector_array=[2,3,4]
+output_file_name='balance_scale.10.csv'
 np.save('selector',np.array(selector_array))
-
-for i in range(0,train_dataset_df.shape[1]):
-    context.append(Gaussian)
-output_file_name='balance_scale.10.log'
-opt_args=str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
-for train_index,test_index in kf.split(train_dataset_df):
-    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+for train_index,test_index in kf.split(train_dataset):
+    X_train,X_test = train_dataset.values[train_index],train_dataset.values[test_index]
+    context = []
+    for i in range(0,train_dataset_df.shape[1]):
+        context.append(Gaussian)
+    opt_args=str(output_file_name) + ' ' + str(instance_slice) +' ' +str(height) + ' '+str(leaves_size)+' '+str(threshold)
+    X_train,X_test=  train_test_split(train_dataset_df,test_size=0.4,random_state=42)
     X=numpy.nan_to_num(X_train)
     X = X.astype(numpy.float32)
     X = preprocessing.normalize(X, norm='l2')
@@ -85,4 +86,4 @@ for train_index,test_index in kf.split(train_dataset_df):
     P.communicate()
     P.wait();
     P.terminate()
-print("process completed")
+    print("process completed")
