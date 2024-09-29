@@ -39,6 +39,7 @@ numpy.random.seed(42)
 import multiprocessing
 import logging
 import subprocess
+from utils import run_execution_float
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -48,7 +49,6 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 # experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
 
 train_dataset,labels= fetch_openml(name='ecoli', version=1,return_X_y=True)
-train_dataset_df = pd.DataFrame(train_dataset)
 
 kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
@@ -61,36 +61,14 @@ counter = 0;
 context = list()
 
 #parameters
-output_file_name='ecoli.10.log'
-min_instances_slice=20
+output_file_name='ecoli.10.csv'
+min_instance_slice=10
 epochs=8000
 height=6
 prob=0.4
-leaves_size=15
+leaves_size=12
 threshold =0.4
 
-opt_args= str(output_file_name) + ' ' + str(min_instances_slice) +' ' +str(epochs) + ' '+ str(height) + ' '+str(prob) + ' ' +str(leaves_size)+' ' + str(threshold)
-
-for i in range(0,train_dataset_df.shape[1]):
-    context.append(Gaussian)
-for train_index,test_index in kf.split(train_dataset_df):
-    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
-    X=numpy.nan_to_num(X_train)
-    X = X.astype(numpy.float32)
-    X = preprocessing.normalize(X, norm='l2')
-    X_test = numpy.nan_to_num(X_test)
-    X_test = preprocessing.normalize(X_test, norm='l2')
-    X = X.astype(numpy.float32)
-    X_test =X_test.astype(numpy.float32)
-    print(X_test.shape)
-    print(X.shape)
-    train_set.append(X)
-    test_set.append(X_test)
-    np.save('train', X)
-    np.save("test",X_test)
-    np.save("context",context)
-    P=subprocess.Popen(['python3 experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
-    P.communicate()
-    P.wait();
-    P.terminate()
-print("process completed")
+for X_train,X_test in kf.split(train_dataset):
+    run_execution_float(X_train=train_dataset.values[X_train],X_test=train_dataset.values[X_test],min_instance_slice=min_instance_slice,height=height,leaves_size=leaves_size,threshold=threshold,output_file_name=output_file_name)
+       

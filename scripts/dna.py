@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python 
+#2839,180
 import numpy
 import sys
 import os
@@ -33,17 +34,23 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
-from utils import run_execution_float
 import multiprocessing
 import logging
 import subprocess
+from utils import run_execution_character
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizefor instance_slice in [10,20,40,60]:
-train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 
-kf = KFold(n_splits=10,shuffle=True,random_state=42)
+
+
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
+
+train_dataset,labels= fetch_openml(name='dna', version=1,return_X_y=True)
+le = preprocessing.LabelEncoder()
+train_dataset = train_dataset[train_dataset.columns].apply(le.fit_transform)
+print(train_dataset.head())
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -54,16 +61,16 @@ counter = 0;
 context = list()
 
 #parameters
-
-min_instance_slice=20
+output_file_name='dna.10.csv'
+min_instance_slice=40
 epochs=8000
-height=6
+height=22
 prob=0.4
-leaves_size=14
+leaves_size=6
 threshold =0.4
-selector_array=[2,3,4]
-output_file_name='balance.10.csv'
-np.save('selector',np.array(selector_array))
+
+
+
 
 for X_train_index,X_test_index  in kf.split(train_dataset):
-    run_execution_float(X_train=train_dataset.values[X_train_index],X_test=train_dataset.values[X_test_index],min_instance_slice=min_instance_slice,height=height,leaves_size=leaves_size,threshold=threshold,output_file_name=output_file_name)
+    run_execution_character(X_train=train_dataset.values[X_train_index],X_test=train_dataset.values[X_test_index],min_instance_slice=min_instance_slice,height=height,leaves_size=leaves_size,threshold=threshold,output_file_name=output_file_name)

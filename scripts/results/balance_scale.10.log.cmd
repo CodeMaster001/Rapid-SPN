@@ -1,0 +1,7 @@
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '2', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '4', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '6', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '8', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '10', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '12', '0.4']
+['experiment.py', 'train.npy', 'test.npy', 'context.npy', 'balance_scale.10.log', '20', '2', '14', '0.4']

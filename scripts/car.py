@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 import numpy
 import sys
 import os
@@ -33,17 +33,22 @@ from spn.structure.Base import *
 import time;
 import numpy as np, numpy.random
 numpy.random.seed(42)
-from utils import run_execution_float
 import multiprocessing
 import logging
 import subprocess
 #tf.logging.set_verbosity(tf.logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_sizefor instance_slice in [10,20,40,60]:
-train_dataset,labels= fetch_openml(name='balance-scale', version=1,return_X_y=True)
 
-kf = KFold(n_splits=10,shuffle=True,random_state=42)
+
+
+# experiment.py train.csv test.csv context.npy instance_slice epochs height prob leaves_size
+
+train_dataset_df,labels= fetch_openml(name='car', version=1,return_X_y=True)
+le = preprocessing.LabelEncoder()
+train_dataset_df = train_dataset_df[train_dataset_df.columns].apply(le.fit_transform)
+print(train_dataset_df.head())
+kf = KFold(n_splits=10,shuffle=True)
 theirs = list()
 ours = list()
 ours_time_list = list()
@@ -54,16 +59,32 @@ counter = 0;
 context = list()
 
 #parameters
-
-min_instance_slice=20
+output_file_name='car.10.csv'
+min_instance_slice=40
 epochs=8000
-height=6
+height=2
 prob=0.4
-leaves_size=14
+leaves_size=16
 threshold =0.4
-selector_array=[2,3,4]
-output_file_name='balance.10.csv'
-np.save('selector',np.array(selector_array))
-
-for X_train_index,X_test_index  in kf.split(train_dataset):
-    run_execution_float(X_train=train_dataset.values[X_train_index],X_test=train_dataset.values[X_test_index],min_instance_slice=min_instance_slice,height=height,leaves_size=leaves_size,threshold=threshold,output_file_name=output_file_name)
+for train_index,test_index in kf.split(train_dataset_df):
+    X_train,X_test=train_dataset_df.values[train_index],train_dataset_df.values[test_index]
+    opt_args= str(output_file_name) + ' ' + str(min_instance_slice) + ' ' + str(height) +' '+ str(leaves_size) + ' ' +str(threshold)
+    print(train_dataset_df.values.shape)
+    context = []
+    for i in range(0,train_dataset_df.shape[1]):
+        context.append(Categorical)
+    print(len(context))
+    X_train,X_test = train_test_split(train_dataset_df,test_size=0.4)
+    X=numpy.nan_to_num(X_train)
+    X_test = numpy.nan_to_num(X_test)
+    print(X_test.shape)
+    train_set.append(X)
+    test_set.append(X_test)
+    np.save('train', X)
+    np.save("test",X_test)
+    np.save("context",context)
+    P=subprocess.Popen(['python3 experiment.py train.npy test.npy context.npy '+opt_args.strip()],shell=True)
+    P.communicate()
+    P.wait();
+    P.terminate()
+print("process completed")
