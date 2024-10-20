@@ -32,6 +32,11 @@ Preprint Zenodo link https://zenodo.org/records/13726892.Please cite the followi
 
 https://doi.org/10.5281/zenodo.13731764
 
+PCA
 
 ![cifar_result](https://github.com/user-attachments/assets/c06b8e41-1aee-4b5e-99e9-b08fe0fecf00)
+STL
+
+![stl_result](https://github.com/user-attachments/assets/43d585a8-f1e9-4521-8a55-b3ad23a4d470)
+
 
