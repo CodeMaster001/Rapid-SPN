@@ -23,6 +23,7 @@ To Execute:
 cd scripts
 
 python3 dna.py
+
 python3 cifar_10_spnrp.py no_of_rows no_of_columns
 
 2. For PCA scripts Please refer jupyter notebook present in the scripts directory.
