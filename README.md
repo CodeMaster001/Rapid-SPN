@@ -32,7 +32,7 @@ Preprint Zenodo link https://zenodo.org/records/13726892.Please cite the followi
 
 https://doi.org/10.5281/zenodo.13731764
 
-PCA
+CIFAR
 
 ![cifar_result](https://github.com/user-attachments/assets/c06b8e41-1aee-4b5e-99e9-b08fe0fecf00)
 STL
