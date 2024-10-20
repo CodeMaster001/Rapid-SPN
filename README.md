@@ -41,4 +41,6 @@ STL
 
 ![stl_result](https://github.com/user-attachments/assets/43d585a8-f1e9-4521-8a55-b3ad23a4d470)
 
+Contact:
+Please contact via email for any queries at prajay.shetty2016@gmail.com
 
