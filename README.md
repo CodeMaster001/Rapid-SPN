@@ -1,8 +1,6 @@
 # Rapid-SPN
 SumProduct Network under Random Projection
 
-Sorry for multiple repository I just didnt had enough time to bring these two to one repository 
-https://github.com/CodeMaster001/Rapid-SPN </br>
 Prajay Shetty </br>
 University of Georgia </br>
 Department of Computer Science </br>
@@ -17,7 +15,7 @@ To be added in the final paper.</br>
 
 For proper usage:
 Clone spflow https://github.com/SPFlow/SPFlow and run src/create_pip_dist.sh and install pip file from dist directory.
-
+Please install  scipy==1.11.4
 To Execute:
 
 1.For normal scripts
